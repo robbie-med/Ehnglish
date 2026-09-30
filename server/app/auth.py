@@ -88,7 +88,9 @@ def get_current_user(
     user = db.scalar(select(User).where(User.email == email))
     if user is None:
         # Concurrent first requests (the PWA fires several at once) must not race on the insert.
-        db.execute(insert(User).values(email=email).on_conflict_do_nothing(index_elements=["email"]))
+        db.execute(
+            insert(User).values(email=email).on_conflict_do_nothing(index_elements=["email"])
+        )
         db.commit()
         user = db.scalar(select(User).where(User.email == email))
         assert user is not None
