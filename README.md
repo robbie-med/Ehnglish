@@ -1,7 +1,8 @@
 # Ehnglish
 
 Private monthly English assessment for one learner (bilingual English/한국어). The plan is
-[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M0 (Skeleton)**.
+[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M1 (Speaking core)**: M0 skeleton plus the
+processing pipeline for C0–C3 and C5.
 
 ```
 web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality check, resumable upload queue, timed task runner.
@@ -55,3 +56,28 @@ All under `/api`, identity from Cloudflare Access (or `EHNGLISH_DEV_EMAIL` in de
 | GET | `/takes/{id}`, `/takes/{id}/audio` | take with results; the WAV |
 
 Every `processing_results` row carries `pipeline_version` (`EHNGLISH_PIPELINE_VERSION`).
+
+## Processing pipeline (M1)
+
+After a take is finalized the worker runs `wav_probe` and then `process_take`, which walks the steps
+for the take's task type (`server/app/processing.py`). Each step is one `processing_results` row and
+is skipped on retry if already present for the current pipeline version.
+
+| Step (kind) | What | Needs |
+|---|---|---|
+| `asr:deepgram`, `asr:azure`, `asr:whisper` | three transcripts with word timings | API keys (each optional; skipped if blank) |
+| `transcript` | ROVER-style majority vote, uncertain words marked, agreement % | — |
+| `timing` | Praat syllable nuclei, pauses ≥250 ms, speech/articulation rate, MLR, onset, pitch | — |
+| `latency` | response latency from `prompt_end`/`record_start` events + voice onset | — |
+| `ei` | sentence-repetition syllable credit, exact match | — |
+| `pron` | Azure pronunciation assessment (scripted, phoneme level, prosody) | Azure key |
+| `phonemes` | wav2vec2 IPA recognizer vs expected phones; contrast tallies (r/l, f/p, …) | `--extra phonemes`, `EHNGLISH_PHONEMES_ENABLED` |
+| `alignment` | Montreal Forced Aligner words/phones + rhythm (%V, ΔC, nPVI) | `mfa` container |
+| `lexical`, `syntax` | MTLD, frequency bands, medical coverage; clauses, subordination, NP length | — |
+| `correction`, `errors` | Claude minimal correction (3 runs, median) → ERRANT error types | Anthropic key |
+
+Task → steps: silence: probe only · read_aloud: asr, vote, timing, pron, phonemes, alignment ·
+sentence_repeat: asr, vote, timing, latency, ei · quick_answer: asr, vote, timing, latency, language ·
+describe_opinion: asr, vote, timing, alignment, language.
+
+Prompt audio for real forms is built once with `content/build_audio.py` (Azure TTS) and committed.

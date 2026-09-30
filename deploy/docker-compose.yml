@@ -41,11 +41,23 @@ services:
     env_file: .env
     environment:
       EHNGLISH_DATABASE_URL: postgresql+psycopg://ehnglish:${POSTGRES_PASSWORD}@db:5432/ehnglish
+      EHNGLISH_MFA_URL: http://mfa:8700
+      EHNGLISH_PHONEMES_ENABLED: "true"
     volumes:
       - ../data:/data
     depends_on:
       api:
         condition: service_started
+      mfa:
+        condition: service_started
+
+  # Montreal Forced Aligner (CPU) behind a tiny HTTP shim; internal only.
+  mfa:
+    build:
+      context: ..
+      dockerfile: server/mfa_service/Dockerfile
+    image: ehnglish-mfa:latest
+    restart: unless-stopped
 
 volumes:
   pgdata:

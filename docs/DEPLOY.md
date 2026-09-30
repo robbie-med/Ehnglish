@@ -17,6 +17,20 @@ only on `127.0.0.1:3305`, published as `https://english.bo-bob.com` through the 
    validates, creates the CNAME with `cloudflared tunnel route dns`, and restarts the tunnel service.
 4. **Start.** `make up` (builds the image, runs migrations, starts api + worker).
 
+## Engine keys (M1)
+
+Add to `deploy/.env` (see `.env.example`): `EHNGLISH_DEEPGRAM_API_KEY`, `EHNGLISH_AZURE_SPEECH_KEY` +
+`_REGION`, `EHNGLISH_WHISPER_API_KEY` (Groq by default; set `_BASE_URL`/`_MODEL` for OpenAI), and
+`EHNGLISH_ANTHROPIC_API_KEY`. A blank key makes that step record `{"skipped": true}` instead of failing,
+so the rest of the pipeline still runs. Re-scoring after keys arrive: bump `EHNGLISH_PIPELINE_VERSION`
+and re-queue (`process_take` jobs) — earlier results stay, tagged with the old version.
+
+The `mfa` container downloads the English ARPA models at build time; the phoneme model (~400 MB)
+downloads into `data/hf-cache` on first use.
+
+Prompt audio: run `cd server && uv run python ../content/build_audio.py` once with the Azure key in
+`server/.env`, then commit `content/audio/`.
+
 ## Day to day
 
 ```bash
