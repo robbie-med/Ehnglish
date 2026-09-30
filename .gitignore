@@ -1,0 +1,23 @@
+# secrets
+.env
+deploy/.env
+*.ppq_key
+# data (raw recordings live outside git; backed up separately)
+data/
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# node
+node_modules/
+web/dist/
+web/dev-dist/
+web/test-results/
+web/playwright-report/
+web/e2e/fixtures/*.wav
+# editors
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,51 @@
+# Dummy form for M0. Exercises the task runner end to end: one read-aloud (audio) task and one
+# typed-response task. Not a real test form; real forms arrive in M1+ under content/forms/.
+id: dummy-v0
+version: 1
+kind: dummy
+title:
+  en: "M0 skeleton check"
+  ko: "M0 스켈레톤 점검"
+tasks:
+  - id: D1
+    type: read_aloud
+    title:
+      en: "Read aloud"
+      ko: "소리 내어 읽기"
+    instructions:
+      en: "When the countdown ends, read the sentence aloud at a natural pace. Recording stops on its own."
+      ko: "카운트다운이 끝나면 문장을 자연스러운 속도로 소리 내어 읽으세요. 녹음은 자동으로 멈춥니다."
+    timing:
+      prep_s: 2
+      respond_s: 4
+      max_s: 6
+    allow_rerecord: true
+    items:
+      - id: D1-01
+        text: "The pharmacist said the refill would be ready after lunch."
+        target:
+          words: 10
+          contrasts: ["f/p", "r/l", "final consonant"]
+      - id: D1-02
+        text: "Please call the clinic if the fever comes back tonight."
+        target:
+          words: 10
+          contrasts: ["v/b", "θ/s"]
+  - id: D2
+    type: typed_response
+    title:
+      en: "Typed answer"
+      ko: "타이핑 답변"
+    instructions:
+      en: "Type a short answer. Your keystrokes are timed. Press Done when finished."
+      ko: "짧게 답을 입력하세요. 키 입력 시간이 기록됩니다. 다 쓰면 완료를 누르세요."
+    timing:
+      prep_s: 0
+      respond_s: 60
+    items:
+      - id: D2-01
+        prompt:
+          en: "In one or two sentences: what do you say when you call to reschedule an appointment?"
+          ko: "한두 문장으로: 예약을 변경하려고 전화할 때 뭐라고 말하나요?"
+        target:
+          min_words: 8
