@@ -26,7 +26,7 @@ Key points:
 
 ## Working in this repo (M0 onward)
 
-- Local dir on the owner's PC: `/home/user/Projects/ultimate_english` (GitHub `robbie-med/ehnglish`).
+- Local dir on the owner's PC: `/home/user/Projects/ultimate_english` (GitHub `robbie-med/Ehnglish`).
 - `make help` lists everything: `make dev-api` / `make dev-web` for local dev, `make test`, `make e2e`,
   `make lint`, `make up` to deploy. See `README.md` and `docs/DEPLOY.md`.
 - Ports are registered in `/home/user/Projects/PORTS.md` (3305 api, 3914 vite, 3607 test db). Do not
