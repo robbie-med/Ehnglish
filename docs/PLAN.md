@@ -1,339 +1,333 @@
 # Ehnglish — Plan
 
-Status: **planning only, nothing built yet.**
+Status: **planning only, nothing built yet.** Build will happen in Claude Desktop, working from this
+document.
+
 Two tools, built in order:
 
-1. **Assessment** (build first). A monthly, standardized English test that collects objective data
-   and turns it into a dashboard she can track over time.
-2. **Trainer** (build after the Assessment works). A learning tool that reads the Assessment results
-   plus an inventory of her books, audio, courses and people, and plans evidence-based practice
-   aimed at her weakest areas.
+1. **Assessment** (this plan). A standardized 30-minute monthly English test whose job is to
+   **collect objective data** and turn it into a dashboard and a machine-readable record.
+2. **Trainer** (later, out of scope here). A practice app that reads the Assessment data and plans
+   what to practise. Her courses, textbooks and helpers are inputs to the Trainer only; the
+   Assessment does not use them.
 
 ---
 
-## 1. Learner profile (what the design is built around)
+## 0. Decisions so far
+
+| Topic | Decision |
+|---|---|
+| Hosting | Owner's server (specs are in the owner's existing server documentation; **no GPU**), reached through Cloudflare Tunnel, with login by Cloudflare Access. Private. |
+| Domain / login emails | To be supplied at build time. |
+| Speech services | **Direct** Deepgram account and **direct** Azure Speech account. Paid APIs are fine. |
+| LLM | Anthropic API, `claude-opus-5-5`. The owner has a Max plan; see the note in §9 about API billing. |
+| Test length | **One 30-minute sitting per month**: a ~22 min core plus a ~9 min rotating module. |
+| Baseline | A one-time baseline in the first week: 3 sittings of about 30 minutes. |
+| Korean tasks | Baseline only. |
+| Official tests | She will take TOEFL or IELTS herself later. The dashboard shows **estimated TOEFL and IELTS equivalents** in the meantime. |
+| Medical focus | **Mostly patient-side language**: appointments, symptoms, pharmacy, insurance, instructions. |
+| Accents | US English, **Northeast** emphasis. |
+| Phone task | A scripted, standardized phone call. **No live AI caller.** |
+| Device | Laptop, USB headset or Blue Yeti microphone, and headphones. |
+| Audience | Both of them view the dashboard, a private web page. **Everything is bilingual, English and Korean.** |
+| Output style | **Objective data, full detail by default. No coaching or feedback layer.** The main consumer is the Trainer. |
+| Native anchor | The husband. Possibly also one advanced Korean–English bilingual friend. |
+| Transcript review | **None by humans.** The app has to produce trustworthy transcripts on its own (§5). |
+| Data sharing | Sending recordings to Deepgram, Azure and Anthropic is fine. |
+| Sermons | Taken from the family's existing sermon-fetching app. |
+
+---
+
+## 1. Learner profile
 
 - Native Korean speaker. About 11 years of English: roughly 4 in school, then about 8 of self-study
   that was mostly reading and listening, with almost no speaking partners.
-  Now living in the US. Takes prep courses and did well in a community college class.
-- **What she says is hard:**
-  - **Speaking.** Low confidence, and **cognitive overload**: she has to retrieve the word, the
-    grammar and the pronunciation all at once while speaking.
-  - **Register.** She lacks the vocabulary for professional conversations and for service tasks
-    (reservations, tickets, phone calls, doctor's appointments).
-  - **High-level talk.** Colleague conversations with fast, abstract, pun-heavy language.
-  - **Listening under hard conditions.** Phone audio, unclear voices, and long monologues such as
-    sermons.
-  - **Medical terminology.** She needs it as a patient, and it is core to her goal of becoming a
-    medical illustrator.
-- **What she says is fine:** casual conversation, which is improving.
-- **Goals:** undergraduate-level discussion first, then master's level in a few years.
+  Now in the US. Takes prep courses and did well in a community college class.
+- **Weak spots she reports:**
+  - **Speaking confidence and overload.** She has to retrieve the word, the grammar and the
+    pronunciation all at once.
+  - **Professional and service vocabulary.** Reservations, tickets, doctor visits.
+  - **Fast, abstract talk between colleagues**, including puns.
+  - **Listening in hard conditions.** Phone audio, unclear voices, sermons.
+- **Doing fine:** casual conversation.
+- **Goals:** undergraduate-level English, then master's level. She will need a TOEFL or IELTS score,
+  and she plans a career in medical illustration.
 
-This profile points to what the test must separate: *knowing* English (large receptive vocabulary,
-good reading) versus *using it in real time* (speech rate, pauses, how fast she recognizes words in
-degraded audio). Her reading and writing likely run well ahead of her speaking and listening. The
-test has to measure that gap precisely, because the Trainer's priorities depend on it.
+What the test must show: the gap between *knowing* English (receptive vocabulary, reading) and
+*using it in real time* (speaking speed and pauses, how fast she answers, word recognition in
+degraded audio).
 
 ---
 
 ## 2. Design principles
 
-1. **Numbers come from deterministic code. The LLM does not produce the numbers.**
-   Speech rate, pauses, word error rates, vocabulary size, reading speed and item scores are
-   computed by code. Claude does judgment tasks only: idea-unit extraction, error correction,
-   rubric scoring and the narrative report. Every judgment call is structured JSON, run several
-   times, and averaged, and we record how much the runs disagree.
-2. **The transcript has to be verbatim, not "cleaned up".** Speech recognition quietly fixes
-   learner errors: she says "he go yesterday" and the transcript says "he went yesterday". It also
-   drops "um" and "uh". Either would corrupt the data, so we use an ensemble of engines, flag
-   disagreements, and add a short human verification step (see §5.2).
-3. **The test is standardized, so months can be compared.** It uses a fixed item bank with
-   **parallel forms** that rotate each month to avoid practice effects. The pre-recorded audio is
-   identical every time, the instructions are the same, and the setup is logged (microphone, room
-   noise, time of day, sleep and stress self-rating).
-4. **Keep the raw data forever.** Every recording and keystroke log is stored. Every metric carries
-   the version of the pipeline that produced it. When better models arrive, all past sessions are
-   **re-scored** with the new pipeline, so trend lines never mix measurement methods.
-5. **Anchor to native speakers.** You and one or two native-speaker friends take the same battery
-   once. Her numbers are then shown against "a native speaker doing *this exact task*", which beats
-   abstract scales.
-6. **Honest uncertainty.** Every score gets a confidence band. A change smaller than the
-   measurement noise is shown as "no clear change".
-7. **Private.** The app is served only behind Cloudflare Access. Data lives on your server. Third
-   parties (Deepgram, Azure, Anthropic) see only the audio or text sent for processing, with
-   retention minimized where each vendor allows it.
+1. **This is data, not feedback.** The tool measures and records. Every number is shown with its
+   definition, its uncertainty, and a comparison with the native anchor. There is no motivational
+   framing and no advice; that belongs to the Trainer.
+2. **Validated instruments carry most of the weight.** Established task types and measures from the
+   research literature form the core. Custom tasks (the phone call, patient-side vocabulary, the
+   sermon clips) are fewer and clearly labelled as custom.
+3. **Deterministic code produces the numbers.** Claude does judgment tasks only (minimal error
+   correction, idea units, checklist and rubric scoring). It returns structured JSON, scored 3 times
+   with the median kept and the spread recorded.
+4. **Everything scorable avoids transcription errors where possible.** Tasks with a known target
+   (read-aloud, sentence repetition, dictation, C-test, vocabulary, multiple choice) make up most of
+   the scoring. Free-speech transcripts come from several engines voting, and any uncertain stretch
+   is excluded from counts (§5).
+5. **Standardized and comparable.** Parallel test versions rotate. The audio is identical every
+   time. Setup is logged each session: microphone, noise floor, time of day, sleep, stress.
+6. **Keep all raw data and re-score it.** Every recording and keystroke log is kept. Every metric
+   carries its pipeline version. When the pipeline improves, all past sessions are re-scored so
+   trends never mix measurement methods.
+7. **Honest uncertainty.** Each score has a confidence interval. Changes inside the measurement noise
+   are labelled "no detectable change".
 
 ---
 
 ## 3. Architecture
 
 ```
- Browser (PWA, laptop preferred)                Your server (via Cloudflare Tunnel)
- ┌──────────────────────────────┐   HTTPS   ┌─────────────────────────────────────────┐
- │ Vite + TypeScript + React    │──────────▶│ FastAPI (Python)                        │
- │ - AudioWorklet → lossless WAV│  (behind  │ - sessions, items, uploads, results API │
- │ - keystroke logger           │ Cloudflare│ Postgres (metadata, metrics, items)     │
- │ - timed task runner          │  Access)  │ Audio/keystroke store on disk (+R2 bkp) │
- │ - offline upload queue (IDB) │           │ Job queue → processing workers          │
- │ - dashboard (charts)         │           │   ASR ensemble · alignment · Praat ·    │
- └──────────────────────────────┘           │   NLP metrics · Claude scoring · report │
-                                            └─────────────────────────────────────────┘
+ Laptop browser (PWA)                            Owner's server (Cloudflare Tunnel + Access)
+ ┌──────────────────────────────┐   HTTPS   ┌──────────────────────────────────────────────┐
+ │ Vite + TypeScript + React    │──────────▶│ FastAPI (Python) + Postgres                  │
+ │ i18n: English / 한국어         │           │ Raw store: WAV + keystroke logs (+R2 backup) │
+ │ AudioWorklet → 16-bit WAV    │           │ Job queue → CPU workers:                     │
+ │ Keystroke logger             │           │   Deepgram · Azure (pron + STT) · Whisper API│
+ │ Timed task runner            │           │   MFA alignment · Praat/parselmouth          │
+ │ Offline upload queue (IDB)   │           │   wav2vec2 phoneme model (CPU) · spaCy · ERRANT│
+ │ Dashboard                    │           │   Claude (judgment tasks) · scoring · export │
+ └──────────────────────────────┘           └──────────────────────────────────────────────┘
 ```
 
-- **Frontend:** Vite, TypeScript, React, and `vite-plugin-pwa`. It is served from Cloudflare Pages
-  or directly from the server, behind **Cloudflare Access** (email one-time-code login for her and
-  for you). GitHub Pages is public, so it is not used.
-- **Recording:** an `AudioWorklet` captures 16-bit PCM WAV. We avoid MediaRecorder because it gives
-  Opus on Chrome and AAC on Safari, which would make results inconsistent across devices. Recordings
-  upload in chunks, with a resume queue in IndexedDB so a flaky connection never loses a take.
-  Each take is checked for clipping, loudness and signal-to-noise ratio, with an immediate retry if
-  needed.
-- **Backend:** FastAPI and Postgres. Workers use a Postgres-backed job queue (or Redis + RQ). One
-  processing run per session, versioned.
-- **Repo layout (proposed):**
+- **No GPU is needed.** MFA, Praat, spaCy, ERRANT and a small phoneme model all run on CPU as a
+  background job after each sitting. Results are ready within minutes.
+- **Recording:** an AudioWorklet writes lossless 16-bit PCM, avoiding MediaRecorder's lossy codecs.
+  Each take gets a quality check (clipping, loudness, signal-to-noise ratio) with an immediate
+  re-record option.
+- **Microphone:** use one mic and one room every month.
+  - With the Blue Yeti: cardioid mode, a fixed distance of about 15–20 cm, gain set once and kept.
+  - **Headphones are required** so test audio doesn't leak into the recording. They can plug into
+    the Yeti.
+- **Repo layout:**
   ```
-  web/        PWA frontend
-  server/     FastAPI app + processing pipeline (Python)
-  content/    item bank (YAML), scripts to generate/record/degrade audio, frequency lists
-  docs/       this plan, scoring spec, data schema
+  web/       PWA frontend (bilingual)
+  server/    FastAPI app + processing pipeline
+  content/   item bank (YAML), audio build scripts, frequency lists, scoring specs
+  docs/      this plan, metric definitions, export schema
   ```
 
 ---
 
-## 4. The assessment battery
+## 4. The battery
 
-**Total: about 80–90 minutes, split into two sittings** (A and B, which can be on different days
-within one week). Instructions are bilingual (Korean and English). Each task ends with a one-tap
-rating of mental effort ("how hard was that?", 1–9). Over time those ratings track the cognitive
-overload she describes.
+### 4.1 Schedule
 
-### Sitting A — Speaking & Listening (~45 min)
+| | Contents | Length |
+|---|---|---|
+| **Baseline week** (once) | Day 1: profile + Korean baseline. Day 2: core + writing. Day 3: vocabulary, reading and listening modules | 3 × ~30 min |
+| **Monthly** | Core + one rotating module | ~30 min |
+| **Rotation** | R1 Vocabulary → R2 Reading & grammar → R3 Listening depth → R4 Writing → repeat | Each module 3× per year |
 
-| # | Task | What she does | Why / key metrics |
-|---|------|---------------|-------------------|
-| A0 | Setup | Mic check, 10 s room silence, headphone check, sleep/stress/mood sliders | Measurement quality and covariates |
-| A1 | **Korean writing** | Types her goals, interests, and a topic she knows well (≈5 min) | Profile for personalization; Korean typing speed baseline |
-| A2 | **Korean speaking** | Talks about her goals (2 min) and a favorite topic (2 min) | **Her L1 fluency baseline**: speech rate, pause habits and idea density in Korean. English fluency is then reported *relative to her own Korean*, which removes personal style from the comparison |
-| A3 | **Same topic in English** | Talks about the same favorite topic (2 min) | **"Expression gap"**: what share of the ideas she expressed in Korean she also gets across in English, plus the English/Korean speech-rate ratio |
-| A4 | **Read-aloud** | Words (including minimal pairs and medical terms), then sentences, then a paragraph | The reference text is known, so pronunciation, prosody and stress can be scored exactly. Targets typical Korean-L1 patterns: r/l, f/p, v/b, z/dʒ, θ/s, i/ɪ, extra vowels after final consonants, final consonants that are held but not released, syllable-timed rhythm |
-| A5 | **Sentence repetition** (elicited imitation) | Hears 24 sentences, from 6 up to 26 syllables, and repeats each exactly | A well-validated measure of overall oral proficiency that directly loads on real-time processing, her self-described bottleneck. Score: % of syllables correct by sentence length |
-| A6 | **Quick answers** | 10 simple spoken questions ("What did you eat for breakfast?") | **Response latency** (ms from question end to speech start). Short sentences first, to build confidence |
-| A7 | **Phone role-plays** | Audio through a simulated phone line: restaurant reservation, rescheduling a doctor's appointment, describing symptoms to a nurse, pharmacy, returning an item, a ticket problem | Task completion, the right fixed phrases ("I'd like to…", "Could you…"), politeness/register, latency, fluency. This is the register she worries about most |
-| A8 | **Describe a process or image** | An anatomical illustration and a picture sequence | Descriptive and spatial language in her future field; picture tasks are highly comparable month to month |
-| A9 | **Opinion** | 30 s to prepare, 90 s to speak (TOEFL-style) | Academic register: organization, linking words, complexity |
-| A10 | **Listen and retell** | Hears a 90 s mini-lecture, then retells it | Integrated listening-to-speaking; share of idea units recalled |
-| A11 | **Sound discrimination** | AXB minimal pairs (which of two sounds matches the third) | Whether she *hears* the contrasts she mispronounces (perception vs production) |
-| A12 | **Dictation under conditions** | Types sentences heard as: clear, fast, **phone-band**, noisy, unfamiliar accent | **Word error rate for each condition**. The phone-band minus clear difference puts an exact number on her "phone penalty" |
-| A13 | **Speech-in-noise threshold** | Adaptive sentences-in-noise test, **in English and in Korean** | The English-minus-Korean gap is the second-language penalty. If her Korean threshold is also poor, get a hearing test, since part of the phone problem may not be about language |
-| A14 | **Listening comprehension** | Multiple choice after: a conversation, a voicemail, a lecture, a **sermon-style monologue**, and **colleague banter with idioms and puns**, at 0.9×, 1.0× and 1.2× speed | Comprehension for each genre and speed; pragmatic inference (did she get the joke or the implication?) |
+**Why this is enough:** short, dense, automated speaking tests reach good reliability in under 20
+minutes; the Versant English test is the model here. The measures that change month to month are
+speaking fluency, response speed and listening under hard conditions, and those are in the core.
+Vocabulary size, reading and writing change more slowly, so measuring them every 4 months fits
+their pace.
 
-A2–A10 give **about 12–15 minutes of her speech** (well above the 5-minute minimum), rising from
-single words to 2-minute monologues so she is never dropped cold into free speech.
+### 4.2 Monthly core (~22 min)
 
-### Sitting B — Reading, Writing, Vocabulary (~40 min)
+| # | Task | What she does | Main measures | Basis |
+|---|---|---|---|---|
+| C0 | Setup | Mic check, 10 s of silence to record the noise floor, sleep/stress/mood sliders | Quality flags, covariates | — |
+| C1 | **Read-aloud** (2 min) | One ~80-word paragraph plus 10 target words: Korean-L1 contrasts (r/l, f/p, v/b, z/dʒ, θ/s, i/ɪ, final consonants) and patient-side medical words | Pronunciation (phoneme accuracy, specific substitutions and extra vowels), word stress, prosody, reading-aloud rate | Azure Pronunciation Assessment, validated against human raters, plus a phoneme recognizer |
+| C2 | **Sentence repetition** (elicited imitation) (6 min) | 20 sentences of 6–24 syllables, each heard once, then repeated after a tone | % of syllables correct, the longest length she repeats correctly, response onset time | Ortega et al.-style EI. A meta-analysis (Yan et al., 2016) found that it reliably separates proficiency levels |
+| C3 | **Quick answers** (2 min) | 6 simple spoken questions | **Response latency**, fluency | Versant-style short-answer task |
+| C4 | **Scripted phone call** (3 min) | A pre-recorded caller heard through a simulated phone line, about 6 turns, with fixed goals (e.g., "reschedule your appointment to next Tuesday afternoon and ask whether you need to fast"). Scenarios are mostly patient-side: scheduling, triage nurse, pharmacy refill, insurance, lab results, plus some general service | Goal-completion checklist, latency per turn, fluency, fixed phrases used | Custom task, standardized |
+| C5 | **Describe, then give an opinion** (3.5 min) | A picture or process description (90 s), then an opinion question with 30 s of preparation and 90 s of speaking | Free-speech fluency (speed, breakdown, repair), syntactic complexity, lexical diversity and sophistication, accuracy | Standard fluency framework; a meta-analysis (Suzuki, Kormos & Uchihara, 2021) found speed and mid-clause pauses track proficiency best |
+| C6 | **Dictation** in 4 conditions (4 min) | 12 sentences typed after hearing them: 3 clear, 3 fast, **3 through a phone line**, 3 in background noise at a fixed noise level | Word error rate per condition, **phone penalty** (phone WER minus clear WER), noise penalty | Dictation is a long-established integrated proficiency measure |
+| C7 | Confidence (1 min) | Sliders for confidence on the phone, at the doctor, with colleagues, at church, in class | Self-rating trends | Can-do style |
 
-| # | Task | What she does | Metrics |
-|---|------|---------------|---------|
-| B1 | **Typing baseline** | Copies a short text in English and in Korean | Typing speed, so that writing fluency is not confused with motor speed |
-| B2 | **Receptive vocabulary size** | Adaptive yes/no test with fake words mixed in, sampling frequency bands from 1k to 20k words | Estimated number of word families she knows, corrected for guessing using the fake words (the LexTALE / X-Lex approach) |
-| B3 | **Domain vocabulary** | Short banked tests: academic word list, medical (word parts, anatomy, patient-side terms), service/transactional words, phrasal verbs and idioms, collocations | Coverage by domain |
-| B4 | **Productive vocabulary** | Fill-in-the-blank with the first letters given (C-test / productive levels style) | Words she can *produce*, not only recognize; the receptive vs productive gap |
-| B5 | **Timed reading** | 4 passages at graded levels: everyday/service, patient information (e.g., discharge instructions), general academic, anatomy/science | Words per minute read, comprehension %, and **effective reading speed** (wpm × accuracy) |
-| B6 | **Sentence verification speed** | Rapid true/false sentences | Reading efficiency (how automatic reading is) |
-| B7 | **Functional email** | 10 min: e.g., email a clinic to reschedule and ask about insurance | Task completion, register, accuracy |
-| B8 | **Academic writing** | 20 min: short argument or explanation | Rubric score, complexity, accuracy, lexical sophistication |
-| B9 | **Self-report** | Can-do statements by situation; a short speaking-anxiety scale; confidence per situation (phone, doctor, colleagues, church, class) | The affective side, tracked alongside skill |
+This produces about 6 minutes of her speech every month. Tasks run from single words up to 90-second
+monologues.
 
-Keystroke logging runs through B7 and B8: typing bursts, pause lengths, where pauses fall, and how
-much she deletes and revises. Research on writing processes uses exactly these to separate "can't
-find the words" from "is editing".
+### 4.3 Rotating modules (~9 min each)
 
-### Item bank and parallel forms
-- Claude drafts the items at controlled difficulty. **You review them as the native-speaker
-  editor.** Items are stored as YAML in `content/`.
-- Each task has **at least 4 parallel forms**, rotated monthly. Item difficulty is re-estimated from
-  her responses and the native baselines, so forms can be kept equivalent over time.
-- Listening audio is generated once with high-quality neural voices across several accents. Where
-  realism matters (banter, phone calls, sermon style), some items are **recorded by you and
-  friends**. Phone-band versions are made with a real phone codec (8 kHz G.711 / AMR-NB through
-  ffmpeg) plus a mild line-noise and babble layer, so they sound like an actual phone call.
-- If you can get sermon recordings from her church, a few are used, with permission, as
-  comprehension items.
+| Module | Contents | Measures |
+|---|---|---|
+| **R1 Vocabulary** | A section of the Updated Vocabulary Levels Test / Vocabulary Size Test (a different form each time, sampled across frequency bands), plus patient-side medical and service vocabulary items | Estimated vocabulary size by frequency band; domain coverage |
+| **R2 Reading & grammar** | One timed passage (alternating patient information and general academic), plus a **C-test** (2 short texts in which words are partly deleted) | Words per minute, comprehension %, effective reading speed (wpm × accuracy), C-test score (an established overall proficiency and grammar measure) |
+| **R3 Listening depth** | A ~2 min **sermon clip** (from the church app), plus a colleague-style conversation or mini-lecture clip with multiple-choice questions and a spoken retell, plus AXB sound discrimination on Korean-L1 contrasts | Comprehension by genre, idea units recalled in the retell, discrimination accuracy (perception vs production) |
+| **R4 Writing** | A patient-side functional email (8 min, e.g., asking a clinic about test results and rescheduling), plus a 30 s typing check and a short speaking-anxiety scale | Checklist completion, accuracy by error type, complexity, keystroke measures (typing bursts, pauses, revisions), anxiety score |
 
----
+### 4.4 Baseline-only tasks (Day 1, ~30 min)
 
-## 5. Processing pipeline (Python, on your server)
+- **Korean writing** (6 min): her goals, her interests, and a topic she knows well. Also gives a
+  Korean typing speed.
+- **Korean speaking** (5 min): goals (2 min), then the favorite topic (2 min). This establishes her
+  **Korean fluency baseline**, so English fluency can be expressed relative to her own speaking style.
+- **The same topic in English** (2 min). Gives the **expression gap**: the share of idea units she
+  expressed in Korean that she also conveys in English, and the English/Korean speech-rate ratio.
+- **LexTALE** (5 min). A validated vocabulary-based proficiency proxy. It has one fixed word list,
+  so it is used at baseline only, never monthly.
+- **Typing baseline** in English and Korean (3 min). Separates writing fluency from typing speed.
+- **Self-report** (5 min): can-do statements and a speaking-anxiety scale.
 
-### 5.1 Speech recognition
-- **Korean speech:** Deepgram (Korean model) plus Whisper large-v3.
-- **English speech:** Deepgram Nova-3 in verbatim mode (filler words on, word timestamps and
-  confidences), plus Whisper large-v3 run locally through WhisperX if the server has a GPU, or via
-  API otherwise. Optionally a third engine (Azure).
-- The outputs are aligned word by word, ROVER-style. Any span where the engines disagree, or where
-  confidence is low, is flagged.
-
-### 5.2 Getting to a "gold" transcript
-No speech recognizer is 100% accurate on accented learner speech, so we don't pretend one is.
-Instead:
-- A small **review screen** plays each flagged snippet. You pick the right version or type what she
-  actually said, keeping her errors exactly as spoken. Expect about 5–10 minutes per session.
-- For read-aloud and sentence repetition the target text is already known, so these tasks need no
-  guessing.
-- The result is a transcript that is effectively exact. It is the *only* input to the scoring.
-
-### 5.3 Alignment and acoustics
-- **Montreal Forced Aligner** on the gold transcript gives exact start and end times for every word
-  and phoneme.
-- **Praat (via parselmouth):** pitch contour, intensity, syllable-nucleus detection (the De Jong &
-  Wempe method, which gives a speech rate that does not depend on speech recognition), and rhythm
-  measures (%V, ΔC, nPVI), which capture the Korean syllable-timed vs English stress-timed contrast.
-- **Pronunciation:**
-  - Azure Pronunciation Assessment gives phoneme-level accuracy, fluency and prosody scores against
-    the reference text.
-  - A phoneme recognizer (wav2vec2 phoneme model) reports what she *actually* produced, compared
-    with the expected phonemes. That shows specific substitutions and insertions (e.g., /r/→/l/,
-    an extra vowel after a final consonant) rather than just a score.
-
-### 5.4 Fluency (from the alignment), using the standard three-part framework
-- **Speed:** speech rate (syllables/s), articulation rate (speech rate excluding pauses),
-  mean length of run between pauses.
-- **Breakdown:** silent pauses (≥250 ms) per minute, their mean length, and **where** they fall
-  (mid-clause vs clause boundary). Mid-clause pausing is the signature of word-finding overload.
-  Also filled pauses (um/uh) and response latency.
-- **Repair:** repetitions, self-corrections, false starts.
-- All of these are also reported as a **ratio to her own Korean baseline** and to the **native
-  anchor**.
-
-### 5.5 Language (from the gold transcripts and her writing)
-- **Lexical:** diversity (MTLD, which does not depend on text length), sophistication (frequency
-  profile against SUBTLEX-US and NGSL bands, academic word list coverage), and the share of
-  multi-word chunks.
-- **Syntactic complexity:** clause length, subordination, phrase complexity (computed from spaCy
-  parses).
-- **Accuracy:** Claude produces a *minimal* correction. **ERRANT** then classifies each edit
-  deterministically (verb tense, article, preposition, agreement, …). That gives error rates per
-  100 words by category, plus the share of error-free clauses. Articles and prepositions are
-  expected to be the big categories for a Korean speaker.
-- **Ideas:** Claude extracts idea units from the Korean and English versions of the same topic (A2
-  vs A3) and from the lecture vs her retelling (A10). The code then computes coverage.
-
-### 5.6 Rubric scoring (Claude)
-- Model: `claude-opus-5-5`, with structured JSON output. Claude works on the gold transcripts and
-  the computed metrics, not on raw audio.
-- Rubrics are written out as descriptors with anchor examples. Each response is scored 3 times
-  independently; the median is used and the spread is logged. If the spread is too large, the item
-  is flagged for your review.
-- Rubric dimensions: task completion, organization/coherence, register/politeness, lexical range,
-  grammar range and accuracy. Each maps to CEFR-style bands.
-
-### 5.7 Aggregation
-- Each domain's raw metrics are converted to scales that are **anchored**:
-  - 0 means the lowest plausible learner.
-  - 100 means the native-anchor median on the same task.
-- Each domain also gets an estimated CEFR band (A2 … C2), with a confidence interval computed by
-  bootstrapping over items.
-- **Optional one-time calibration:** she takes one external scored test around the first
-  assessment, for example Pearson Versant (automated, and closest to this battery) or the Duolingo
-  English Test. That maps our scales to a recognized reference point.
+### 4.5 Item bank, parallel forms, audio
+- **6 parallel forms of the core**, so any one form comes back only every 6 months. Rotating modules
+  get 3 forms each. Items are stored as YAML in `content/`, with their target properties
+  (syllable count, word frequency band, structure).
+- Claude drafts items to specification; the husband reviews them once as the native-speaker editor.
+- **Audio:**
+  - Recorded by the husband where natural speech matters (phone caller, conversation).
+  - Otherwise neural text-to-speech with US voices, weighted toward a **Northeast** accent where
+    voices are available.
+  - Everything is generated once and stored, so the audio is identical each time.
+- **Phone line:** real telephone codecs (8 kHz G.711 / AMR-NB via ffmpeg), line noise, and a fixed
+  noise level.
+- **Sermon clips** come from the existing church app, are transcribed once, and each is fixed to a
+  specific form.
 
 ---
 
-## 6. Dashboard
+## 5. Processing pipeline (automated, no human review)
 
-- **Top line:** one card per domain with the current band, the change since last month (only if
-  larger than the noise), and a sparkline.
-- **Domains and sub-scores:**
-  - **Speaking.** Fluency (speed / breakdown / repair), pronunciation (segments, word stress,
-    rhythm, intonation), complexity, accuracy, lexis, functional/phone tasks, and response latency.
-  - **Listening.** By condition (clear / fast / phone / noise / accent), by genre (conversation /
-    voicemail / lecture / sermon / banter), the speech-in-noise gap, and sound discrimination.
-  - **Reading.** Effective reading speed and comprehension for each text type.
-  - **Writing.** Rubric scores, accuracy by error type, complexity, and writing fluency.
-  - **Vocabulary.** Estimated size (receptive and productive) and coverage by domain (academic /
-    medical / service / idioms).
-  - **Confidence and effort.** Self-rated confidence per situation, anxiety score, and mental-effort
-    ratings per task type.
-- **Drill-down:** listen to any take with the transcript highlighted word by word, pauses shown as
-  gaps, and mispronounced phonemes marked. This is useful for her to *hear* her own patterns.
-- **Priority map:** each weakness ranked by (how far below target) × (how much it matters for her
-  goals). This is the handoff to the Trainer.
-- **Report:** a narrative summary per assessment, generated in **Korean and English**, citing the
-  numbers from the dashboard. It never invents numbers.
-- **Export:** a versioned JSON schema (`assessment_result.v1.json`) that the Trainer, or a future
-  Claude session, can read directly.
+### 5.1 Tasks with a known target
+Read-aloud, sentence repetition, dictation, C-test, vocabulary and multiple choice are scored against
+the key. Specifically:
+- **Sentence repetition:** her response is transcribed *without* giving the recognizer the target
+  sentence, so it can't bias the transcript toward correct. It is then aligned to the target to
+  score syllables. The phoneme recognizer provides a second opinion on each syllable.
+- **Read-aloud:** Azure Pronunciation Assessment in scripted mode, plus wav2vec2 phoneme recognition
+  to list the phonemes she actually produced vs the expected ones.
 
----
+### 5.2 Free speech: transcription by vote
+1. Three independent engines transcribe it:
+   - **Deepgram Nova-3**: verbatim, filler words kept, no auto-formatting, a confidence per word.
+   - **Azure Speech-to-Text**.
+   - **Whisper large-v3** through a hosted API.
+2. The three outputs are aligned word by word (ROVER), and a **majority vote** decides each word.
+3. Stretches with no majority, or very low confidence, are marked **uncertain**. They are excluded
+   from grammar and vocabulary counts but kept for timing.
+4. Each task reports a **transcript agreement %** as a data-quality metric, so a low-confidence month
+   is visible rather than hidden.
+5. Korean audio at baseline goes to Deepgram (Korean) and Whisper.
 
-## 7. Build milestones (Tool 1)
+### 5.3 Timing and acoustics
+- **Montreal Forced Aligner** on the voted transcript gives word and phoneme timings. Alignment
+  tolerates a few uncertain words.
+- **Praat (parselmouth):**
+  - Syllable-nucleus detection (De Jong & Wempe), which measures speech rate **independently of
+    transcription**.
+  - Pitch and intensity.
+  - Rhythm measures (%V, ΔC, nPVI), for syllable-timed vs stress-timed rhythm.
 
-| Milestone | Scope | Value on completion |
-|-----------|-------|---------------------|
-| **M0 Skeleton** | Repo structure, FastAPI + Postgres, Cloudflare Tunnel + Access, PWA shell, lossless recorder with upload queue, mic/SNR check | Can record securely |
-| **M1 Profile + first speech data** | A1–A3, speech-recognition ensemble, review screen, alignment, fluency metrics, Korean-vs-English comparison | First objective fluency numbers and the expression-gap measure |
-| **M2 Speaking ladder** | A4–A10, pronunciation pipeline, error annotation, rubric scoring | Full speaking profile |
-| **M3 Listening** | A11–A14, audio generation and degradation scripts, dictation scoring, adaptive noise test | Phone penalty and genre-specific listening |
-| **M4 Reading / Writing / Vocab** | B1–B9, keystroke logger, adaptive vocabulary test | Complete battery |
-| **M5 Dashboard + report** | Scales, confidence intervals, trends, drill-down, bilingual report, JSON export | Usable monthly |
-| **M6 Calibration** | Native-anchor sessions, a test-retest pilot (take it twice within a week to measure noise), optional external test mapping | Scores you can trust |
+### 5.4 Metrics
+- **Fluency:**
+  - Speed: speech rate, articulation rate (excluding pauses), mean length of run.
+  - Breakdown: pauses ≥250 ms per minute, mean pause length, **share of pauses mid-clause vs at
+    clause boundaries**, filled pauses, response latency.
+  - Repair: repetitions, self-corrections, false starts.
+- **Lexical:** MTLD (vocabulary diversity), frequency profile (SUBTLEX-US / NGSL bands), academic and
+  medical coverage.
+- **Syntactic:** clause length, subordination, phrase complexity (from spaCy parses).
+- **Accuracy:** Claude makes a minimal correction; **ERRANT** classifies each edit (article,
+  preposition, tense, agreement, …). Result: errors per 100 words by type, and % of error-free
+  clauses.
+- **Ideas:** Claude extracts idea units; code computes coverage (the baseline expression gap and the
+  R3 retell).
+- **Phone-call and email checklists:** Claude checks each goal item against the transcript or text,
+  3 runs, median kept.
 
-M1 is deliberately early: it measures her most important problem, speaking fluency, before
-everything else is built.
-
-**Rough running cost per assessment:** well under a few dollars in API usage (speech recognition
-for about 20 minutes of audio, pronunciation scoring, and a few dozen Claude calls). It is less if
-Whisper, MFA and the phoneme model run locally on a GPU.
-
----
-
-## 8. Tool 2 — Trainer (preview only; designed after Tool 1 is working)
-
-**Inputs:**
-- The Assessment JSON history.
-- A **resource inventory:**
-  - Books and PDFs, audio files and courses (with syllabi), which are ingested, transcribed where
-    needed, and profiled by level and vocabulary.
-  - **People:** you, friends, classmates, church contacts, with availability and what each is good
-    for (casual chat, professional role-play, medical vocabulary).
-
-**Evidence-based methods matched to likely weaknesses:**
-- **Speaking overload and confidence:**
-  - Learn **fixed chunks and phrases** for target situations, so that sentences are retrieved whole
-    rather than assembled word by word. This is the most direct fix for overload.
-  - **4/3/2 technique** (tell the same story in 4, then 3, then 2 minutes).
-  - Task repetition, with planning time gradually reduced.
-  - Shadowing.
-  - Rehearsed phone and doctor role-plays with an AI voice partner, then with real people.
-- **Pronunciation and phone listening:**
-  - High-variability phonetic training on the contrasts she confuses.
-  - Dictation on phone-band audio, and speed ramps.
-  - Narrow listening: many sermons from the same speaker, with transcripts.
-- **Vocabulary:**
-  - FSRS spaced repetition, with words drawn from *her own* resources and prioritized by frequency
-    and gap.
-  - Medical terms taught through word parts (cardi-, -itis, -ectomy …), which pays off for
-    illustration work too.
-- **Colleague-level talk:** idioms, puns and implied meaning, practised on real examples. You can
-  record short clips of your own conversations (with colleagues' consent) as material.
-- **Human scheduler:** short structured "missions" for you and friends. For example: "10 minutes:
-  she describes a recent appointment, you ask 3 follow-up questions, and note any word she was
-  missing."
-- **The loop:** each monthly assessment re-ranks the priorities, and the plan adapts.
+### 5.5 Scales and estimates
+- Each metric is shown **raw**, then as a **% of the native anchor on the same form**, then as a
+  0–100 domain scale, with a bootstrapped 95% confidence interval.
+- **Estimated CEFR level by skill.** These are then mapped to **estimated TOEFL iBT section scores
+  and IELTS bands** using the official CEFR concordance tables from ETS and IELTS. They are clearly
+  labelled as estimates, and are recalibrated once she has a real TOEFL or IELTS score.
 
 ---
 
-## 9. Open questions (answers change the build)
+## 6. Outputs
 
-1. **Server:** OS, Docker available? **GPU?** A GPU means WhisperX, MFA and the phoneme model run
-   locally (cheaper and more private); without one we lean on Deepgram and Azure.
-2. **Paid APIs OK?** Deepgram, Azure Speech (pronunciation assessment) and Anthropic.
-3. **Device:** laptop plus a USB headset microphone is strongly recommended, for consistent audio
-   and for typing tasks. Will she also want to use her phone?
-4. **Hosting:** Cloudflare Pages + Access, or serve everything from your server through the tunnel?
-   Which domain or subdomain?
-5. **Native anchor:** are you and 1–2 friends willing to take the battery once (about 90 min)?
-6. **Length:** is 2 × ~45 min per month acceptable, or should it be shorter (with wider
-   confidence bands)?
-7. **Transcript review:** are you willing to do the ~5–10 min review per session, or should it be
-   fully automatic (less exact)?
-8. **Content:** church sermon recordings we could use? Any course materials she is using now?
-9. **External calibration test:** one-time Versant or Duolingo English Test — yes or no?
+### 6.1 Dashboard (bilingual toggle, full detail by default)
+- **Per-domain panels:**
+  - Speaking: fluency, pronunciation, complexity, accuracy, lexis, phone task, latency.
+  - Listening: by condition (clear / fast / phone / noise) and by genre (sermon / conversation /
+    lecture), plus sound discrimination.
+  - Reading.
+  - Writing.
+  - Vocabulary: size by band and domain coverage.
+  - Self-ratings.
+- **Each metric shows:** its current value, the native anchor, a trend line with confidence band, and
+  a one-line definition in both languages.
+- **Estimated TOEFL / IELTS equivalents** per skill, clearly marked as estimates.
+- **Session quality panel:** noise floor, clipping, transcript agreement, completion, and
+  sleep/stress covariates.
+- **Recording viewer:** any recording can be played with word-level timing, pauses shown as gaps, and
+  phoneme mismatches marked. This is for checking the data, not coaching.
+
+### 6.2 Machine-readable export
+- `assessment_result.v1.json` (versioned schema) with every metric, confidence interval, item-level
+  response, pipeline version and quality flag. **This is the contract with the Trainer.**
+
+---
+
+## 7. Validation and calibration
+
+- **Native anchor:** the husband takes **every core form once** (6 × ~22 min, which can be spread
+  out) plus the rotating forms. That anchors every form and lets forms be equated. If the bilingual
+  friend takes part, they add an "advanced learner" reference point.
+- **One native speaker is a thin norm.** It is supplemented with published native-speaker values
+  where they exist, such as typical native speech rates and near-ceiling sentence-repetition scores.
+- **Test–retest:** during calibration she takes the same core twice within one week. The difference
+  measures the noise floor that decides what counts as "detectable change".
+- **External calibration:** when she takes TOEFL or IELTS, the estimate mapping is refit.
+
+---
+
+## 8. Build milestones
+
+| Milestone | Scope |
+|---|---|
+| **M0 Skeleton** | Repo, FastAPI + Postgres, Tunnel + Access, bilingual PWA shell, lossless recorder + upload queue, mic/noise check, item bank format, task runner |
+| **M1 Speaking core** | C0–C3 and C5. Three-engine speech recognition with voting, MFA, Praat, Azure pronunciation, phoneme model, sentence-repetition scoring, fluency and language metrics |
+| **M2 Phone + dictation** | Audio build pipeline (recording, TTS, phone codec, noise), C4, C6, C7, checklist scoring |
+| **M3 Baseline tasks** | Korean writing and speaking, English comparison, idea-unit extraction, LexTALE, typing, self-report |
+| **M4 Rotating modules** | R1–R4, keystroke logging, sermon clip import from the church app |
+| **M5 Dashboard + export** | Scales, confidence intervals, trends, quality panel, recording viewer, TOEFL/IELTS estimates, JSON export |
+| **M6 Calibration** | Native anchor on all forms, test–retest, then her baseline week |
+
+**Rough running cost:** well under $2 per month. That covers about 6–15 minutes of audio through 3
+speech engines, pronunciation scoring, and a few dozen Claude calls. There is a one-time cost of a
+few dollars for text-to-speech when building the items.
+
+---
+
+## 9. Accounts and services to set up
+
+- **Deepgram:** direct account (English and Korean speech-to-text).
+- **Azure Speech:** direct account (pronunciation assessment and speech-to-text). Check whether the
+  free tier covers the monthly volume.
+- **Hosted Whisper large-v3:** e.g., the Groq or OpenAI API. This is the third voting engine.
+- **Anthropic API key** from the Claude Console. **A Max plan does not include API usage**; the API
+  is billed separately to a Console account.
+- **Text-to-speech for item audio:** Azure neural voices and/or ElevenLabs (direct or via ppq.ai).
+- **Cloudflare:** Tunnel, Access application, and optionally R2 for backups.
+
+---
+
+## 10. Still open (to settle at build time)
+
+1. Domain or subdomain, and the login email addresses.
+2. How to pull sermon audio from the existing church app (API, files, or database?).
+3. Whether the bilingual friend takes part.
+4. The husband's time for anchoring: all 6 core forms, about 2–2.5 hours in total, spread out.
+5. The date of the first baseline week.
+6. The server documentation location, to be linked or copied into `docs/` for the build session.
+
+---
+
+## 11. Tool 2 (Trainer): not planned here
+
+It will be designed after the Assessment produces data. Its inputs will be the
+`assessment_result.v1.json` history plus her courses, books, audio and people.
