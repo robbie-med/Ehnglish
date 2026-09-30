@@ -1,9 +1,9 @@
 // Mirrors server/app/content.py and server/app/schemas.py.
 export interface Text2 { en: string; ko: string }
 export interface Timing { prep_s: number; respond_s: number; max_s: number }
-export interface Item { id: string; text?: string | null; prompt?: Text2 | null; audio?: string | null; target: Record<string, unknown> }
-export type TaskType = 'read_aloud' | 'typed_response';
-export interface Task { id: string; type: TaskType; title: Text2; instructions: Text2; timing: Timing; allow_rerecord: boolean; items: Item[] }
+export interface Item { id: string; text?: string | null; prompt?: Text2 | null; audio?: string | null; image?: string | null; timing?: Timing | null; target: Record<string, unknown> }
+export type TaskType = 'silence' | 'read_aloud' | 'sentence_repeat' | 'quick_answer' | 'describe_opinion' | 'typed_response';
+export interface Task { id: string; type: TaskType; title: Text2; instructions: Text2; timing: Timing; allow_rerecord: boolean; tone_hz?: number | null; items: Item[] }
 export interface Form { id: string; version: number; kind: string; title: Text2; tasks: Task[] }
 export interface FormSummary { id: string; version: number; kind: string; title: Text2; task_count: number; item_count: number }
 

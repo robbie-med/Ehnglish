@@ -10,12 +10,14 @@ import type { EventIn, Form, SessionOut } from '../types';
 import { enqueueUpload, processQueue } from '../upload/queue';
 import { sha256Hex } from '../upload/sha256';
 import { useLang } from '../useLang';
-import { countItems, initialState, reduce, type RunnerState } from './machine';
+import { countItems, effectiveTiming, hasReview, initialState, reduce, taskKind, type RunnerState } from './machine';
 import { useCountdown } from './useCountdown';
 
 interface Props { form: Form; session: SessionOut; onFinished: () => void }
 
 interface LastTake { takeId: string; pcm: Int16Array; quality: QualityReport }
+
+const TONE_MS = 150;
 
 export default function TaskRunner({ form, session, onFinished }: Props) {
   const { t } = useTranslation();
@@ -29,34 +31,40 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const eventsRef = useRef<EventIn[]>([]);
   const keysRef = useRef(new KeystrokeLogger());
   const textRef = useRef<HTMLTextAreaElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const setup = useMemo(() => loadSetup(), []);
 
   const task = form.tasks[state.taskIdx];
   const item = task?.items[state.itemIdx];
+  const timing = task && item ? effectiveTiming(task, item) : null;
+  const kind = task ? taskKind(task) : 'audio';
   const total = countItems(form);
   const doneItems = form.tasks.slice(0, state.taskIdx).reduce((n, tk) => n + tk.items.length, 0) + state.itemIdx;
 
   const mark = useCallback((name: string, meta?: Record<string, unknown>) => {
     eventsRef.current.push({ name, t_client_ms: performance.now(), meta });
   }, []);
-
   const fail = (e: unknown) => setError(String((e as Error).message ?? e));
 
-  // Create the take row when an item starts (prep or respond phase, attempt-specific).
+  // Create the take row when an item starts (first active phase of each attempt).
   useEffect(() => {
     if (!task || !item) return;
-    if (state.phase !== 'prep' && state.phase !== 'respond') return;
-    if (takeIdRef.current) return; // already created for this attempt
-    const kind = task.type === 'read_aloud' ? ('audio' as const) : ('typed' as const);
+    if (!['prep', 'prompt', 'respond'].includes(state.phase)) return;
+    if (takeIdRef.current) return;
+    // Reset the timeline synchronously: later effects in this same render (prompt playback) mark events.
+    eventsRef.current = [];
+    mark('item_shown', { phase: state.phase });
     const body = kind === 'audio'
-      ? { task_id: task.id, item_id: item.id, attempt: state.attempt, kind, sample_rate: rec?.info.sampleRate ?? setup.sampleRate, channels: 1 }
-      : { task_id: task.id, item_id: item.id, attempt: state.attempt, kind };
-    api.createTake(session.id, body).then((tk) => {
-      takeIdRef.current = tk.id;
-      eventsRef.current = [];
-      mark('item_shown', { phase: state.phase });
-    }).catch(fail);
+      ? { task_id: task.id, item_id: item.id, attempt: state.attempt, kind: 'audio' as const, sample_rate: rec?.info.sampleRate ?? setup.sampleRate, channels: 1 }
+      : { task_id: task.id, item_id: item.id, attempt: state.attempt, kind: 'typed' as const };
+    api.createTake(session.id, body).then((tk) => { takeIdRef.current = tk.id; }).catch(fail);
   }, [state.phase, state.taskIdx, state.itemIdx, state.attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function waitForTakeId(): Promise<string> {
+    for (let i = 0; i < 100 && !takeIdRef.current; i++) await new Promise((r) => setTimeout(r, 100));
+    if (!takeIdRef.current) throw new Error('take was not created');
+    return takeIdRef.current;
+  }
 
   async function begin() {
     try {
@@ -68,44 +76,77 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
     }
   }
 
-  // --- audio item -------------------------------------------------------
-  const onPrepDone = useCallback(() => {
-    mark('prompt_end');
-    dispatch({ type: 'PREP_DONE' });
-  }, [mark]);
+  // --- audio prompt phase: play the item audio, then a beep, then open the mic ------------
+  useEffect(() => {
+    if (state.phase !== 'prompt' || !item?.audio || !rec) return;
+    let cancelled = false;
+    const el = new Audio(`/api/forms/${encodeURIComponent(form.id)}/audio/${item.audio}`);
+    audioRef.current = el;
+    el.onended = async () => {
+      if (cancelled) return;
+      mark('prompt_end');
+      if (task.tone_hz) {
+        const osc = rec.ctx.createOscillator();
+        const g = rec.ctx.createGain();
+        osc.frequency.value = task.tone_hz;
+        g.gain.value = 0.2;
+        osc.connect(g).connect(rec.ctx.destination);
+        osc.start();
+        await new Promise((r) => setTimeout(r, TONE_MS));
+        osc.stop();
+        osc.disconnect();
+        mark('tone_end');
+      }
+      if (!cancelled) dispatch({ type: 'PROMPT_DONE' });
+    };
+    el.onerror = () => fail(new Error(`prompt audio failed: ${item.audio}`));
+    mark('prompt_start');
+    el.play().catch(fail);
+    return () => { cancelled = true; el.pause(); audioRef.current = null; };
+  }, [state.phase, state.itemIdx, state.taskIdx, state.attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- recording phase ------------------------------------------------------------------
+  const commitTake = useCallback(async (take: LastTake) => {
+    if (!rec) return;
+    mark('accepted');
+    const wav = encodeWav(take.pcm, rec.info.sampleRate, 1);
+    const sha = await sha256Hex(wav);
+    await enqueueUpload(take.takeId, session.id, wav, sha, take.quality);
+    await api.postEvents(take.takeId, eventsRef.current).catch(() => undefined);
+    void processQueue(api);
+    takeIdRef.current = null;
+  }, [rec, session.id, mark]);
 
   useEffect(() => {
-    if (state.phase !== 'respond' || task?.type !== 'read_aloud' || !rec) return;
+    if (state.phase !== 'respond' || kind !== 'audio' || !rec || !timing) return;
     let cancelled = false;
     (async () => {
+      if (!item?.audio) mark('prompt_end'); // no audio prompt: the response window opens now
       mark('record_start');
       await rec.start();
-      await new Promise((r) => setTimeout(r, task.timing.respond_s * 1000));
+      await new Promise((r) => setTimeout(r, timing.respond_s * 1000));
       if (cancelled) return;
       const pcm = await rec.stop();
       mark('record_stop');
       const quality = analyzeTake(pcm, rec.info.sampleRate, setup.noise_floor?.rms_dbfs ?? null);
-      // Wait for the take row if the network was slow.
-      for (let i = 0; i < 50 && !takeIdRef.current; i++) await new Promise((r) => setTimeout(r, 100));
-      const takeId = takeIdRef.current;
-      if (!takeId) { fail(new Error('take was not created')); return; }
-      setLast({ takeId, pcm, quality });
-      dispatch({ type: 'RESPONSE_DONE' });
+      const takeId = await waitForTakeId();
+      const takeRec = { takeId, pcm, quality };
+      if (hasReview(task)) {
+        setLast(takeRec);
+        dispatch({ type: 'RESPONSE_DONE' });
+      } else {
+        await commitTake(takeRec);
+        dispatch({ type: 'RESPONSE_DONE' });
+      }
     })().catch(fail);
     return () => { cancelled = true; };
   }, [state.phase, state.attempt, state.itemIdx, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function accept() {
-    if (!last || !rec) return;
+    if (!last) return;
     setBusy(true);
     try {
-      mark('accepted');
-      const wav = encodeWav(last.pcm, rec.info.sampleRate, 1);
-      const sha = await sha256Hex(wav);
-      await enqueueUpload(last.takeId, session.id, wav, sha, last.quality);
-      await api.postEvents(last.takeId, eventsRef.current).catch(() => undefined);
-      void processQueue(api);
-      takeIdRef.current = null;
+      await commitTake(last);
       setLast(null);
       dispatch({ type: 'ACCEPT' });
     } catch (e) {
@@ -124,9 +165,9 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
     dispatch({ type: 'RERECORD' });
   }
 
-  // --- typed item -------------------------------------------------------
+  // --- typed item -----------------------------------------------------------------------
   useEffect(() => {
-    if (state.phase === 'respond' && task?.type === 'typed_response' && textRef.current) {
+    if (state.phase === 'respond' && kind === 'typed' && textRef.current) {
       keysRef.current.attach(textRef.current);
       textRef.current.focus();
       mark('prompt_end');
@@ -136,10 +177,10 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
 
   async function submitTyped() {
     const el = textRef.current;
-    const takeId = takeIdRef.current;
-    if (!el || !takeId) return;
+    if (!el) return;
     setBusy(true);
     try {
+      const takeId = await waitForTakeId();
       mark('submit');
       await api.submitTyped(takeId, el.value, keysRef.current.events);
       await api.postEvents(takeId, eventsRef.current).catch(() => undefined);
@@ -154,16 +195,16 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   }
   const typedDeadline = useCallback(() => { void submitTyped(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- finish -----------------------------------------------------------
+  // --- finish ---------------------------------------------------------------------------
   useEffect(() => {
     if (state.phase === 'done') {
       api.patchSession(session.id, { status: 'done' }).catch(() => undefined).finally(onFinished);
     }
   }, [state.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const prepLeft = useCountdown(task?.timing.prep_s ?? 0, state.phase === 'prep', onPrepDone);
-  const respondLeft = useCountdown(task?.timing.respond_s ?? 0, state.phase === 'respond' && task?.type === 'read_aloud', () => undefined);
-  const typedLeft = useCountdown(task?.timing.respond_s ?? 0, state.phase === 'respond' && task?.type === 'typed_response', typedDeadline);
+  const prepLeft = useCountdown(timing?.prep_s ?? 0, state.phase === 'prep', () => dispatch({ type: 'PREP_DONE' }));
+  const respondLeft = useCountdown(timing?.respond_s ?? 0, state.phase === 'respond' && kind === 'audio', () => undefined);
+  const typedLeft = useCountdown(timing?.respond_s ?? 0, state.phase === 'respond' && kind === 'typed', typedDeadline);
 
   if (error) return <div className="card status-bad">{t('common.error')}: {error}</div>;
 
@@ -176,7 +217,11 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
       </div>
     );
   }
-  if (state.phase === 'done') return <div className="card">{t('common.loading')}</div>;
+  if (state.phase === 'done' || !task || !item || !timing) return <div className="card">{t('common.loading')}</div>;
+
+  const showText = task.type === 'read_aloud';
+  const showPrompt = task.type === 'describe_opinion' || task.type === 'typed_response';
+  const active = state.phase === 'prep' || state.phase === 'prompt' || state.phase === 'respond';
 
   return (
     <div className="stack">
@@ -191,21 +236,28 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
-      {task.type === 'read_aloud' && (state.phase === 'prep' || state.phase === 'respond') && (
+      {kind === 'audio' && active && (
         <div className="card stack">
-          <div className="muted">{t('runner.read_this')}</div>
-          <p className="big" data-testid="item-text">{item.text}</p>
-          {state.phase === 'prep' && <div className="countdown" data-testid="prep">{t('runner.get_ready')} · {prepLeft}</div>}
-          {state.phase === 'respond' && <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{t('runner.recording')} · {respondLeft}</div>}
+          {showText && <><div className="muted">{t('runner.read_this')}</div><p className="big" data-testid="item-text">{item.text}</p></>}
+          {showPrompt && <p className="big" data-testid="item-prompt">{item.prompt?.[lang]}</p>}
+          {item.image && <img src={`/api/forms/${encodeURIComponent(form.id)}/audio/${item.image}`} alt="" style={{ maxWidth: '100%' }} />}
+          {task.type === 'silence' && <p className="big">{t('runner.stay_silent')}</p>}
+          {state.phase === 'prep' && (
+            <div className="countdown" data-testid="prep">{task.type === 'describe_opinion' ? t('runner.think') : t('runner.get_ready')} · {prepLeft}</div>
+          )}
+          {state.phase === 'prompt' && <div className="countdown" data-testid="listening">🎧 {t('runner.listen')}</div>}
+          {state.phase === 'respond' && (
+            <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : t('runner.speak_now')} · {respondLeft}</div>
+          )}
         </div>
       )}
 
-      {task.type === 'read_aloud' && state.phase === 'review' && last && (
+      {kind === 'audio' && state.phase === 'review' && last && (
         <div className="card stack" data-testid="review">
           <h3>{t('runner.review_title')}</h3>
           <div>{t('runner.duration', { s: last.quality.duration_s })}</div>
           <div className={last.quality.ok ? 'status-ok' : 'status-warn'}>{last.quality.ok ? t('runner.quality_ok') : t('runner.quality_issue')}</div>
-          {last.quality.flags.length > 0 && <ul className="flags">{last.quality.flags.map((f) => <li key={f}>{t(`quality.${f}`)}</li>)}</ul>}
+          {last.quality.flags.length > 0 && task.type !== 'silence' && <ul className="flags">{last.quality.flags.map((f) => <li key={f}>{t(`quality.${f}`)}</li>)}</ul>}
           <table className="stats"><tbody>
             <tr><td>{t('quality.peak')}</td><td>{last.quality.peak_dbfs ?? '—'} dBFS</td></tr>
             <tr><td>{t('quality.rms')}</td><td>{last.quality.rms_dbfs ?? '—'} dBFS</td></tr>
@@ -219,7 +271,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
-      {task.type === 'typed_response' && state.phase === 'respond' && (
+      {kind === 'typed' && state.phase === 'respond' && (
         <div className="card stack">
           <p className="big" data-testid="item-prompt">{item.prompt?.[lang]}</p>
           <div className="muted">{t('common.seconds', { n: typedLeft })}</div>

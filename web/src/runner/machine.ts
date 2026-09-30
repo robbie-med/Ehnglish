@@ -1,7 +1,7 @@
 /** Pure state machine for the timed task runner. Driven entirely by the form definition. */
-import type { Form, Task } from '../types';
+import type { Form, Item, Task, Timing } from '../types';
 
-export type Phase = 'intro' | 'task_intro' | 'prep' | 'respond' | 'review' | 'done';
+export type Phase = 'intro' | 'task_intro' | 'prep' | 'prompt' | 'respond' | 'review' | 'done';
 
 export interface RunnerState {
   phase: Phase;
@@ -14,18 +14,37 @@ export type Action =
   | { type: 'BEGIN' }
   | { type: 'START_TASK' }
   | { type: 'PREP_DONE' }
+  | { type: 'PROMPT_DONE' }
   | { type: 'RESPONSE_DONE' }
   | { type: 'ACCEPT' }
   | { type: 'RERECORD' };
 
+export const AUDIO_TASKS = new Set(['silence', 'read_aloud', 'sentence_repeat', 'quick_answer', 'describe_opinion']);
+
 export const initialState: RunnerState = { phase: 'intro', taskIdx: 0, itemIdx: 0, attempt: 1 };
+
+export function taskKind(task: Task): 'audio' | 'typed' {
+  return AUDIO_TASKS.has(task.type) ? 'audio' : 'typed';
+}
+
+export function effectiveTiming(task: Task, item: Item): Timing {
+  return item.timing ?? task.timing;
+}
 
 export function currentTask(form: Form, s: RunnerState): Task | undefined {
   return form.tasks[s.taskIdx];
 }
 
+/** Review (accept / re-record) exists only for audio tasks that allow re-recording. */
+export function hasReview(task: Task): boolean {
+  return taskKind(task) === 'audio' && task.allow_rerecord;
+}
+
 function enterItem(task: Task, s: RunnerState): RunnerState {
-  return { ...s, phase: task.timing.prep_s > 0 ? 'prep' : 'respond' };
+  const item = task.items[s.itemIdx];
+  const t = effectiveTiming(task, item);
+  if (t.prep_s > 0) return { ...s, phase: 'prep' };
+  return { ...s, phase: item.audio ? 'prompt' : 'respond' };
 }
 
 function nextItem(form: Form, s: RunnerState): RunnerState {
@@ -41,6 +60,7 @@ function nextItem(form: Form, s: RunnerState): RunnerState {
 
 export function reduce(form: Form, s: RunnerState, a: Action): RunnerState {
   const task = form.tasks[s.taskIdx];
+  const item = task?.items[s.itemIdx];
   switch (a.type) {
     case 'BEGIN':
       if (s.phase !== 'intro') return s;
@@ -50,11 +70,13 @@ export function reduce(form: Form, s: RunnerState, a: Action): RunnerState {
       return enterItem(task, s);
     case 'PREP_DONE':
       if (s.phase !== 'prep') return s;
+      return { ...s, phase: item?.audio ? 'prompt' : 'respond' };
+    case 'PROMPT_DONE':
+      if (s.phase !== 'prompt') return s;
       return { ...s, phase: 'respond' };
     case 'RESPONSE_DONE':
       if (s.phase !== 'respond') return s;
-      // Audio takes get a review step; typed responses move straight on.
-      return task.type === 'read_aloud' ? { ...s, phase: 'review' } : nextItem(form, s);
+      return hasReview(task) ? { ...s, phase: 'review' } : nextItem(form, s);
     case 'ACCEPT':
       if (s.phase !== 'review') return s;
       return nextItem(form, s);

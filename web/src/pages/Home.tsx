@@ -13,8 +13,10 @@ export default function Home() {
   const [sessions, setSessions] = useState<SessionOut[]>([]);
   const [pending, setPending] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [env, setEnv] = useState<string>('prod');
 
   useEffect(() => {
+    api.me().then((m) => setEnv(m.env)).catch(() => undefined);
     api.listForms().then(setForms).catch((e) => setError(String(e.message)));
     api.listSessions().then(setSessions).catch(() => undefined);
     return subscribe(setPending);
@@ -26,7 +28,7 @@ export default function Home() {
         <h2>{t('home.forms')}</h2>
         {error && <p className="status-bad">{error}</p>}
         {!forms && !error && <p className="muted">{t('common.loading')}</p>}
-        {forms?.map((f) => (
+        {forms?.filter((f) => f.kind !== 'dummy' || env !== 'prod').map((f) => (
           <div className="row" key={f.id} style={{ justifyContent: 'space-between', padding: '8px 0' }}>
             <div>
               <strong>{f.title[lang]}</strong>

@@ -1,7 +1,18 @@
 {
-  "app": { "title": "Ehnglish", "subtitle": "영어 평가" },
-  "nav": { "language": "English", "home": "처음으로" },
-  "common": { "loading": "불러오는 중…", "error": "문제가 발생했습니다", "retry": "다시 시도", "seconds": "{{n}}초" },
+  "app": {
+    "title": "Ehnglish",
+    "subtitle": "영어 평가"
+  },
+  "nav": {
+    "language": "English",
+    "home": "처음으로"
+  },
+  "common": {
+    "loading": "불러오는 중…",
+    "error": "문제가 발생했습니다",
+    "retry": "다시 시도",
+    "seconds": "{{n}}초"
+  },
   "home": {
     "forms": "시험 목록",
     "start": "시작",
@@ -55,7 +66,11 @@
     "accept": "저장하고 계속",
     "rerecord": "다시 녹음",
     "finish": "마치기",
-    "attempt": "{{n}}번째 시도"
+    "attempt": "{{n}}번째 시도",
+    "listen": "들으세요",
+    "stay_silent": "조용히 있어 주세요.",
+    "think": "생각하세요",
+    "speak_now": "말하세요"
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",
@@ -63,7 +78,10 @@
     "too_quiet": "너무 작습니다. 마이크에 가까이 가거나 게인을 높이세요.",
     "noisy": "신호 대 잡음비가 낮습니다. 배경 소음이 큽니다.",
     "silent": "녹음된 소리가 없습니다. 마이크를 확인하세요.",
-    "peak": "최고점", "rms": "음량", "noise": "배경 소음", "snr": "SNR"
+    "peak": "최고점",
+    "rms": "음량",
+    "noise": "배경 소음",
+    "snr": "SNR"
   },
   "done": {
     "title": "응시 완료",

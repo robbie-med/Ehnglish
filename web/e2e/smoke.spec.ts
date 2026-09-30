@@ -6,9 +6,10 @@ import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { API_PORT } from '../playwright.config';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const API = 'http://127.0.0.1:3305/api';
+const API = `http://127.0.0.1:${API_PORT}/api`;
 const SERVER_DIR = resolve(__dirname, '../../server');
 
 function parseWav(buf: Buffer) {

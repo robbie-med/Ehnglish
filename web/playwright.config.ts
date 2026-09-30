@@ -7,6 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Smoke test: needs the throwaway Postgres (deploy/docker-compose.test.yml) running on 3607.
 const root = resolve(__dirname, '..');
 const fixture = resolve(__dirname, 'e2e/fixtures/speech.wav');
+export const API_PORT = '3915'; // registered as ehnglish-api-e2e; prod api owns 3305
 const serverEnv = {
   EHNGLISH_ENV: 'test',
   EHNGLISH_DEV_EMAIL: 'e2e@example.com',
@@ -45,9 +46,9 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'uv run alembic upgrade head && uv run uvicorn app.main:app --host 127.0.0.1 --port 3305',
+      command: `uv run alembic upgrade head && uv run uvicorn app.main:app --host 127.0.0.1 --port ${API_PORT}`,
       cwd: resolve(root, 'server'),
-      url: 'http://127.0.0.1:3305/api/health',
+      url: `http://127.0.0.1:${API_PORT}/api/health`,
       env: serverEnv,
       reuseExistingServer: false,
       timeout: 60_000,
@@ -55,6 +56,7 @@ export default defineConfig({
     {
       command: 'npm run dev',
       cwd: __dirname,
+      env: { EHNGLISH_API_PORT: API_PORT },
       url: 'http://127.0.0.1:3914',
       reuseExistingServer: false,
       timeout: 60_000,

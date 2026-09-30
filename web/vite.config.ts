@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
-// Ports are registered in /home/user/Projects/PORTS.md: 3914 = ehnglish-vite, 3305 = ehnglish-api.
+// Ports are registered in /home/user/Projects/PORTS.md: 3914 = ehnglish-vite, 3305 = ehnglish-api,
+// 3915 = ehnglish-api-e2e (EHNGLISH_API_PORT under Playwright).
 export default defineConfig({
   plugins: [
     react(),
@@ -35,7 +36,7 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 3914,
     strictPort: true,
-    proxy: { '/api': { target: 'http://127.0.0.1:3305', changeOrigin: false } },
+    proxy: { '/api': { target: `http://127.0.0.1:${process.env.EHNGLISH_API_PORT ?? '3305'}`, changeOrigin: false } },
   },
   preview: { host: '127.0.0.1', port: 3914, strictPort: true },
   test: {

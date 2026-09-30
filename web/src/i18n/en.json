@@ -1,7 +1,18 @@
 {
-  "app": { "title": "Ehnglish", "subtitle": "English assessment" },
-  "nav": { "language": "한국어", "home": "Home" },
-  "common": { "loading": "Loading…", "error": "Something went wrong", "retry": "Retry", "seconds": "{{n}} s" },
+  "app": {
+    "title": "Ehnglish",
+    "subtitle": "English assessment"
+  },
+  "nav": {
+    "language": "한국어",
+    "home": "Home"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "seconds": "{{n}} s"
+  },
   "home": {
     "forms": "Available forms",
     "start": "Start",
@@ -55,7 +66,11 @@
     "accept": "Keep and continue",
     "rerecord": "Record again",
     "finish": "Finish",
-    "attempt": "Attempt {{n}}"
+    "attempt": "Attempt {{n}}",
+    "listen": "Listen",
+    "stay_silent": "Stay silent.",
+    "think": "Think",
+    "speak_now": "Speak now"
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",
@@ -63,7 +78,10 @@
     "too_quiet": "Too quiet. Move closer to the microphone or raise the gain.",
     "noisy": "Low signal-to-noise ratio. Background noise is high.",
     "silent": "Nothing was recorded. Check the microphone.",
-    "peak": "Peak", "rms": "Loudness", "noise": "Noise floor", "snr": "SNR"
+    "peak": "Peak",
+    "rms": "Loudness",
+    "noise": "Noise floor",
+    "snr": "SNR"
   },
   "done": {
     "title": "Sitting complete",
