@@ -1,0 +1,75 @@
+# Smoke-test form: one short item of every M1 task type. Kind "dummy" forms are hidden from the
+# learner in production. Prompt audio is synthetic (server/scripts/make_e2e_audio.py).
+id: e2e-core
+version: 1
+kind: dummy
+title:
+  en: "E2E core check"
+  ko: "E2E 핵심 점검"
+tasks:
+  - id: C0
+    type: silence
+    title: { en: "Room noise", ko: "실내 소음" }
+    instructions: { en: "Stay silent.", ko: "조용히 있어 주세요." }
+    timing: { prep_s: 0, respond_s: 1 }
+    allow_rerecord: false
+    items:
+      - id: C0-silence
+        target: { purpose: noise_floor }
+  - id: C1
+    type: read_aloud
+    title: { en: "Read aloud", ko: "소리 내어 읽기" }
+    instructions: { en: "Read the sentence.", ko: "문장을 읽으세요." }
+    timing: { prep_s: 1, respond_s: 2 }
+    allow_rerecord: true
+    items:
+      - id: C1-01
+        text: "The pharmacist said the refill would be ready after lunch."
+        target: { words: 10 }
+  - id: C2
+    type: sentence_repeat
+    title: { en: "Repeat", ko: "따라 말하기" }
+    instructions: { en: "Listen, then repeat after the beep.", ko: "듣고 삐 소리 후 따라 말하세요." }
+    timing: { prep_s: 0, respond_s: 2 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - id: C2-01
+        text: "The pharmacy closes at nine."
+        audio: audio/e2e-core/C2-01.wav
+        target: { syllables: 8 }
+  - id: C3
+    type: quick_answer
+    title: { en: "Quick answer", ko: "빠른 대답" }
+    instructions: { en: "Answer right away.", ko: "바로 대답하세요." }
+    timing: { prep_s: 0, respond_s: 2 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - id: C3-01
+        text: "What time do you usually wake up?"
+        audio: audio/e2e-core/C3-01.wav
+        target: { type: personal }
+  - id: C5
+    type: describe_opinion
+    title: { en: "Describe", ko: "묘사하기" }
+    instructions: { en: "Think, then speak.", ko: "생각한 뒤 말하세요." }
+    timing: { prep_s: 1, respond_s: 2 }
+    allow_rerecord: false
+    items:
+      - id: C5-describe
+        prompt: { en: "Describe a visit to a clinic.", ko: "병원 방문을 묘사하세요." }
+        target: { stage: describe }
+      - id: C5-opinion
+        prompt: { en: "Should patients email their doctor?", ko: "환자가 의사에게 이메일을 보내야 할까요?" }
+        timing: { prep_s: 1, respond_s: 2 }
+        target: { stage: opinion }
+  - id: W1
+    type: typed_response
+    title: { en: "Typed", ko: "타이핑" }
+    instructions: { en: "Type a short answer.", ko: "짧게 입력하세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - id: W1-01
+        prompt: { en: "Why did you call the clinic?", ko: "왜 병원에 전화했나요?" }
+        target: { min_words: 5 }

@@ -1,0 +1,136 @@
+# Core form A (monthly core, ~22 min). Drafted to the plan's specifications; the native-speaker
+# editor (the husband) reviews once before first use. Audio paths are produced by
+# content/build_audio.py and are fixed forever after (identical audio every sitting).
+id: core-A
+version: 1
+kind: core
+title:
+  en: "Monthly core — form A"
+  ko: "월간 핵심 시험 — A형"
+tasks:
+  - id: C0
+    type: silence
+    title:
+      en: "Room noise"
+      ko: "실내 소음"
+    instructions:
+      en: "Stay completely silent for 10 seconds so the app can measure the room."
+      ko: "앱이 실내 소음을 측정할 수 있도록 10초 동안 완전히 조용히 있어 주세요."
+    timing: { prep_s: 2, respond_s: 10 }
+    allow_rerecord: true
+    items:
+      - id: C0-silence
+        target: { purpose: noise_floor }
+
+  - id: C1
+    type: read_aloud
+    title:
+      en: "Read aloud"
+      ko: "소리 내어 읽기"
+    instructions:
+      en: "Read the paragraph aloud at a natural pace, then the ten words one at a time. Recording starts after the countdown."
+      ko: "문단을 자연스러운 속도로 소리 내어 읽은 뒤, 열 개의 단어를 하나씩 읽으세요. 카운트다운 후 녹음이 시작됩니다."
+    timing: { prep_s: 5, respond_s: 75, max_s: 90 }
+    allow_rerecord: true
+    items:
+      - id: C1-para
+        text: >-
+          Good morning, this is Dr. Rivera's office calling about your appointment on Thursday.
+          Before you come in, please stop taking the blood thinner the night before, and bring a
+          list of every pill and vitamin you use. The lab is on the third floor, next to the
+          pharmacy. If the fever or the rash comes back, call us right away instead of waiting
+          for the visit. Do you have any questions about the insurance form we mailed you?
+        target:
+          words: 82
+          contrasts: ["r/l", "f/p", "v/b", "z/dʒ", "θ/s", "i/ɪ", "final consonants", "clusters"]
+      - id: C1-words
+        text: "pharmacy, refill, vitamin, thermometer, rash, vaccine, insurance, appointment, lab, fever"
+        target:
+          words: 10
+          contrasts_per_word:
+            pharmacy: ["f/p", "r/l"]
+            refill: ["r/l", "f/p", "final l"]
+            vitamin: ["v/b", "i/ɪ"]
+            thermometer: ["θ/s", "r/l"]
+            rash: ["r/l", "final ʃ"]
+            vaccine: ["v/b", "i/ɪ"]
+            insurance: ["ʃ", "final ns"]
+            appointment: ["final nt", "ɔɪ"]
+            lab: ["l", "final b"]
+            fever: ["f/p", "v/b"]
+
+  - id: C2
+    type: sentence_repeat
+    title:
+      en: "Repeat the sentence"
+      ko: "문장 따라 말하기"
+    instructions:
+      en: "You will hear each sentence once. After the beep, repeat it exactly. The sentences get longer."
+      ko: "각 문장을 한 번만 듣게 됩니다. 삐 소리 후 정확히 따라 말하세요. 문장은 점점 길어집니다."
+    timing: { prep_s: 0, respond_s: 8, max_s: 10 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - { id: C2-01, text: "The pharmacy closes at nine.", audio: audio/core-A/C2-01.wav, target: { syllables: 8 } }
+      - { id: C2-02, text: "Please bring your insurance card.", audio: audio/core-A/C2-02.wav, target: { syllables: 7 } }
+      - { id: C2-03, text: "My daughter has a fever tonight.", audio: audio/core-A/C2-03.wav, target: { syllables: 9 } }
+      - { id: C2-04, text: "The nurse will call you back this afternoon.", audio: audio/core-A/C2-04.wav, target: { syllables: 10 } }
+      - { id: C2-05, text: "I need to reschedule my appointment for Friday.", audio: audio/core-A/C2-05.wav, target: { syllables: 13 } }
+      - { id: C2-06, text: "Take one tablet twice a day with food.", audio: audio/core-A/C2-06.wav, target: { syllables: 9 } }
+      - { id: C2-07, text: "The doctor said the rash should fade in a week.", audio: audio/core-A/C2-07.wav, target: { syllables: 11 } }
+      - { id: C2-08, text: "Do I have to fast before the blood test on Monday?", audio: audio/core-A/C2-08.wav, target: { syllables: 13 } }
+      - { id: C2-09, text: "The lab results were not ready when I called yesterday.", audio: audio/core-A/C2-09.wav, target: { syllables: 14 } }
+      - { id: C2-10, text: "If the pain gets worse, you should go straight to the emergency room.", audio: audio/core-A/C2-10.wav, target: { syllables: 16 } }
+      - { id: C2-11, text: "She asked whether the vaccine would cover the new variant this winter.", audio: audio/core-A/C2-11.wav, target: { syllables: 18 } }
+      - { id: C2-12, text: "The pharmacist explained that the generic version works exactly the same.", audio: audio/core-A/C2-12.wav, target: { syllables: 19 } }
+      - { id: C2-13, text: "Although the office was closed, the answering service took my message.", audio: audio/core-A/C2-13.wav, target: { syllables: 17 } }
+      - { id: C2-14, text: "The insurance company still hasn't approved the referral to the specialist.", audio: audio/core-A/C2-14.wav, target: { syllables: 21 } }
+      - { id: C2-15, text: "Before we start, I'd like to confirm your date of birth and your address.", audio: audio/core-A/C2-15.wav, target: { syllables: 18 } }
+      - { id: C2-16, text: "My colleague thought the meeting had been moved, but nobody had told the rest of us.", audio: audio/core-A/C2-16.wav, target: { syllables: 20 } }
+      - { id: C2-17, text: "The thermometer reads a hundred and one, which is why I decided to call tonight.", audio: audio/core-A/C2-17.wav, target: { syllables: 22 } }
+      - { id: C2-18, text: "Unless the swelling goes down by tomorrow morning, they want to see you in person.", audio: audio/core-A/C2-18.wav, target: { syllables: 21 } }
+      - { id: C2-19, text: "The receptionist apologized for the wait and offered to reschedule the follow-up visit.", audio: audio/core-A/C2-19.wav, target: { syllables: 25 } }
+      - { id: C2-20, text: "Even though the prescription was ready, the pharmacy couldn't release it without a signature.", audio: audio/core-A/C2-20.wav, target: { syllables: 25 } }
+
+  - id: C3
+    type: quick_answer
+    title:
+      en: "Quick answers"
+      ko: "빠른 대답"
+    instructions:
+      en: "You will hear a short question. Answer right away in a full sentence. Speed matters more than perfection."
+      ko: "짧은 질문을 듣게 됩니다. 바로 완전한 문장으로 대답하세요. 완벽함보다 속도가 중요합니다."
+    timing: { prep_s: 0, respond_s: 12, max_s: 15 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - { id: C3-01, text: "What time do you usually wake up?", audio: audio/core-A/C3-01.wav, target: { type: personal } }
+      - { id: C3-02, text: "How do you get to the grocery store?", audio: audio/core-A/C3-02.wav, target: { type: personal } }
+      - { id: C3-03, text: "What would you say if the pharmacy gave you the wrong medicine?", audio: audio/core-A/C3-03.wav, target: { type: patient_side } }
+      - { id: C3-04, text: "Why do people need to see a dentist twice a year?", audio: audio/core-A/C3-04.wav, target: { type: explain } }
+      - { id: C3-05, text: "What is the difference between a cold and the flu?", audio: audio/core-A/C3-05.wav, target: { type: compare } }
+      - { id: C3-06, text: "If your appointment were cancelled, what would you do next?", audio: audio/core-A/C3-06.wav, target: { type: hypothetical } }
+
+  - id: C5
+    type: describe_opinion
+    title:
+      en: "Describe, then give an opinion"
+      ko: "묘사하기, 그리고 의견 말하기"
+    instructions:
+      en: "First, describe the process shown for 90 seconds. Then you get 30 seconds to think about a question and 90 seconds to answer it."
+      ko: "먼저 제시된 과정을 90초 동안 설명하세요. 그다음 질문에 대해 30초 동안 생각하고 90초 동안 대답합니다."
+    timing: { prep_s: 10, respond_s: 90, max_s: 95 }
+    allow_rerecord: false
+    items:
+      - id: C5-describe
+        prompt:
+          en: "Describe, step by step, what happens from the moment you arrive at a clinic for a check-up until you leave with a prescription."
+          ko: "검진을 위해 병원에 도착한 순간부터 처방전을 받아 나올 때까지 무슨 일이 일어나는지 단계별로 설명하세요."
+        timing: { prep_s: 10, respond_s: 90, max_s: 95 }
+        target: { stage: describe, genre: process }
+      - id: C5-opinion
+        prompt:
+          en: "Some people think patients should be able to email their doctor with questions at any time. Do you agree? Give reasons."
+          ko: "환자가 언제든지 의사에게 이메일로 질문할 수 있어야 한다고 생각하는 사람들이 있습니다. 동의하나요? 이유를 말하세요."
+        timing: { prep_s: 30, respond_s: 90, max_s: 95 }
+        target: { stage: opinion }
