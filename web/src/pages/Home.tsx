@@ -1,0 +1,53 @@
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { api } from '../api/client';
+import type { FormSummary, SessionOut } from '../types';
+import { subscribe } from '../upload/queue';
+import { useLang } from '../useLang';
+
+export default function Home() {
+  const { t } = useTranslation();
+  const lang = useLang();
+  const [forms, setForms] = useState<FormSummary[] | null>(null);
+  const [sessions, setSessions] = useState<SessionOut[]>([]);
+  const [pending, setPending] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.listForms().then(setForms).catch((e) => setError(String(e.message)));
+    api.listSessions().then(setSessions).catch(() => undefined);
+    return subscribe(setPending);
+  }, []);
+
+  return (
+    <div className="stack">
+      <div className="card">
+        <h2>{t('home.forms')}</h2>
+        {error && <p className="status-bad">{error}</p>}
+        {!forms && !error && <p className="muted">{t('common.loading')}</p>}
+        {forms?.map((f) => (
+          <div className="row" key={f.id} style={{ justifyContent: 'space-between', padding: '8px 0' }}>
+            <div>
+              <strong>{f.title[lang]}</strong>
+              <div className="muted">{f.id} · {t('home.tasks', { tasks: f.task_count, items: f.item_count })}</div>
+            </div>
+            <Link to={`/setup/${f.id}`}><button className="primary" data-testid={`start-${f.id}`}>{t('home.start')}</button></Link>
+          </div>
+        ))}
+      </div>
+      <div className="card">
+        <p data-testid="pending" className={pending ? 'status-warn' : 'status-ok'}>
+          {pending ? t('home.pending', { n: pending }) : t('home.all_uploaded')}
+        </p>
+        <h3>{t('home.sessions')}</h3>
+        {sessions.length === 0 && <p className="muted">{t('home.no_sessions')}</p>}
+        {sessions.map((s) => (
+          <div key={s.id} className="muted">
+            {new Date(s.started_at).toLocaleString()} · {s.form_id} · {s.status} · {s.takes.length} takes
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
