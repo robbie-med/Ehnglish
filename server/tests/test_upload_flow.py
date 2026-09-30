@@ -105,6 +105,11 @@ def test_full_audio_flow_with_worker(client: TestClient, db) -> None:
     assert abs(res.result["duration_s"] - 1.5) < 1e-3
     assert -10 < res.result["rms_dbfs"] < -8  # 0.5 amplitude sine ≈ -9 dBFS
     assert res.result["clip_count"] == 0
+    # wav_probe hands over to the M1 pipeline; with no engine keys every engine step is skipped.
+    follow = worker.run_once(db)
+    assert follow is not None and follow.type == "process_take" and follow.status == "done", (
+        follow.last_error
+    )
     assert worker.run_once(db) is None  # queue drained
 
     t = client.get(f"/api/takes/{tid}").json()

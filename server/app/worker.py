@@ -17,7 +17,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
-from . import queue, wav
+from . import processing, queue, wav
 from .config import get_settings
 from .db import get_sessionmaker
 from .models import Job, ProcessingResult, Take
@@ -52,6 +52,17 @@ def wav_probe(db: Session, job: Job) -> None:
         )
     )
     take.status = "processed"
+    # Hand over to the M1 pipeline (separate job so a slow engine never blocks the probe).
+    queue.enqueue(db, "process_take", {"take_id": str(take.id)}, max_attempts=5)
+
+
+@handler("process_take")
+def process_take(db: Session, job: Job) -> None:
+    take = db.get(Take, uuid.UUID(job.payload["take_id"]))
+    if take is None or not take.wav_path:
+        raise RuntimeError("take missing or has no audio")
+    summary = processing.process_take(db, take, job.id)
+    log.info("take %s: %s", take.id, summary)
 
 
 def run_once(db: Session, worker_id: str = "test") -> Job | None:

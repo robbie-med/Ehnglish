@@ -124,7 +124,7 @@ def create_take(
     task = next((t for t in form.tasks if t.id == body.task_id), None)
     if task is None or not any(i.id == body.item_id for i in task.items):
         raise HTTPException(400, "task/item not in this form")
-    expected_kind = "audio" if task.type == "read_aloud" else "typed"
+    expected_kind = task.kind
     if body.kind != expected_kind:
         raise HTTPException(400, f"task {task.id} expects kind={expected_kind}")
     if body.kind == "audio" and not (body.sample_rate and body.channels):

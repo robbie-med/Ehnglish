@@ -35,15 +35,26 @@ class Timing(BaseModel):
 
 class Item(BaseModel):
     id: str
-    # read_aloud: the text she reads. typed_response: the prompt she answers.
+    # read_aloud: the text she reads. sentence_repeat / quick_answer: the text of the audio prompt
+    # (the scoring key; never shown to her). typed_response / describe_opinion: see prompt.
     text: str | None = None
     prompt: Text2 | None = None
-    audio: str | None = None  # relative path under content/audio/, for listening tasks later
+    audio: str | None = None  # relative path under content/audio/ (built once, fixed forever)
+    image: str | None = None  # relative path under content/images/ (picture description)
+    timing: Timing | None = None  # per-item override of the task timing
     # Target properties used by scoring (syllables, frequency band, structure, min words...).
     target: dict = Field(default_factory=dict)
 
 
-TaskType = Literal["read_aloud", "typed_response"]
+TaskType = Literal[
+    "silence",  # C0: record the room for the noise floor
+    "read_aloud",  # C1
+    "sentence_repeat",  # C2: hear once, tone, repeat
+    "quick_answer",  # C3: hear a question, answer at once (latency)
+    "describe_opinion",  # C5: describe (picture/process), then opinion with prep
+    "typed_response",  # R4 / baseline writing
+]
+AUDIO_TASKS = {"silence", "read_aloud", "sentence_repeat", "quick_answer", "describe_opinion"}
 
 
 class Task(BaseModel):
@@ -53,15 +64,24 @@ class Task(BaseModel):
     instructions: Text2
     timing: Timing
     allow_rerecord: bool = True
+    # Audio-prompt tasks: recording opens after this beep once the prompt has finished playing.
+    tone_hz: int | None = None
     items: list[Item]
+
+    @property
+    def kind(self) -> str:
+        return "audio" if self.type in AUDIO_TASKS else "typed"
 
     @model_validator(mode="after")
     def _items_fit_type(self) -> Task:
         for it in self.items:
+            where = f"{self.id}/{it.id}"
             if self.type == "read_aloud" and not it.text:
-                raise ValueError(f"{self.id}/{it.id}: read_aloud items need text")
-            if self.type == "typed_response" and not it.prompt:
-                raise ValueError(f"{self.id}/{it.id}: typed_response items need a prompt")
+                raise ValueError(f"{where}: read_aloud items need text")
+            if self.type in ("sentence_repeat", "quick_answer") and not (it.text and it.audio):
+                raise ValueError(f"{where}: {self.type} items need text (the key) and audio")
+            if self.type in ("typed_response", "describe_opinion") and not it.prompt:
+                raise ValueError(f"{where}: {self.type} items need a prompt")
         return self
 
 

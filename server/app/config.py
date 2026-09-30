@@ -32,8 +32,23 @@ class Settings(BaseSettings):
     # Optional belt-and-braces allow list (comma separated). Empty = trust Access alone.
     allowed_emails: str = ""
 
+    # External engines (plan §9). Read at call time; missing keys make that step skip, not crash.
+    deepgram_api_key: str | None = None
+    azure_speech_key: str | None = None
+    azure_speech_region: str | None = None  # e.g. eastus
+    whisper_base_url: str = "https://api.groq.com/openai/v1"  # or https://api.openai.com/v1
+    whisper_api_key: str | None = None
+    whisper_model: str = "whisper-large-v3"  # OpenAI: whisper-1
+    anthropic_api_key: str | None = None
+    claude_model: str = "claude-opus-5-5"
+    # CPU phoneme recognizer (optional extra `phonemes`). Off by default so dev installs stay small.
+    phonemes_enabled: bool = False
+    phoneme_threads: int = 4
+    # Montreal Forced Aligner HTTP shim (deploy/docker-compose.yml service `mfa`). None = skip.
+    mfa_url: str | None = None
+
     # Stamped on every processing result. Bump when any metric code changes.
-    pipeline_version: str = "m0.0.1"
+    pipeline_version: str = "m1.0.0"
     chunk_max_bytes: int = 4 * 1024 * 1024
     worker_poll_s: float = 2.0
 
