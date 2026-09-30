@@ -23,3 +23,17 @@ Key points:
   structured output and 3 scoring runs (median kept).
 - Keep all raw recordings, and tag every metric with the pipeline version that produced it.
 - Do not build Tool 2 until the Assessment works.
+
+## Working in this repo (M0 onward)
+
+- Local dir on the owner's PC: `/home/user/Projects/ultimate_english` (GitHub `robbie-med/ehnglish`).
+- `make help` lists everything: `make dev-api` / `make dev-web` for local dev, `make test`, `make e2e`,
+  `make lint`, `make up` to deploy. See `README.md` and `docs/DEPLOY.md`.
+- Ports are registered in `/home/user/Projects/PORTS.md` (3305 api, 3914 vite, 3607 test db). Do not
+  bind others without claiming them.
+- Item bank: `content/forms/*.yaml`, schema in `server/app/content.py`. Run `content/lint.py` after edits.
+- New processing steps go in `server/app/worker.py` as job handlers writing `ProcessingResult` rows
+  stamped with `EHNGLISH_PIPELINE_VERSION`. Bump the version whenever metric code changes.
+- Secrets: only `deploy/.env` on the server (gitignored). Cloudflare API token for scripts lives outside
+  the repo (`CLOUDFLARE_API_TOKEN_FILE`).
+- Live: https://english.bo-bob.com (Cloudflare Access, team `sikoraweb`).

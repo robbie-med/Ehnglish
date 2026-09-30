@@ -1,0 +1,51 @@
+# Production on the owner's PC (host `PC`). Port 3305 = ehnglish-api (see /home/user/Projects/PORTS.md).
+# Postgres is internal only: the host already runs Postgres 14 on 5432.
+name: ehnglish
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ehnglish
+      POSTGRES_DB: ehnglish
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ehnglish"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: ehnglish:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      EHNGLISH_DATABASE_URL: postgresql+psycopg://ehnglish:${POSTGRES_PASSWORD}@db:5432/ehnglish
+    ports:
+      - "127.0.0.1:3305:3305"
+    volumes:
+      - ../data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    image: ehnglish:latest
+    restart: unless-stopped
+    command: ["python", "-m", "app.worker"]
+    env_file: .env
+    environment:
+      EHNGLISH_DATABASE_URL: postgresql+psycopg://ehnglish:${POSTGRES_PASSWORD}@db:5432/ehnglish
+    volumes:
+      - ../data:/data
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pgdata:

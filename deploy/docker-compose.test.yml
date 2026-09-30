@@ -1,0 +1,18 @@
+# Throwaway Postgres for pytest and the Playwright smoke test.
+# Port 3607 is registered in /home/user/Projects/PORTS.md (ehnglish-db-test).
+services:
+  db-test:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ehnglish
+      POSTGRES_PASSWORD: ehnglish
+      POSTGRES_DB: ehnglish
+    ports:
+      - "127.0.0.1:3607:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ehnglish"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
