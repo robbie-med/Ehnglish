@@ -408,3 +408,19 @@ def test_phoneme_expectations_and_comparison() -> None:
     assert r.phone_accuracy == round((r.n_expected - 2) / r.n_expected, 4)
     assert ph.tokenize_ipa("ðʌ") == ["ð", "ʌ"] and ph.tokenize_ipa("t ʃ aɪ") == ["tʃ", "aɪ"]
     assert ph.compare(ph.expected_ipa("lab"), ph.tokenize_ipa("l æ b")).per == 0.0
+
+
+def test_report_summarizes_session(client: TestClient, db, mocked_engines) -> None:
+    from app import report
+
+    tid = _finalized_take(client, "core-A", "C2", "C2-01")
+    _drain(db)
+    sid = client.get(f"/api/takes/{tid}").json()["session_id"]
+    import uuid as _uuid
+
+    lines = report.summarize(db, _uuid.UUID(sid))
+    text = "\n".join(lines)
+    assert "core-A" in text and "C2/C2-01" in text
+    assert "repetition: 100.0% syllables" in text
+    assert "transcript (3 engines" in text
+    assert "not found" in report.summarize(db, _uuid.uuid4())[0]
