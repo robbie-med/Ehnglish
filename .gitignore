@@ -21,3 +21,5 @@ web/e2e/fixtures/*.wav
 .DS_Store
 .idea/
 .vscode/
+# owner-provided API keys (never commit)
+keys
