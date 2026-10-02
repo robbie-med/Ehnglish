@@ -61,6 +61,21 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   await expect(page.getByTestId('recording')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId('item-prompt')).toContainText('email', { timeout: 15_000 });
   await expect(page.getByTestId('recording')).toBeVisible({ timeout: 10_000 });
+  // C4 phone call: scenario card, caller audio, then her turn.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('scenario')).toContainText('Reschedule');
+  await expect(page.getByTestId('listening')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('recording')).toBeVisible({ timeout: 10_000 });
+  // C6 dictation: audio prompt, then typed.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('listening')).toBeVisible({ timeout: 10_000 });
+  await page.getByTestId('typed-input').pressSequentially('your prescription will be ready in 20 minutes', { delay: 5 });
+  await page.getByTestId('done-typing').click();
+  // C7 rating: slider.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await page.getByTestId('rating-input').fill('8');
+  await expect(page.getByTestId('rating-value')).toHaveText('8');
+  await page.getByTestId('done-typing').click();
   // W1 typed.
   await page.getByTestId('start-task').click({ timeout: 15_000 });
   await page.getByTestId('typed-input').pressSequentially('I called about my refill.', { delay: 10 });
@@ -79,6 +94,9 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   expect(byTask('C3')).toHaveLength(1);
   expect(byTask('C5')).toHaveLength(2);
   expect(byTask('W1')[0].text).toContain('refill');
+  expect(byTask('C4')).toHaveLength(1);
+  expect(byTask('C6')[0].text).toContain('prescription');
+  expect(byTask('C7')[0].text).toBe('8');
   for (const t of takes.filter((t) => t.kind === 'audio' && t.status !== 'rejected')) {
     expect(t.status).toBe('finalized');
     expect(t.duration_s).toBeGreaterThan(0.8);
@@ -103,5 +121,12 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
     if (t.task_id === 'C3') expect(k.latency).toBeTruthy();
     if (t.task_id === 'C5') expect(k.lexical.tokens).toBe(0);
     if (t.task_id === 'C1') expect(k.pron.skipped).toBe(true);
+    if (t.task_id === 'C4') { expect(k.phrases.total).toBe(1); expect(k.checklist.skipped).toBe(true); }
   }
+  const typedAfter = (after.takes as Array<Record<string, any>>).filter((t) => t.kind === 'typed');
+  const dict = typedAfter.find((t) => t.task_id === 'C6')!;
+  const wer = kinds(dict).wer;
+  expect(wer.condition).toBe('phone');
+  expect(wer.exact).toBe(true); // "20" normalises to "twenty"
+  expect(kinds(typedAfter.find((t) => t.task_id === 'C7')!)).toEqual({});
 });

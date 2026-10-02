@@ -70,7 +70,11 @@
     "listen": "들으세요",
     "stay_silent": "조용히 있어 주세요.",
     "think": "생각하세요",
-    "speak_now": "말하세요"
+    "speak_now": "말하세요",
+    "scenario": "상황",
+    "your_turn": "말할 차례",
+    "next": "다음",
+    "type_what_you_heard": "들은 대로 정확히 입력하세요"
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",

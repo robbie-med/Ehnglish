@@ -27,6 +27,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [last, setLast] = useState<LastTake | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
   const takeIdRef = useRef<string | null>(null);
   const eventsRef = useRef<EventIn[]>([]);
   const keysRef = useRef(new KeystrokeLogger());
@@ -78,14 +79,15 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
 
   // --- audio prompt phase: play the item audio, then a beep, then open the mic ------------
   useEffect(() => {
-    if (state.phase !== 'prompt' || !item?.audio || !rec) return;
+    if (state.phase !== 'prompt' || !item?.audio) return;
+    if (kind === 'audio' && !rec) return;
     let cancelled = false;
     const el = new Audio(`/api/forms/${encodeURIComponent(form.id)}/audio/${item.audio}`);
     audioRef.current = el;
     el.onended = async () => {
       if (cancelled) return;
       mark('prompt_end');
-      if (task.tone_hz) {
+      if (task.tone_hz && rec) {
         const osc = rec.ctx.createOscillator();
         const g = rec.ctx.createGain();
         osc.frequency.value = task.tone_hz;
@@ -167,22 +169,26 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
 
   // --- typed item -----------------------------------------------------------------------
   useEffect(() => {
-    if (state.phase === 'respond' && kind === 'typed' && textRef.current) {
-      keysRef.current.attach(textRef.current);
-      textRef.current.focus();
-      mark('prompt_end');
+    if (state.phase === 'respond' && kind === 'typed') {
+      if (textRef.current) {
+        keysRef.current.attach(textRef.current);
+        textRef.current.focus();
+      }
+      if (!item?.audio) mark('prompt_end'); // audio prompts already marked it when playback ended
+      setRating(item?.scale ? Math.round((item.scale.min + item.scale.max) / 2) : null);
     }
     return () => keysRef.current.detach();
   }, [state.phase, state.itemIdx, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function submitTyped() {
     const el = textRef.current;
-    if (!el) return;
+    const value = el ? el.value : rating !== null ? String(rating) : null;
+    if (value === null) return;
     setBusy(true);
     try {
       const takeId = await waitForTakeId();
       mark('submit');
-      await api.submitTyped(takeId, el.value, keysRef.current.events);
+      await api.submitTyped(takeId, value, keysRef.current.events);
       await api.postEvents(takeId, eventsRef.current).catch(() => undefined);
       keysRef.current = new KeystrokeLogger();
       takeIdRef.current = null;
@@ -220,7 +226,8 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   if (state.phase === 'done' || !task || !item || !timing) return <div className="card">{t('common.loading')}</div>;
 
   const showText = task.type === 'read_aloud';
-  const showPrompt = task.type === 'describe_opinion' || task.type === 'typed_response';
+  const showPrompt = task.type === 'describe_opinion' || task.type === 'phone_call';
+  const scenario = task.type === 'phone_call' ? (task.target?.scenario as string | undefined) : undefined;
   const active = state.phase === 'prep' || state.phase === 'prompt' || state.phase === 'respond';
 
   return (
@@ -238,6 +245,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
 
       {kind === 'audio' && active && (
         <div className="card stack">
+          {scenario && <div className="muted" data-testid="scenario">{t('runner.scenario')}: {scenario}</div>}
           {showText && <><div className="muted">{t('runner.read_this')}</div><p className="big" data-testid="item-text">{item.text}</p></>}
           {showPrompt && <p className="big" data-testid="item-prompt">{item.prompt?.[lang]}</p>}
           {item.image && <img src={`/api/forms/${encodeURIComponent(form.id)}/audio/${item.image}`} alt="" style={{ maxWidth: '100%' }} />}
@@ -247,7 +255,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
           )}
           {state.phase === 'prompt' && <div className="countdown" data-testid="listening">🎧 {t('runner.listen')}</div>}
           {state.phase === 'respond' && (
-            <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : t('runner.speak_now')} · {respondLeft}</div>
+            <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : task.type === 'phone_call' ? t('runner.your_turn') : t('runner.speak_now')} · {respondLeft}</div>
           )}
         </div>
       )}
@@ -271,11 +279,29 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
-      {kind === 'typed' && state.phase === 'respond' && (
+      {kind === 'typed' && state.phase === 'prompt' && (
+        <div className="card stack"><div className="countdown" data-testid="listening">🎧 {t('runner.listen')}</div></div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'rating' && item.scale && (
         <div className="card stack">
           <p className="big" data-testid="item-prompt">{item.prompt?.[lang]}</p>
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <span className="muted">{item.scale.labels[String(item.scale.min)]?.[lang] ?? item.scale.min}</span>
+            <strong data-testid="rating-value">{rating}</strong>
+            <span className="muted">{item.scale.labels[String(item.scale.max)]?.[lang] ?? item.scale.max}</span>
+          </div>
+          <input type="range" min={item.scale.min} max={item.scale.max} step={1} value={rating ?? item.scale.min} onChange={(e) => setRating(Number(e.target.value))} data-testid="rating-input" />
+          <button className="primary" onClick={submitTyped} disabled={busy} data-testid="done-typing">{t('runner.next')}</button>
+        </div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type !== 'rating' && (
+        <div className="card stack">
+          {item.prompt && <p className="big" data-testid="item-prompt">{item.prompt[lang]}</p>}
+          {task.type === 'dictation' && <p className="big" data-testid="item-prompt">{t('runner.type_what_you_heard')}</p>}
           <div className="muted">{t('common.seconds', { n: typedLeft })}</div>
-          <textarea ref={textRef} placeholder={t('runner.type_here')} data-testid="typed-input" spellCheck={false} autoCorrect="off" />
+          <textarea ref={textRef} placeholder={t('runner.type_here')} data-testid="typed-input" spellCheck={false} autoCorrect="off" autoComplete="off" />
           <button className="primary" onClick={submitTyped} disabled={busy} data-testid="done-typing">{t('runner.done_typing')}</button>
         </div>
       )}

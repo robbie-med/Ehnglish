@@ -19,7 +19,7 @@ export type Action =
   | { type: 'ACCEPT' }
   | { type: 'RERECORD' };
 
-export const AUDIO_TASKS = new Set(['silence', 'read_aloud', 'sentence_repeat', 'quick_answer', 'describe_opinion']);
+export const AUDIO_TASKS = new Set(['silence', 'read_aloud', 'sentence_repeat', 'quick_answer', 'phone_call', 'describe_opinion']);
 
 export const initialState: RunnerState = { phase: 'intro', taskIdx: 0, itemIdx: 0, attempt: 1 };
 

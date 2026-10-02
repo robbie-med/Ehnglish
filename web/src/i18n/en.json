@@ -70,7 +70,11 @@
     "listen": "Listen",
     "stay_silent": "Stay silent.",
     "think": "Think",
-    "speak_now": "Speak now"
+    "speak_now": "Speak now",
+    "scenario": "Scenario",
+    "your_turn": "Your turn",
+    "next": "Next",
+    "type_what_you_heard": "Type exactly what you heard"
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",
