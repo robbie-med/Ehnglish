@@ -3,6 +3,8 @@ median kept and the spread recorded. Code computes every number from what Claude
 
 from __future__ import annotations
 
+import json
+import re
 import statistics
 from dataclasses import dataclass
 from typing import Any
@@ -24,25 +26,35 @@ def _client():
     return anthropic.Anthropic(api_key=s.anthropic_api_key)
 
 
-def structured(
-    system: str, user: str, schema: dict, *, tool_name: str = "answer", temperature: float = 0.2
-) -> dict:
-    """One call that must return JSON matching `schema` (via tool use)."""
+def structured(system: str, user: str, schema: dict, *, tool_name: str = "answer") -> dict:
+    """One call that must return JSON matching `schema`. The model is asked to call the tool
+    (forced tool_choice is not supported on claude-opus-5-5); if it answers in text instead, the
+    text is parsed as JSON."""
     client = _client()
     s = get_settings()
     msg = client.messages.create(
         model=s.claude_model,
         max_tokens=4096,
-        temperature=temperature,
-        system=system,
+        system=system
+        + f"\n\nAlways respond by calling the `{tool_name}` tool with the result; never answer in prose.",
         tools=[{"name": tool_name, "description": "Return the result.", "input_schema": schema}],
-        tool_choice={"type": "tool", "name": tool_name},
+        tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": user}],
     )
+    text_parts: list[str] = []
     for block in msg.content:
         if block.type == "tool_use" and block.name == tool_name:
             return dict(block.input)
-    raise EngineError("claude returned no tool call")
+        if block.type == "text":
+            text_parts.append(block.text)
+    text = "\n".join(text_parts).strip()
+    m = re.search(r"\{.*\}", text, re.S)
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError:
+            pass
+    raise EngineError(f"claude returned no tool call and no JSON: {text[:200]!r}")
 
 
 @dataclass
