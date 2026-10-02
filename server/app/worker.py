@@ -59,7 +59,7 @@ def wav_probe(db: Session, job: Job) -> None:
 @handler("process_take")
 def process_take(db: Session, job: Job) -> None:
     take = db.get(Take, uuid.UUID(job.payload["take_id"]))
-    if take is None or not take.wav_path:
+    if take is None or (take.kind == "audio" and not take.wav_path):
         raise RuntimeError("take missing or has no audio")
     summary = processing.process_take(db, take, job.id)
     log.info("take %s: %s", take.id, summary)

@@ -17,7 +17,8 @@ import httpx
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT.parent / "server"))
 from app.config import get_settings  # noqa: E402
-from app.content import load_forms  # noqa: E402
+from app.content import AudioFx, load_forms  # noqa: E402
+from app.pipeline import audiofx  # noqa: E402
 
 # US voices. Azure has no explicit Northeast-accent voice; these are the most neutral-Northern
 # sounding of the standard set. Change here once and rebuild only the files you delete.
@@ -49,6 +50,25 @@ def tts(text: str, voice: str, *, rate: str = "0%") -> bytes:
     return r.content
 
 
+def render(text: str, voice: str, fx: AudioFx, out: Path) -> None:
+    """TTS, then the item's effects in order: rate (TTS prosody) → phone line → noise."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        cur = Path(td) / "tts.wav"
+        cur.write_bytes(tts(text, voice, rate=fx.rate))
+        if fx.phone:
+            nxt = Path(td) / "phone.wav"
+            audiofx.phone_line(cur, nxt)
+            cur = nxt
+        if fx.noise_snr_db is not None:
+            nxt = Path(td) / "noise.wav"
+            achieved = audiofx.add_noise(cur, nxt, snr_db=fx.noise_snr_db, kind=fx.noise_kind)
+            print(f"    noise {fx.noise_kind} target {fx.noise_snr_db} dB, achieved {achieved} dB")
+            cur = nxt
+        out.write_bytes(cur.read_bytes())
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--voice", help="override the English voice")
@@ -72,11 +92,12 @@ def main() -> None:
                     skipped += 1
                     continue
                 lang = "ko" if item.target.get("language") == "ko" else "en"
-                print(f"{form.id}/{task.id}/{item.id}: {item.text[:50]!r} -> {item.audio}")
+                fx = item.fx or AudioFx()
+                print(f"{form.id}/{task.id}/{item.id}: {item.text[:50]!r} -> {item.audio}  fx={fx.model_dump(exclude_defaults=True) or 'plain'}")
                 if args.dry_run:
                     continue
                 out.parent.mkdir(parents=True, exist_ok=True)
-                out.write_bytes(tts(item.text, voices[lang]))
+                render(item.text, fx.voice or voices[lang], fx, out)
                 made += 1
     print(f"built {made}, kept {skipped}")
 

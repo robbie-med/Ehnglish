@@ -1,8 +1,7 @@
 # Ehnglish
 
 Private monthly English assessment for one learner (bilingual English/한국어). The plan is
-[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M1 (Speaking core)**: M0 skeleton plus the
-processing pipeline for C0–C3 and C5.
+[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M2 (Phone + dictation)**: the whole monthly core (C0–C7) records and is scored.
 
 ```
 web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality check, resumable upload queue, timed task runner.
@@ -75,9 +74,17 @@ is skipped on retry if already present for the current pipeline version.
 | `alignment` | Montreal Forced Aligner words/phones + rhythm (%V, ΔC, nPVI) | `mfa` container |
 | `lexical`, `syntax` | MTLD, frequency bands, medical coverage; clauses, subordination, NP length | — |
 | `correction`, `errors` | Claude minimal correction (3 runs, median) → ERRANT error types | Anthropic key |
+| `wer` | dictation word error rate vs the key, tagged with the condition (clear/fast/phone/noise) | — |
+| `phrases` | fixed phrases used in a phone turn (fuzzy match) | — |
+| `checklist` | phone-call goal checklist over all turns so far (Claude, 3 runs, majority per goal) | Anthropic key |
 
 Task → steps: silence: probe only · read_aloud: asr, vote, timing, pron, phonemes, alignment ·
 sentence_repeat: asr, vote, timing, latency, ei · quick_answer: asr, vote, timing, latency, language ·
-describe_opinion: asr, vote, timing, alignment, language.
+describe_opinion: asr, vote, timing, alignment, language · phone_call (per turn): asr, vote, timing,
+latency, language, phrases, checklist · dictation (typed): wer · typed_response: language · rating: stored only.
+
+Prompt audio effects (`fx:` on an item, rendered once by `content/build_audio.py`): `voice`, `rate`
+(TTS prosody, e.g. "+35%" for the fast condition), `phone` (300–3400 Hz band, 8 kHz G.711 μ-law round
+trip, band-limited hiss), `noise_snr_db` + `noise_kind` (pink or babble at a fixed SNR, seeded).
 
 Prompt audio for real forms is built once with `content/build_audio.py` (Azure TTS) and committed.

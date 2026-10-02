@@ -42,6 +42,8 @@ class Item(BaseModel):
     audio: str | None = None  # relative path under content/audio/ (built once, fixed forever)
     image: str | None = None  # relative path under content/images/ (picture description)
     timing: Timing | None = None  # per-item override of the task timing
+    fx: AudioFx | None = None  # how the audio is built; None = plain TTS
+    scale: Scale | None = None  # rating items
     # Target properties used by scoring (syllables, frequency band, structure, min words...).
     target: dict = Field(default_factory=dict)
 
@@ -51,10 +53,36 @@ TaskType = Literal[
     "read_aloud",  # C1
     "sentence_repeat",  # C2: hear once, tone, repeat
     "quick_answer",  # C3: hear a question, answer at once (latency)
+    "phone_call",  # C4: pre-recorded caller through a phone line, one item per turn
     "describe_opinion",  # C5: describe (picture/process), then opinion with prep
+    "dictation",  # C6: hear a sentence (clear/fast/phone/noise), type it
+    "rating",  # C7 and self-report: one slider per item, stored as a typed number
     "typed_response",  # R4 / baseline writing
 ]
-AUDIO_TASKS = {"silence", "read_aloud", "sentence_repeat", "quick_answer", "describe_opinion"}
+AUDIO_TASKS = {
+    "silence",
+    "read_aloud",
+    "sentence_repeat",
+    "quick_answer",
+    "phone_call",
+    "describe_opinion",
+}
+
+
+class AudioFx(BaseModel):
+    """How content/build_audio.py renders an item's prompt audio (plan §4.5)."""
+
+    voice: str | None = None  # Azure voice name override (e.g. the caller)
+    rate: str = "0%"  # TTS prosody rate, e.g. "+30%" for the fast dictation condition
+    phone: bool = False  # 8 kHz G.711 μ-law round trip, 300–3400 Hz band, line hiss
+    noise_snr_db: float | None = None  # mix pink/babble noise at this SNR (None = clean)
+    noise_kind: Literal["pink", "babble"] = "pink"
+
+
+class Scale(BaseModel):
+    min: int = 0
+    max: int = 10
+    labels: dict[str, Text2] = Field(default_factory=dict)  # {"0": {...}, "10": {...}}
 
 
 class Task(BaseModel):
@@ -66,6 +94,8 @@ class Task(BaseModel):
     allow_rerecord: bool = True
     # Audio-prompt tasks: recording opens after this beep once the prompt has finished playing.
     tone_hz: int | None = None
+    # Task-level scoring targets: phone_call goals/phrases, etc.
+    target: dict = Field(default_factory=dict)
     items: list[Item]
 
     @property
@@ -78,10 +108,27 @@ class Task(BaseModel):
             where = f"{self.id}/{it.id}"
             if self.type == "read_aloud" and not it.text:
                 raise ValueError(f"{where}: read_aloud items need text")
-            if self.type in ("sentence_repeat", "quick_answer") and not (it.text and it.audio):
+            if self.type in ("sentence_repeat", "quick_answer", "dictation") and not (
+                it.text and it.audio
+            ):
                 raise ValueError(f"{where}: {self.type} items need text (the key) and audio")
-            if self.type in ("typed_response", "describe_opinion") and not it.prompt:
+            if self.type == "phone_call" and not (it.text and it.audio and it.prompt):
+                raise ValueError(
+                    f"{where}: phone_call turns need text, audio and a prompt (goal card)"
+                )
+            if self.type == "dictation" and it.target.get("condition") not in (
+                "clear",
+                "fast",
+                "phone",
+                "noise",
+            ):
+                raise ValueError(f"{where}: dictation items need target.condition")
+            if self.type in ("typed_response", "describe_opinion", "rating") and not it.prompt:
                 raise ValueError(f"{where}: {self.type} items need a prompt")
+            if self.type == "rating" and it.scale is None:
+                raise ValueError(f"{where}: rating items need a scale")
+        if self.type == "phone_call" and not self.target.get("goals"):
+            raise ValueError(f"{self.id}: phone_call tasks need target.goals")
         return self
 
 

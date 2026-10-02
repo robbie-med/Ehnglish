@@ -228,6 +228,7 @@ def submit_typed(
     )
     t.status = "finalized"
     t.finalized_at = datetime.now(UTC)
+    queue.enqueue(db, "process_take", {"take_id": str(t.id)}, max_attempts=5)
     db.commit()
     db.expire_all()
     return take_out(own_take(db, user, t.id))

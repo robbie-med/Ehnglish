@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from .config import get_settings
 from .content import Form, Item, Task, get_forms
@@ -22,7 +22,7 @@ from .engines import phonemes as phoneme_engine
 from .engines.base import EngineError, Transcript
 from .engines.claude import minimal_correction
 from .models import ProcessingResult, Take, TestSession
-from .pipeline import ei, lexical, phonemes, praat, rhythm, syntax, vote
+from .pipeline import checklist, dictation, ei, lexical, phonemes, praat, rhythm, syntax, vote
 from .pipeline.text import normalize
 
 log = logging.getLogger("processing")
@@ -260,10 +260,91 @@ def step_language(ctx: Ctx, transcript: dict) -> dict:
     return {"lexical": lex, "syntax": syn, "correction": corr, "errors": err}
 
 
+def step_language_text(ctx: Ctx, text: str) -> dict:
+    """Language metrics on a typed text (dictation excluded): same steps as speech, no voting."""
+    transcript = {
+        "text": text,
+        "confident_text": text,
+        "words": [{"text": w, "uncertain": False} for w in text.split()],
+    }
+    return step_language(ctx, transcript)
+
+
+def step_dictation(ctx: Ctx) -> dict:
+    typed = ctx.take.typed.text if ctx.take.typed else ""
+    cond = str(ctx.item.target.get("condition", "clear"))
+    return ctx.step("wer", lambda: dictation.score(ctx.item.text or "", typed, cond).to_dict())
+
+
+def _phone_turns(ctx: Ctx) -> list[dict]:
+    """Caller line + learner transcript for every turn of this task in the session, in item order.
+    Learner text comes from each take's voted transcript (current pipeline version)."""
+    takes = ctx.db.scalars(
+        select(Take)
+        .where(
+            Take.session_id == ctx.take.session_id,
+            Take.task_id == ctx.task.id,
+            Take.status != "rejected",
+        )
+        .options(selectinload(Take.results))
+    ).all()
+    by_item: dict[str, Take] = {}
+    for t in takes:
+        prev = by_item.get(t.item_id)
+        if prev is None or t.attempt > prev.attempt:
+            by_item[t.item_id] = t
+    turns = []
+    for it in ctx.task.items:
+        t = by_item.get(it.id)
+        learner = ""
+        if t is not None:
+            rows = [
+                r
+                for r in t.results
+                if r.kind == "transcript" and r.pipeline_version == ctx.settings.pipeline_version
+            ]
+            if rows:
+                words = rows[-1].result.get("words", [])
+                learner = " ".join(
+                    ("[uncertain] " + w["text"]) if w.get("uncertain") else w["text"] for w in words
+                )
+        turns.append({"item": it.id, "caller": it.text or "", "learner": learner})
+    return turns
+
+
+def step_phone(ctx: Ctx, transcript: dict) -> dict:
+    """Fixed phrases for this turn (code) and the goal checklist over all turns so far (Claude).
+    The checklist on the last turn is the one that counts; earlier ones show progress."""
+    phrases = list(ctx.task.target.get("phrases", [])) + list(ctx.item.target.get("phrases", []))
+    ctx.step("phrases", lambda: checklist.phrase_use(phrases, transcript.get("text", "")))
+
+    def goals() -> dict:
+        turns = _phone_turns(ctx)
+        try:
+            res = checklist.score_goals(list(ctx.task.target.get("goals", [])), turns).to_dict()
+        except EngineError as e:
+            if "not set" in str(e):
+                return {"skipped": True, "reason": str(e), "turns": turns}
+            raise
+        res["turns"] = turns
+        res["is_last_turn"] = ctx.item.id == ctx.task.items[-1].id
+        return res
+
+    return ctx.step("checklist", goals)
+
+
 # ---------------------------------------------------------------------- per task type
 def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> str:
     ctx = Ctx(db, take, job_id)
     t = ctx.task.type
+    if take.kind == "typed":
+        if t == "dictation":
+            step_dictation(ctx)
+            return "dictation done"
+        if t == "typed_response":
+            step_language_text(ctx, ctx.take.typed.text if ctx.take.typed else "")
+            return "typed_response done"
+        return f"no processing for typed {t}"
     if t == "silence":
         return "silence: wav_probe only"
     if t == "read_aloud":
@@ -288,6 +369,14 @@ def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> st
         step_latency(ctx, timing)
         step_language(ctx, tr)
         return "quick_answer done"
+    if t == "phone_call":
+        asr = step_asr(ctx)
+        tr = step_vote(ctx, asr)
+        timing = step_timing(ctx)
+        step_latency(ctx, timing)
+        step_language(ctx, tr)
+        step_phone(ctx, tr)
+        return "phone_call turn done"
     if t == "describe_opinion":
         asr = step_asr(ctx)
         tr = step_vote(ctx, asr)

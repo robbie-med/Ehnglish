@@ -64,6 +64,40 @@ tasks:
         prompt: { en: "Should patients email their doctor?", ko: "환자가 의사에게 이메일을 보내야 할까요?" }
         timing: { prep_s: 1, respond_s: 2 }
         target: { stage: opinion }
+  - id: C4
+    type: phone_call
+    title: { en: "Phone call", ko: "전화 통화" }
+    instructions: { en: "Reply to the caller.", ko: "상대방에게 대답하세요." }
+    timing: { prep_s: 0, respond_s: 2 }
+    allow_rerecord: false
+    target:
+      scenario: "Reschedule your check-up."
+      goals: ["Says why they are calling.", "Asks for Tuesday."]
+      phrases: ["I'd like to reschedule"]
+    items:
+      - id: C4-01
+        text: "Dr. Rivera's office, how can I help you?"
+        audio: audio/e2e-core/C4-01.wav
+        prompt: { en: "Say why you are calling.", ko: "왜 전화했는지 말하세요." }
+  - id: C6
+    type: dictation
+    title: { en: "Dictation", ko: "받아쓰기" }
+    instructions: { en: "Type what you hear.", ko: "들은 대로 입력하세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - id: C6-01
+        text: "Your prescription will be ready in twenty minutes."
+        audio: audio/e2e-core/C6-01.wav
+        target: { condition: phone }
+  - id: C7
+    type: rating
+    title: { en: "Confidence", ko: "자신감" }
+    instructions: { en: "Move the slider.", ko: "슬라이더를 움직이세요." }
+    timing: { prep_s: 0, respond_s: 60 }
+    items:
+      - id: C7-phone
+        prompt: { en: "On the phone", ko: "전화 통화에서" }
+        scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } }
   - id: W1
     type: typed_response
     title: { en: "Typed", ko: "타이핑" }
