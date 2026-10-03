@@ -1,0 +1,10 @@
+# Official external scores (plan §0 "Official tests", §5.5): add a row when she takes TOEFL or
+# IELTS. The dashboard compares each row with its estimate from the nearest earlier sitting and
+# shifts later estimates by the level difference, labelling them "estimate (calibrated)".
+external: []
+#  - date: 2027-03-15
+#    test: toefl        # toefl (iBT section scores) or ielts (bands)
+#    speaking: 22
+#    listening: 19
+#    reading: 24
+#    writing: 21

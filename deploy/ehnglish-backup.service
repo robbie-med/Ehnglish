@@ -1,0 +1,9 @@
+# User unit. Install with:
+#   mkdir -p ~/.config/systemd/user && cp deploy/ehnglish-backup.{service,timer} ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now ehnglish-backup.timer
+[Unit]
+Description=Ehnglish nightly backup (pg_dump + raw recordings)
+
+[Service]
+Type=oneshot
+ExecStart=/home/user/Projects/ultimate_english/deploy/backup.sh

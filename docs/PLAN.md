@@ -1,7 +1,7 @@
 # Ehnglish — Plan
 
-Status: **planning only, nothing built yet.** Build will happen in Claude Desktop, working from this
-document.
+Status: **built through M5 (dashboard + export) and live at english.bo-bob.com; M6 calibration is
+next.** §12 is the build log. The sections below are the spec as planned.
 
 Two tools, built in order:
 
@@ -331,3 +331,28 @@ few dollars for text-to-speech when building the items.
 
 It will be designed after the Assessment produces data. Its inputs will be the
 `assessment_result.v1.json` history plus her courses, books, audio and people.
+
+---
+
+## 12. Build log (added during M0–M5, 2026-09-30 → 2026-10-03)
+
+Decisions and deviations made while building, for the record. None reopens a §0 decision.
+
+| Topic | What was built | Why / note |
+|---|---|---|
+| Hosting | This PC (`PC`, no GPU), four containers (api, worker, Postgres 16, Montreal Forced Aligner) on `127.0.0.1:3305`, published as `english.bo-bob.com` through the shared `diet-loggers` tunnel with Cloudflare Access (team `sikoraweb`). | §0 Hosting; the Hetzner VPS is too small and has no tunnel. |
+| Login | Cloudflare Access JWT verified server-side; allow list of the two emails; learner/anchor roles from env. | §0 Domain/login emails, §7 anchors. |
+| Whisper host | Groq (`whisper-large-v3`), switchable to OpenAI by env. | §9 "e.g. Groq or OpenAI". |
+| Claude calls | `claude-opus-5-5` via the Anthropic SDK; forced tool choice and `temperature` are not accepted by this model, so calls ask for a tool and fall back to JSON in text. 3 runs, median kept, spread stored. | §2.3. |
+| Headphone check | Objective: a 1 kHz tone is played during a short recording; leak > 12 dB over the silence reference blocks the sitting. | §3 "Headphones are required". |
+| Noise floor | 10 s silence at setup (quality covariate) **and** C0 as a real stored take in every core form. | §4.2 C0. |
+| Latency | Client events (`prompt_end`, `record_start`) plus Praat voice onset; never server clocks. | §4.2 C3. |
+| Prompt audio | Azure neural TTS (Andrew; Ava as the phone caller), built once and committed; phone line = G.711 μ-law 8 kHz round trip + band-limited hiss; noise = seeded babble at +5 dB SNR; fast = TTS rate +35 %. Recorded human audio can replace any file at the same path. | §4.5. |
+| Korean | Deepgram/Azure/Whisper in `ko`; normalisation keeps Hangul; English-only metrics skipped; idea units and coverage via Claude. | §4.4, §5.2.5. |
+| Multiple choice | Keys kept at index 0 in YAML; options shuffled per (session, item) on the client; the original index is stored. | Keeps YAML readable without leaking positions. |
+| LexTALE | Published 60-item list + 3 practice, F/J keys, reaction time recorded, `%correct_av`. | §4.4. |
+| Scales | Bootstrapped 95 % CI over items; % of native anchor and 0–100 scale when anchor sittings exist on the same form; trends flagged by the test–retest noise floor (pairs of the same form within 10 days) or CI overlap. | §5.5, §7. |
+| Estimates | CEFR per skill from labelled heuristic thresholds (median over indicators), mapped with the official ETS/IELTS concordances; refit by level offset once `content/calibration.yaml` has a real score. | §0 Official tests, §5.5. |
+| Export | `assessment_result.v1.json` = session, setup, every take with item-level responses and results, session rollups, metrics with CIs, estimates, pipeline versions. | §6.2. |
+| Pipeline versions | `m0.0.1` … `m5.0.0`; every result row carries the version that produced it; re-scoring appends rows. | §2.6. |
+| Not yet | Core forms B–F and rotating forms B–C (content); the sermon clip task (needs a clip chosen); recorded caller audio; mid-clause vs boundary pause share (needs alignment + clause boundaries, M6 follow-up). | — |

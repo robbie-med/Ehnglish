@@ -1035,18 +1035,45 @@ def apply_anchor(values: dict[str, MetricValue], anchor_means: dict[str, float])
         mv.scale = round(max(0.0, min(100.0, pct)), 1)
 
 
-def trend(points: list[dict]) -> dict:
-    """points: [{session_id, started_at, value, ci95}] in time order. Flags whether the latest
-    change is detectable (CIs don't overlap; if no CI, any change counts but is marked uncertain)."""
+def trend(points: list[dict], noise: float | None = None) -> dict:
+    """points: [{session_id, started_at, value, ci95}] in time order. The latest change is
+    'detectable' when it exceeds the test–retest noise floor for this metric (plan §7), or, if no
+    noise floor is known yet, when the two CIs do not overlap. Without either, it is None."""
     if len(points) < 2:
-        return {"points": points, "change": None, "detectable": None}
+        return {"points": points, "change": None, "detectable": None, "noise": noise}
     a, b = points[-2], points[-1]
     change = round(b["value"] - a["value"], 3)
-    if a.get("ci95") and b.get("ci95"):
+    if noise is not None:
+        detectable = abs(change) > noise
+    elif a.get("ci95") and b.get("ci95"):
         detectable = b["ci95"][0] > a["ci95"][1] or b["ci95"][1] < a["ci95"][0]
     else:
         detectable = None
-    return {"points": points, "change": change, "detectable": detectable}
+    return {"points": points, "change": change, "detectable": detectable, "noise": noise}
+
+
+def retest_noise(sessions: list[dict], *, max_days: float = 10.0) -> dict[str, float]:
+    """Test–retest noise floor per metric: |difference| between two sittings of the same form
+    taken within `max_days` of each other (plan §7). sessions: [{form_id, started_at (iso),
+    metrics: {id: value}}] in time order. The largest pair difference per metric is kept."""
+    from datetime import datetime
+
+    out: dict[str, float] = {}
+    for i in range(1, len(sessions)):
+        a, b = sessions[i - 1], sessions[i]
+        if a["form_id"] != b["form_id"]:
+            continue
+        ta = datetime.fromisoformat(a["started_at"])
+        tb = datetime.fromisoformat(b["started_at"])
+        if abs((tb - ta).days) > max_days:
+            continue
+        for mid, va in a["metrics"].items():
+            vb = b["metrics"].get(mid)
+            if va is None or vb is None:
+                continue
+            d = round(abs(vb - va), 3)
+            out[mid] = max(out.get(mid, 0.0), d)
+    return out
 
 
 # ---------------------------------------------------------------- estimates (labelled heuristics)
@@ -1132,4 +1159,75 @@ def estimate_skill(skill: str, values: dict[str, MetricValue]) -> dict:
         "based_on": used,
         "spread": max(levels) - min(levels),
         "label": "estimate",
+    }
+
+
+# ---------------------------------------------------------------- external calibration (plan §5.5, §7)
+def cefr_from_official(test: str, skill: str, score: float) -> str | None:
+    """Official concordance: a TOEFL iBT section score or an IELTS band → CEFR."""
+    if test == "ielts":
+        for lvl in reversed(CEFR_ORDER):
+            lo, _hi = IELTS[lvl]
+            if score >= lo:
+                return lvl
+        return "A2"
+    table = {
+        "speaking": TOEFL_SPEAKING,
+        "writing": TOEFL_WRITING,
+        "listening": TOEFL_LISTENING,
+        "reading": TOEFL_SECTION,
+    }[skill]
+    for lvl in reversed(CEFR_ORDER):
+        rng = table.get(lvl)
+        if rng and score >= rng[0]:
+            return lvl
+    return "A2"
+
+
+def calibration_offsets(
+    external: list[dict], estimates_by_date: list[tuple[str, dict[str, str | None]]]
+) -> dict[str, int]:
+    """For each official score, compare its CEFR with our estimate from the nearest sitting on or
+    before that date; the level difference becomes the offset applied to later estimates.
+    external: [{date, test: 'toefl'|'ielts', speaking, listening, reading, writing}];
+    estimates_by_date: [(iso date, {skill: cefr})] in time order."""
+    offsets: dict[str, int] = {}
+    for ex in external:
+        date = str(ex.get("date", ""))
+        nearest = None
+        for d, est in estimates_by_date:
+            if d[:10] <= date[:10]:
+                nearest = est
+        if nearest is None:
+            continue
+        for skill in ("speaking", "listening", "reading", "writing"):
+            score = ex.get(skill)
+            ours = nearest.get(skill)
+            if score is None or ours is None:
+                continue
+            official = cefr_from_official(str(ex.get("test", "toefl")), skill, float(score))
+            if official:
+                offsets[skill] = CEFR_ORDER.index(official) - CEFR_ORDER.index(ours)
+    return offsets
+
+
+def apply_offset(est: dict, offset: int) -> dict:
+    if not est.get("cefr") or not offset:
+        return est
+    i = max(0, min(len(CEFR_ORDER) - 1, CEFR_ORDER.index(est["cefr"]) + offset))
+    cefr = CEFR_ORDER[i]
+    skill = est["skill"]
+    table = {
+        "speaking": TOEFL_SPEAKING,
+        "writing": TOEFL_WRITING,
+        "listening": TOEFL_LISTENING,
+        "reading": TOEFL_SECTION,
+    }[skill]
+    return {
+        **est,
+        "cefr": cefr,
+        "toefl": table.get(cefr),
+        "ielts": IELTS.get(cefr),
+        "label": "estimate (calibrated)",
+        "offset": offset,
     }

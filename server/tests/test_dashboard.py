@@ -225,3 +225,73 @@ def test_anchor_scales_and_subject_switch(client: TestClient, db, monkeypatch) -
         update={"learner_email": "tester@example.com", "anchor_emails": "anchor@example.com"}
     )
     assert client.get("/api/dashboard?subject=anchor@example.com").status_code == 403
+
+
+def test_retest_noise_and_calibration() -> None:
+    sessions = [
+        {
+            "form_id": "core-A",
+            "started_at": "2026-10-01T10:00:00+00:00",
+            "metrics": {"speech_rate": 3.0, "wer_clear": 10.0},
+        },
+        {
+            "form_id": "core-A",
+            "started_at": "2026-10-05T10:00:00+00:00",
+            "metrics": {"speech_rate": 3.4, "wer_clear": 8.0},
+        },
+        {
+            "form_id": "core-B",
+            "started_at": "2026-11-05T10:00:00+00:00",
+            "metrics": {"speech_rate": 4.0},
+        },
+        {
+            "form_id": "core-B",
+            "started_at": "2027-01-05T10:00:00+00:00",
+            "metrics": {"speech_rate": 5.0},
+        },  # too far apart
+    ]
+    noise = metrics.retest_noise(sessions)
+    assert noise == {"speech_rate": 0.4, "wer_clear": 2.0}
+    pts = [
+        {"session_id": "a", "started_at": "1", "value": 3.0, "ci95": None},
+        {"session_id": "b", "started_at": "2", "value": 3.3, "ci95": None},
+    ]
+    assert metrics.trend(pts, noise["speech_rate"])["detectable"] is False
+    pts[1]["value"] = 3.6
+    assert metrics.trend(pts, noise["speech_rate"])["detectable"] is True
+
+    assert metrics.cefr_from_official("toefl", "speaking", 22) == "B2"
+    assert metrics.cefr_from_official("toefl", "reading", 27) == "C1"
+    assert metrics.cefr_from_official("ielts", "listening", 6.0) == "B2"
+    offs = metrics.calibration_offsets(
+        [{"date": "2026-12-01", "test": "toefl", "speaking": 22, "reading": 27}],
+        [
+            ("2026-10-01T00:00:00", {"speaking": "B1", "reading": "C1"}),
+            ("2026-11-20T00:00:00", {"speaking": "B1", "reading": "B2"}),
+        ],
+    )
+    assert offs == {"speaking": 1, "reading": 1}
+    est = metrics.apply_offset(
+        {
+            "skill": "speaking",
+            "cefr": "B1",
+            "toefl": (16, 19),
+            "ielts": (4.0, 5.0),
+            "label": "estimate",
+        },
+        1,
+    )
+    assert est["cefr"] == "B2" and est["toefl"] == (20, 24) and "calibrated" in est["label"]
+    assert metrics.apply_offset({"skill": "speaking", "cefr": None}, 1)["cefr"] is None
+
+
+def test_dashboard_reports_noise_and_calibration(client: TestClient, db, monkeypatch) -> None:
+    _fake_engines(monkeypatch)
+    _core_session(client, db)
+    _core_session(client, db)  # same form, same day → a test–retest pair
+    dash = client.get("/api/dashboard").json()
+    assert "ei_pct_syllables" in dash["retest_noise"]
+    ei = {m["id"]: m for m in dash["domains"]["speaking"]}["ei_pct_syllables"]
+    assert ei["trend"]["noise"] == dash["retest_noise"]["ei_pct_syllables"]
+    assert ei["trend"]["detectable"] is False  # identical sittings
+    assert dash["calibration"] == {"external": [], "offsets": {}}

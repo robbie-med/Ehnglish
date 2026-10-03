@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from .. import metrics
 from ..auth import get_current_user
+from ..calibration import load_calibration
 from ..config import Settings, get_settings
 from ..content import get_forms
 from ..db import get_db
@@ -168,7 +169,29 @@ def dashboard(
                 "form_id": s.form_id,
                 "started_at": b["session"]["started_at"],
             }
-    trends = {mid: metrics.trend(pts) for mid, pts in series.items()}
+    noise = metrics.retest_noise(
+        [
+            {
+                "form_id": r["session"]["form_id"],
+                "started_at": r["session"]["started_at"],
+                "metrics": {k: v["value"] for k, v in r["metrics"].items()},
+            }
+            for r in per_session
+        ]
+    )
+    trends = {mid: metrics.trend(pts, noise.get(mid)) for mid, pts in series.items()}
+    calib = load_calibration(settings.content_dir)
+    offsets = metrics.calibration_offsets(
+        calib.get("external", []),
+        [
+            (r["session"]["started_at"], {e["skill"]: e["cefr"] for e in r["estimates"]})
+            for r in per_session
+        ],
+    )
+    for r in per_session:
+        r["estimates"] = [
+            metrics.apply_offset(e, offsets.get(e["skill"], 0)) for e in r["estimates"]
+        ]
     domains: dict[str, list[dict]] = {}
     for m in metrics.METRICS:
         if m.id in latest_by_metric:
@@ -201,6 +224,8 @@ def dashboard(
         "estimates": list(est.values()) or latest_estimates,
         "per_session": per_session,
         "anchors_available": {fid: bool(v) for fid, v in anchor_cache.items()},
+        "retest_noise": noise,
+        "calibration": {"external": calib.get("external", []), "offsets": offsets},
         "generated_at": datetime.now(UTC).isoformat(),
     }
 
