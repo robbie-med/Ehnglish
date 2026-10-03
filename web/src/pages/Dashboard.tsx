@@ -16,6 +16,7 @@ export interface DashboardData {
   domains: Record<string, Metric[]>;
   estimates: Estimate[];
   anchors_available: Record<string, boolean>;
+  costs: { sessions: Record<string, { total_usd: number; by_engine: Record<string, { cost_usd: number; calls: number; units: Record<string, number> }> }>; all_time: { total_usd: number; by_engine: Record<string, number> } } | null;
 }
 
 const DOMAIN_ORDER = ['speaking', 'listening', 'reading', 'writing', 'vocabulary', 'self', 'quality'];
@@ -149,6 +150,28 @@ export default function Dashboard() {
           </table>
         </div>
       ))}
+
+      {data.costs && (
+        <div className="card" data-testid="costs">
+          <h3>{t('dash.costs')} <span className="muted" style={{ fontWeight: 400 }}>· {t('dash.costs_note')}</span></h3>
+          <p>{t('dash.all_time')}: <strong>${data.costs.all_time.total_usd.toFixed(2)}</strong> <span className="muted">({Object.entries(data.costs.all_time.by_engine).map(([e, c]) => `${e} $${c.toFixed(2)}`).join(' · ')})</span></p>
+          <table className="stats" style={{ width: '100%' }}>
+            <thead><tr><th>{t('dash.sitting')}</th><th>{t('dash.cost')}</th><th>{t('dash.by_engine')}</th></tr></thead>
+            <tbody>
+              {sessionsNewestFirst.map((s) => {
+                const c = data.costs!.sessions[s.id];
+                return (
+                  <tr key={s.id}>
+                    <td>{new Date(s.started_at).toLocaleDateString()} · {s.form_id}</td>
+                    <td>${c ? c.total_usd.toFixed(2) : '0.00'}</td>
+                    <td className="muted" style={{ fontSize: '0.85rem' }}>{c ? Object.entries(c.by_engine).map(([e, v]) => `${e} $${v.cost_usd.toFixed(2)} (${v.calls})`).join(' · ') : '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="card">
         <h3>{t('dash.sessions')}</h3>

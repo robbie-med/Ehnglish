@@ -148,7 +148,13 @@
       "vocabulary": "Vocabulary",
       "self": "Self-ratings & covariates",
       "quality": "Session quality"
-    }
+    },
+    "costs": "Costs",
+    "costs_note": "estimated from list prices in content/pricing.yaml; visible to the owner only",
+    "all_time": "All time",
+    "sitting": "Sitting",
+    "cost": "Cost",
+    "by_engine": "By engine (calls)"
   },
   "viewer": {
     "recordings": "Recordings",

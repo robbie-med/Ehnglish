@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from .. import metrics
+from .. import metrics, usage
 from ..auth import get_current_user
 from ..calibration import load_calibration
 from ..config import Settings, get_settings
@@ -225,6 +225,14 @@ def dashboard(
         "per_session": per_session,
         "anchors_available": {fid: bool(v) for fid, v in anchor_cache.items()},
         "retest_noise": noise,
+        "costs": (
+            {
+                "sessions": {str(s.id): usage.session_cost(db, s.id) for s in sessions},
+                "all_time": usage.total_cost(db),
+            }
+            if user.email.lower() in settings.owner_email_set
+            else None
+        ),
         "calibration": {"external": calib.get("external", []), "offsets": offsets},
         "generated_at": datetime.now(UTC).isoformat(),
     }

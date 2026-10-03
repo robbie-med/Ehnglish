@@ -128,6 +128,10 @@ trip, band-limited hiss), `noise_snr_db` + `noise_kind` (pink or babble at a fix
 
 Prompt audio for real forms is built once with `content/build_audio.py` (Azure TTS) and committed.
 
+**Costs.** Every external call is ledgered (`usage` table: engine, audio seconds or tokens, estimated
+cost from `content/pricing.yaml`). The dashboard shows per-sitting and all-time costs only to
+`EHNGLISH_OWNER_EMAILS`.
+
 **Re-scoring.** After any metric change: bump `EHNGLISH_PIPELINE_VERSION`, redeploy, then
 `docker compose -f deploy/docker-compose.yml exec worker python -m app.rescore` (optionally
 `--form core-A` or `--session <id>`). Old result rows stay, tagged with their version.

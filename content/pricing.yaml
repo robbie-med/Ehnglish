@@ -1,0 +1,19 @@
+# Estimated list prices used for the owner-only cost ledger (USD). Edit when a provider changes
+# prices; ledger rows keep the price that applied when they were written. Audio prices are per
+# minute of audio sent; model prices per million tokens. These are pay-as-you-go list prices as of
+# the build (October 2026) and should be checked against the first real invoices.
+deepgram:
+  per_minute_audio: 0.0043          # Nova-3 pay-as-you-go
+azure_stt:
+  per_minute_audio: 0.0167          # standard STT, $1/hour (F0 free tier covers 5 h/month)
+azure_pron:
+  per_minute_audio: 0.0167          # pronunciation assessment billed like STT
+whisper:
+  per_minute_audio: 0.00185         # Groq whisper-large-v3, $0.111/hour
+google:
+  per_minute_audio: 0.024           # Speech-to-Text v1 standard
+claude:
+  per_million_tokens_in: 15.0       # placeholder for claude-opus-5-5; update from the Console
+  per_million_tokens_out: 75.0
+azure_tts:
+  per_million_chars: 16.0           # neural TTS, content build only (one-time)

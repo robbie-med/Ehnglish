@@ -15,6 +15,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from . import usage
 from .config import get_settings
 from .content import Form, Item, Task, get_forms
 from .engines import azure, deepgram, google, mfa, whisper
@@ -106,7 +107,14 @@ def step_asr(ctx: Ctx) -> dict[str, dict]:
 
         def run(fn=fn, name=name) -> dict:
             try:
-                return fn(ctx.path, language=ctx.language).to_dict()
+                out = fn(ctx.path, language=ctx.language).to_dict()
+                usage.record(
+                    name if name != "azure" else "azure_stt",
+                    "audio_s",
+                    float(ctx.take.duration_s or 0),
+                    note="asr",
+                )
+                return out
             except EngineError as e:
                 if "not set" in str(e) or "not enabled" in str(e):
                     log.info("%s skipped: %s", name, e)
@@ -176,7 +184,9 @@ def step_latency(ctx: Ctx, timing: dict) -> dict:
 def step_pron(ctx: Ctx) -> dict:
     def run() -> dict:
         try:
-            return azure.pronunciation_assessment(ctx.path, ctx.item.text or "").to_dict()
+            out = azure.pronunciation_assessment(ctx.path, ctx.item.text or "").to_dict()
+            usage.record("azure_pron", "audio_s", float(ctx.take.duration_s or 0), note="pron")
+            return out
         except EngineError as e:
             if "not set" in str(e):
                 return {"skipped": True, "reason": str(e)}
@@ -541,6 +551,14 @@ def step_email_checklist(ctx: Ctx, text: str) -> dict:
 
 # ---------------------------------------------------------------------- per task type
 def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> str:
+    token = usage.set_scope(db, take.session_id, take.id)
+    try:
+        return _process_take(db, take, job_id)
+    finally:
+        usage.reset_scope(token)
+
+
+def _process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> str:
     ctx = Ctx(db, take, job_id)
     t = ctx.task.type
     if take.kind == "typed":

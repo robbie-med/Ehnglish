@@ -11,6 +11,7 @@ from typing import Any
 
 from rapidfuzz.distance import Levenshtein
 
+from .. import usage as usage_ledger
 from ..config import get_settings
 from .base import EngineError
 
@@ -41,6 +42,14 @@ def structured(system: str, user: str, schema: dict, *, tool_name: str = "answer
         tool_choice={"type": "auto"},
         messages=[{"role": "user", "content": user}],
     )
+    u = getattr(msg, "usage", None)
+    if u is not None:
+        usage_ledger.record(
+            "claude", "tokens_in", float(getattr(u, "input_tokens", 0) or 0), note=tool_name
+        )
+        usage_ledger.record(
+            "claude", "tokens_out", float(getattr(u, "output_tokens", 0) or 0), note=tool_name
+        )
     text_parts: list[str] = []
     for block in msg.content:
         if block.type == "tool_use" and block.name == tool_name:

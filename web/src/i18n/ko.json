@@ -148,7 +148,13 @@
       "vocabulary": "어휘",
       "self": "자가 평가 및 공변량",
       "quality": "응시 품질"
-    }
+    },
+    "costs": "비용",
+    "costs_note": "content/pricing.yaml의 정가로 추정한 값이며 소유자에게만 표시됩니다",
+    "all_time": "누적",
+    "sitting": "응시",
+    "cost": "비용",
+    "by_engine": "엔진별 (호출 수)"
   },
   "viewer": {
     "recordings": "녹음",

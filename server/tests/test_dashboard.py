@@ -333,3 +333,31 @@ def test_rescore_enqueues_jobs_and_keeps_old_results(client: TestClient, db, mon
     )
     exp = client.get(f"/api/sessions/{sid}/export").json()
     assert exp["pipeline_versions"] == ["test.0.1", "test.0.2"]
+
+
+def test_cost_ledger_owner_only(client: TestClient, db, monkeypatch) -> None:
+    from app import usage
+    from app.main import app
+    from app.models import Usage
+
+    _fake_engines(monkeypatch)
+    sid = _core_session(client, db)
+    rows = db.scalars(select(Usage)).all()
+    assert rows and all(r.session_id is not None for r in rows)
+    engines = {r.engine for r in rows}
+    assert {"deepgram", "azure_stt", "whisper"} <= engines
+    secs = sum(r.quantity for r in rows if r.engine == "deepgram")
+    assert abs(secs - 3 * 0.6) < 0.05  # three 0.6 s takes
+    cost = usage.session_cost(db, __import__("uuid").UUID(sid))
+    assert cost["total_usd"] > 0 and cost["by_engine"]["deepgram"]["calls"] == 3
+    # learner: no costs
+    assert client.get("/api/dashboard").json()["costs"] is None
+    # owner: costs per session and all-time
+    base = get_settings()
+    app.dependency_overrides[get_settings] = lambda: base.model_copy(
+        update={"owner_emails": "tester@example.com"}
+    )
+    d = client.get("/api/dashboard").json()
+    assert d["costs"]["sessions"][sid]["total_usd"] == cost["total_usd"]
+    assert d["costs"]["all_time"]["total_usd"] >= cost["total_usd"]
+    assert usage.price_for("claude", "tokens_in") > 0 and usage.price_for("nope", "audio_s") == 0.0
