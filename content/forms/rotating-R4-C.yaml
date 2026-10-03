@@ -1,0 +1,52 @@
+# Rotating module R4, form C (~9 min): parallel to R4-A/B. Drafted to spec; native-speaker edit pending.
+id: rotating-R4-C
+version: 1
+kind: rotating
+title:
+  en: "Writing — form C"
+  ko: "쓰기 — C형"
+tasks:
+  - id: R4-email
+    type: typed_response
+    title: { en: "Email to the insurance company", ko: "보험회사에 보내는 이메일" }
+    instructions:
+      en: "Write an email to your insurance company. You have eight minutes. Cover every point in the task; the email is scored on the points covered, accuracy and clarity, not on length."
+      ko: "보험회사에 이메일을 쓰세요. 8분입니다. 과제의 모든 요점을 다루세요. 길이가 아니라 다룬 요점, 정확성, 명료성으로 평가합니다."
+    timing: { prep_s: 15, respond_s: 480 }
+    target:
+      goals:
+        - "Identifies themselves (name, member ID or date of birth) and the claim or visit in question."
+        - "States that the claim was denied and that they believe the clinic is in network."
+        - "Asks for the reason for the denial in writing."
+        - "Asks how to appeal, or states that they are appealing, and what documents are attached."
+        - "Asks for a reply by a specific date or within a stated time."
+        - "Closes politely with a request for confirmation."
+    items:
+      - id: R4-email-1
+        prompt:
+          en: "Your insurance denied a claim for an urgent care visit in March, saying the clinic was out of network, but you checked and the clinic is in your network. Write to the insurance company: say who you are and which visit, explain the problem, ask for the reason in writing, say you want to appeal and what you are attaching (the itemized bill and the clinic's network listing), ask for a reply within two weeks, and ask them to confirm."
+          ko: "보험회사가 3월의 긴급 진료 청구를 '네트워크 외'라는 이유로 거부했지만, 확인해 보니 그 병원은 네트워크 안에 있습니다. 보험회사에 이메일을 쓰세요: 누구이고 어떤 진료인지 말하고, 문제를 설명하고, 거부 사유를 서면으로 요청하고, 이의 신청을 하겠다고 말하며 첨부 서류(항목별 청구서와 병원의 네트워크 등록 정보)를 밝히고, 2주 안에 답변을 요청하고, 확인을 요청하세요."
+        target: { language: en, genre: email }
+
+  - id: R4-typing
+    type: copy_typing
+    title: { en: "Typing check", ko: "타이핑 점검" }
+    instructions: { en: "Copy the text as fast as you comfortably can. Thirty seconds.", ko: "편안한 한도에서 최대한 빠르게 글을 따라 입력하세요. 30초입니다." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - id: R4-typing-1
+        text: "I am writing to follow up on the message I left on Monday. Could you let me know whether the referral has been sent, and if not, what you need from me?"
+        target: { language: en }
+
+  - id: R4-anxiety
+    type: rating
+    title: { en: "Speaking anxiety", ko: "말하기 불안" }
+    instructions: { en: "Rate each statement from 0 (not at all true) to 10 (completely true).", ko: "각 문장을 0(전혀 아니다)에서 10(완전히 그렇다)까지 평가하세요." }
+    timing: { prep_s: 0, respond_s: 60 }
+    items:
+      - { id: S-anx-1, prompt: { en: "I feel nervous when I have to speak English without preparing.", ko: "준비 없이 영어로 말해야 할 때 긴장된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-2, prompt: { en: "I worry about making mistakes when I speak English.", ko: "영어로 말할 때 실수할까 봐 걱정된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-3, prompt: { en: "My mind goes blank when someone asks me something in English.", ko: "누가 영어로 무언가를 물으면 머리가 하얘진다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-4, prompt: { en: "I avoid phone calls in English when I can.", ko: "가능하면 영어 전화 통화를 피한다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-5, prompt: { en: "I feel relaxed speaking English in casual conversation.", ko: "가벼운 대화에서는 영어로 말하는 것이 편안하다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }
+      - { id: S-anx-6, prompt: { en: "I feel confident speaking English with people I don't know.", ko: "모르는 사람과 영어로 말하는 것이 자신 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }

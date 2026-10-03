@@ -1,0 +1,57 @@
+# Rotating module R1, form C (~9 min): parallel to R1-A/B. Bands 1k–10k, three items each, then
+# ten patient-side medical/service items. Drafted to spec; native-speaker edit pending (REVIEW.md).
+id: rotating-R1-C
+version: 1
+kind: rotating
+title:
+  en: "Vocabulary — form C"
+  ko: "어휘 — C형"
+tasks:
+  - id: R1
+    type: multiple_choice
+    title: { en: "Vocabulary", ko: "어휘" }
+    instructions:
+      en: "Choose the meaning of the underlined word. If you don't know, choose your best guess. Press 1–4 or click."
+      ko: "밑줄 친 단어의 뜻을 고르세요. 모르면 가장 그럴듯한 것을 고르세요. 1~4 키를 누르거나 클릭하세요."
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - { id: R1-01, text: "<u>see</u>: They saw it.", options: ["looked at it", "cut it", "started it", "guessed it"], target: { band: 1k, answer: 0 } }
+      - { id: R1-02, text: "<u>standard</u>: Her standards are very high.", options: ["levels she expects things to reach", "shoes", "heels", "grades at school"], target: { band: 1k, answer: 0 } }
+      - { id: R1-03, text: "<u>basis</u>: This was used as the basis.", options: ["starting point", "main part", "next step", "final result"], target: { band: 1k, answer: 0 } }
+      - { id: R1-04, text: "<u>jump</u>: She tried to jump.", options: ["move quickly off the ground with both feet", "lie on top of the water", "hit a ball", "run as fast as she could"], target: { band: 2k, answer: 0 } }
+      - { id: R1-05, text: "<u>birth</u>: Give me the date of your birth.", options: ["when you were born", "when you got married", "when you arrived here", "when you finished school"], target: { band: 2k, answer: 0 } }
+      - { id: R1-06, text: "<u>dust</u>: The dust was thick.", options: ["dry dirt in the air or on surfaces", "smoke", "mist", "mud"], target: { band: 2k, answer: 0 } }
+      - { id: R1-07, text: "<u>operate</u>: I need someone to operate it.", options: ["make it work", "repair it", "carry it", "sell it"], target: { band: 3k, answer: 0 } }
+      - { id: R1-08, text: "<u>bull</u>: We saw a bull.", options: ["male cow", "large bird", "kind of snake", "farm cart"], target: { band: 3k, answer: 0 } }
+      - { id: R1-09, text: "<u>champion</u>: He was a champion.", options: ["someone who won a competition", "doctor", "brave soldier", "wise old man"], target: { band: 3k, answer: 0 } }
+      - { id: R1-10, text: "<u>weep</u>: She wept all night.", options: ["cried", "waited", "worked", "walked"], target: { band: 4k, answer: 0 } }
+      - { id: R1-11, text: "<u>mare</u>: The mare was tired.", options: ["female horse", "young dog", "old woman", "small boat"], target: { band: 4k, answer: 0 } }
+      - { id: R1-12, text: "<u>candid</u>: Please be candid.", options: ["honest", "careful", "quick", "quiet"], target: { band: 4k, answer: 0 } }
+      - { id: R1-13, text: "<u>thesis</u>: She has completed her thesis.", options: ["long written piece of research", "year of study abroad", "first job", "medical training"], target: { band: 5k, answer: 0 } }
+      - { id: R1-14, text: "<u>veer</u>: The car veered.", options: ["changed direction suddenly", "went faster", "stopped", "made a loud noise"], target: { band: 5k, answer: 0 } }
+      - { id: R1-15, text: "<u>fracture</u>: They found a fracture.", options: ["a break", "a small hole", "a lost ring", "a hidden door"], target: { band: 5k, answer: 0 } }
+      - { id: R1-16, text: "<u>thesaurus</u>: Use the thesaurus.", options: ["book of words with similar meanings", "book of maps", "list of phone numbers", "set of rules"], target: { band: 6k, answer: 0 } }
+      - { id: R1-17, text: "<u>cordial</u>: He was cordial.", options: ["friendly and polite", "angry", "late", "ill"], target: { band: 6k, answer: 0 } }
+      - { id: R1-18, text: "<u>locust</u>: There were hundreds of locusts.", options: ["insects that fly in large groups and eat crops", "small birds", "wild cats", "kinds of fish"], target: { band: 6k, answer: 0 } }
+      - { id: R1-19, text: "<u>ruck</u>: He got caught in the ruck.", options: ["crowd of people pushing together", "storm", "traffic jam", "argument"], target: { band: 7k, answer: 0 } }
+      - { id: R1-20, text: "<u>puritan</u>: He is a puritan.", options: ["person with strict moral rules", "person who loves parties", "religious leader", "wealthy person"], target: { band: 7k, answer: 0 } }
+      - { id: R1-21, text: "<u>azalea</u>: This azalea is very pretty.", options: ["flowering bush", "small bird", "piece of jewelry", "painting"], target: { band: 7k, answer: 0 } }
+      - { id: R1-22, text: "<u>pasture</u>: The pasture was green.", options: ["land where animals feed on grass", "forest", "garden path", "mountain lake"], target: { band: 8k, answer: 0 } }
+      - { id: R1-23, text: "<u>dinghy</u>: We rowed the dinghy.", options: ["small boat", "old car", "cart", "sled"], target: { band: 8k, answer: 0 } }
+      - { id: R1-24, text: "<u>vicinity</u>: It's in the vicinity.", options: ["nearby area", "capital city", "same building", "next room"], target: { band: 8k, answer: 0 } }
+      - { id: R1-25, text: "<u>hessian</u>: She bought some hessian.", options: ["rough, strong cloth", "fine wine", "sweet pastry", "sharp cheese"], target: { band: 9k, answer: 0 } }
+      - { id: R1-26, text: "<u>limpid</u>: The water was limpid.", options: ["clear", "muddy", "frozen", "warm"], target: { band: 9k, answer: 0 } }
+      - { id: R1-27, text: "<u>mystique</u>: The place has a certain mystique.", options: ["special quality that is hard to explain", "unpleasant smell", "famous history", "high price"], target: { band: 9k, answer: 0 } }
+      - { id: R1-28, text: "<u>emir</u>: We saw the emir.", options: ["Muslim ruler or chief", "old church", "royal garden", "sacred book"], target: { band: 10k, answer: 0 } }
+      - { id: R1-29, text: "<u>didactic</u>: The book is very didactic.", options: ["meant to teach, sometimes too obviously", "funny", "long", "expensive"], target: { band: 10k, answer: 0 } }
+      - { id: R1-30, text: "<u>upbeat</u>: I'm feeling really upbeat about it.", options: ["cheerful and hopeful", "nervous", "tired", "unsure"], target: { band: 10k, answer: 0 } }
+      - { id: R1-31, text: "<u>in network</u>: The clinic is in network.", options: ["covered by your insurance plan", "connected to the hospital Wi-Fi", "open twenty-four hours", "accepting new patients"], target: { band: medical, answer: 0 } }
+      - { id: R1-32, text: "<u>itemized</u>: Please send an itemized bill.", options: ["a bill listing each charge separately", "a bill with a discount", "a bill paid in full", "a bill sent by email"], target: { band: medical, answer: 0 } }
+      - { id: R1-33, text: "<u>sedation</u>: You will receive sedation.", options: ["medicine that makes you calm or sleepy", "a vaccine", "a blood transfusion", "a physical exam"], target: { band: medical, answer: 0 } }
+      - { id: R1-34, text: "<u>walk-in</u>: It's a walk-in clinic.", options: ["no appointment is needed", "you must use the stairs", "it is for sports injuries only", "it is inside a pharmacy"], target: { band: medical, answer: 0 } }
+      - { id: R1-35, text: "<u>contagious</u>: The illness is contagious.", options: ["can spread from person to person", "is very painful", "lasts a long time", "needs surgery"], target: { band: medical, answer: 0 } }
+      - { id: R1-36, text: "<u>dilate</u>: The drops will dilate your pupils.", options: ["make them wider", "make them smaller", "make them water", "make them itch"], target: { band: medical, answer: 0 } }
+      - { id: R1-37, text: "<u>explanation of benefits</u>: You will get an explanation of benefits.", options: ["a statement from the insurer showing what was covered", "a list of free services", "a receipt from the pharmacy", "a letter from your employer"], target: { band: medical, answer: 0 } }
+      - { id: R1-38, text: "<u>over the phone</u>: They can renew it over the phone.", options: ["by calling, without a visit", "at the front desk", "only by mail", "through the app"], target: { band: medical, answer: 0 } }
+      - { id: R1-39, text: "<u>swelling</u>: Watch for swelling.", options: ["a part of the body getting bigger", "a high temperature", "a skin rash", "a loss of appetite"], target: { band: medical, answer: 0 } }
+      - { id: R1-40, text: "<u>physical</u>: She needs a physical before camp.", options: ["a general medical check-up", "an exercise class", "a vaccination", "a dental cleaning"], target: { band: medical, answer: 0 } }

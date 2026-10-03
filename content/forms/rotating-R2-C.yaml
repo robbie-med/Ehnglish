@@ -1,0 +1,64 @@
+# Rotating module R2, form C (~9 min): a patient-information passage (the rotation alternates:
+# A patient, B academic, C patient), six questions, two C-texts. Drafted to spec; native-speaker
+# edit pending (REVIEW.md).
+id: rotating-R2-C
+version: 1
+kind: rotating
+title:
+  en: "Reading & grammar — form C"
+  ko: "읽기와 문법 — C형"
+tasks:
+  - id: R2-read
+    type: reading_passage
+    title: { en: "Timed reading", ko: "시간 측정 읽기" }
+    instructions:
+      en: "Read the text once at your normal pace, as if you had received it from your pharmacy. Press Done as soon as you finish. Questions follow; you will not see the text again."
+      ko: "약국에서 받은 안내문이라고 생각하고 평소 속도로 한 번 읽으세요. 다 읽으면 바로 완료를 누르세요. 그다음 문제가 나오며, 글은 다시 볼 수 없습니다."
+    timing: { prep_s: 0, respond_s: 300 }
+    target: { questions: R2-q, genre: patient_information }
+    items:
+      - id: R2-passage
+        text: >-
+          Patient information: amoxicillin 500 mg capsules. Take one capsule three times a day, about
+          eight hours apart, for ten days. Keep taking it until the capsules are finished, even if you
+          feel better after a few days; stopping early lets the strongest bacteria survive and makes the
+          infection harder to treat next time. You may take it with or without food, but taking it with a
+          meal reduces stomach upset. If you miss a dose, take it as soon as you remember, unless the next
+          dose is due within two hours, in which case skip the missed one. Never take two doses at once.
+          Common side effects are mild nausea, loose stools, and a metallic taste; these usually pass. Stop
+          taking the medicine and seek care right away if you develop hives, swelling of the face or
+          throat, trouble breathing, or severe watery diarrhea, which can be a sign of a serious bowel
+          infection. Tell the pharmacist if you take blood thinners or birth control pills, because this
+          antibiotic can affect both. Store the capsules at room temperature, away from the bathroom's
+          moisture, and keep them out of reach of children. This prescription cannot be refilled; if your
+          symptoms have not improved after three days, contact your doctor rather than the pharmacy.
+        target: { words: 250 }
+
+  - id: R2-q
+    type: multiple_choice
+    title: { en: "Questions about the text", ko: "글에 대한 문제" }
+    instructions: { en: "Answer from memory. Press 1–4 or click.", ko: "기억을 바탕으로 답하세요. 1~4 키를 누르거나 클릭하세요." }
+    timing: { prep_s: 0, respond_s: 45 }
+    target: { genre: patient_information }
+    items:
+      - { id: R2-q1, text: "How should the capsules be taken?", options: ["One, three times a day, for ten days", "Two in the morning for five days", "One a day until you feel better", "Three at bedtime"], target: { answer: 0 } }
+      - { id: R2-q2, text: "Why must you finish the course even if you feel better?", options: ["Stopping early lets the strongest bacteria survive", "The pharmacy will not take them back", "The capsules expire quickly", "Your insurance requires it"], target: { answer: 0 } }
+      - { id: R2-q3, text: "What should you do if you miss a dose and the next one is due in an hour?", options: ["Skip the missed dose", "Take two doses at once", "Take the missed dose and delay the next", "Call the doctor"], target: { answer: 0 } }
+      - { id: R2-q4, text: "Which symptom means you should stop and seek care right away?", options: ["Swelling of the face or throat", "A metallic taste", "Mild nausea", "Loose stools"], target: { answer: 0 } }
+      - { id: R2-q5, text: "Why should you tell the pharmacist about birth control pills?", options: ["The antibiotic can affect them", "They must be taken at the same time", "They are also 500 mg", "They cause hives"], target: { answer: 0 } }
+      - { id: R2-q6, text: "What should you do if you are not better after three days?", options: ["Contact your doctor", "Ask the pharmacy for a refill", "Double the dose", "Stop and wait a week"], target: { answer: 0 } }
+
+  - id: R2-ctest
+    type: c_test
+    title: { en: "Complete the words", ko: "단어 완성하기" }
+    instructions:
+      en: "In each text, parts of some words are missing. Type the missing letters so that each word fits the sentence. Two texts; take your time but keep moving."
+      ko: "각 글에서 일부 단어의 뒷부분이 빠져 있습니다. 문장에 맞도록 빠진 글자를 입력하세요. 글 두 편입니다. 서두르지 않아도 되지만 계속 진행하세요."
+    timing: { prep_s: 0, respond_s: 240 }
+    items:
+      - id: R2-c1
+        text: "The waiting room was quiet when we arrived. A nu{rse} called o{ur} name wit{hin} a f{ew} minutes a{nd} led u{s} down t{he} hall. S{he} checked m{y} daughter's tempe{rature}, asked ab{out} her sym{ptoms}, and wr{ote} everything in{to} the comp{uter} before t{he} doctor ca{me} in to exa{mine} her th{roat} and ea{rs}."
+        target: { blanks: 20 }
+      - id: R2-c2
+        text: "Insurance letters can be confusing. The fi{rst} page usu{ally} says wh{at} the pl{an} paid a{nd} what y{ou} still o{we}, but t{he} numbers d{o} not alw{ays} match t{he} bill fr{om} the cli{nic}. If th{ey} differ, ca{ll} the insu{rer} first, bec{ause} the cli{nic} can on{ly} explain its o{wn} charges."
+        target: { blanks: 20 }
