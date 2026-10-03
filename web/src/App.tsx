@@ -30,6 +30,7 @@ export default function App() {
           <Link to="/"><button className="link" data-testid="nav-home">{t('nav.tests')}</button></Link>
           <Link to="/dashboard"><button className="link" data-testid="nav-dashboard">{t('nav.dashboard')}</button></Link>
           {email && <span className="who" data-testid="who">{email}</span>}
+          <span className="who" title="build" data-testid="build" style={{ opacity: 0.6 }}>{__BUILD_ID__.split('+')[1]?.split('.')[0]}</span>
           <button className="link" onClick={() => setLang(other)} aria-label="language">{t('nav.language')}</button>
         </div>
       </header>

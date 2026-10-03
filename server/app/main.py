@@ -38,12 +38,21 @@ def create_app() -> FastAPI:
         index = Path(dist) / "index.html"
         app.mount("/assets", StaticFiles(directory=Path(dist) / "assets"), name="assets")
 
+        no_store = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache"}
+
         @app.get("/{path:path}", include_in_schema=False)
         def spa(path: str, request: Request):
             candidate = Path(dist) / path
             if path and candidate.is_file():
-                return FileResponse(candidate)
-            return FileResponse(index)
+                # Hashed assets may be cached forever; the worker, manifest and build marker must not be.
+                fresh = path in (
+                    "sw.js",
+                    "manifest.webmanifest",
+                    "__build",
+                    "registerSW.js",
+                ) or path.startswith("workbox-")
+                return FileResponse(candidate, headers=no_store if fresh else None)
+            return FileResponse(index, headers=no_store)
 
     return app
 
