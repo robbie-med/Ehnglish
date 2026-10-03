@@ -10,7 +10,7 @@ import type { EventIn, Form, SessionOut } from '../types';
 import { enqueueUpload, processQueue } from '../upload/queue';
 import { sha256Hex } from '../upload/sha256';
 import { useLang } from '../useLang';
-import { countItems, effectiveTiming, hasReview, initialState, reduce, taskKind, type RunnerState } from './machine';
+import { countItems, ctestSegments, effectiveTiming, hasReview, initialState, reduce, shuffledOrder, taskKind, type RunnerState } from './machine';
 import { useCountdown } from './useCountdown';
 
 interface Props { form: Form; session: SessionOut; onFinished: () => void }
@@ -28,6 +28,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const [last, setLast] = useState<LastTake | null>(null);
   const [busy, setBusy] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
+  const [blanks, setBlanks] = useState<string[]>([]);
   const takeIdRef = useRef<string | null>(null);
   const eventsRef = useRef<EventIn[]>([]);
   const keysRef = useRef(new KeystrokeLogger());
@@ -176,9 +177,59 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
       }
       if (!item?.audio) mark('prompt_end'); // audio prompts already marked it when playback ended
       setRating(item?.scale ? Math.round((item.scale.min + item.scale.max) / 2) : null);
+      setBlanks(item?.text && task?.type === 'c_test' ? ctestSegments(item.text).filter((x) => x.blank).map(() => '') : []);
     }
     return () => keysRef.current.detach();
   }, [state.phase, state.itemIdx, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function submitChoice(value: string, eventName = 'answer') {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const takeId = await waitForTakeId();
+      mark(eventName, { value });
+      await api.submitTyped(takeId, value, []);
+      await api.postEvents(takeId, eventsRef.current).catch(() => undefined);
+      takeIdRef.current = null;
+      dispatch({ type: 'RESPONSE_DONE' });
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const order = useMemo(
+    () => (item?.options ? shuffledOrder(item.options.length, `${session.id}:${item.id}`) : []),
+    [item?.id, item?.options, session.id],
+  );
+
+  useEffect(() => {
+    if (state.phase !== 'respond' || !task) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (task.type === 'multiple_choice' && /^[1-9]$/.test(e.key)) {
+        const pos = Number(e.key) - 1;
+        if (pos < order.length) void submitChoice(String(order[pos]), 'submit');
+      }
+      if (task.type === 'axb') {
+        if (e.key === 'f' || e.key === 'F' || e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') void submitChoice('A');
+        if (e.key === 'j' || e.key === 'J' || e.key === 'b' || e.key === 'B' || e.key === 'ArrowRight') void submitChoice('B');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [state.phase, state.itemIdx, busy, order]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Task-level stimulus (conversation / lecture / sermon clip): play once, then the items.
+  useEffect(() => {
+    if (state.phase !== 'stimulus' || !task?.audio) return;
+    let cancelled = false;
+    const el = new Audio(`/api/forms/${encodeURIComponent(form.id)}/audio/${task.audio}`);
+    el.onended = () => { if (!cancelled) { mark('stimulus_end'); dispatch({ type: 'STIMULUS_DONE' }); } };
+    el.onerror = () => fail(new Error(`stimulus audio failed: ${task.audio}`));
+    el.play().catch(fail);
+    return () => { cancelled = true; el.pause(); };
+  }, [state.phase, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function answerLexical(answer: 'yes' | 'no') {
     if (busy) return;
@@ -209,7 +260,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
 
   async function submitTyped() {
     const el = textRef.current;
-    const value = el ? el.value : rating !== null ? String(rating) : null;
+    const value = task?.type === 'c_test' ? blanks.join('\u241f') : el ? el.value : rating !== null ? String(rating) : null;
     if (value === null) return;
     setBusy(true);
     try {
@@ -306,8 +357,56 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
+      {state.phase === 'stimulus' && (
+        <div className="card stack"><div className="countdown" data-testid="stimulus">🎧 {t('runner.listen')}</div><p className="muted">{t('runner.listen_once')}</p></div>
+      )}
+
       {kind === 'typed' && state.phase === 'prompt' && (
         <div className="card stack"><div className="countdown" data-testid="listening">🎧 {t('runner.listen')}</div></div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'multiple_choice' && item.options && (
+        <div className="card stack">
+          {task.text && <p data-testid="task-text" style={{ whiteSpace: 'pre-wrap' }}>{task.text}</p>}
+          <p className="big" data-testid="item-text" dangerouslySetInnerHTML={{ __html: item.text ?? '' }} />
+          <div className="muted">{t('runner.choose')}</div>
+          <div className="stack">
+            {order.map((orig, pos) => (
+              <button key={orig} onClick={() => submitChoice(String(orig), 'submit')} disabled={busy} data-testid={`option-${orig}`} style={{ textAlign: 'left' }}>
+                <strong>{pos + 1}.</strong> {item.options![orig]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'reading_passage' && (
+        <div className="card stack">
+          <p data-testid="passage" style={{ whiteSpace: 'pre-wrap', fontSize: '1.1rem', lineHeight: 1.7 }}>{item.text}</p>
+          <button className="primary" onClick={() => submitChoice('', 'submit')} disabled={busy} data-testid="done-reading">{t('runner.done_reading')}</button>
+        </div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'c_test' && (
+        <div className="card stack">
+          <div className="muted">{t('runner.fill_blanks')} · {t('common.seconds', { n: typedLeft })}</div>
+          <p data-testid="ctest" style={{ fontSize: '1.15rem', lineHeight: 2.2 }}>
+            {(() => { let bi = -1; return ctestSegments(item.text ?? '').map((seg, i) => seg.blank
+              ? (() => { const idx = ++bi; return <input key={i} type="text" value={blanks[idx] ?? ''} size={Math.max(2, seg.len ?? 3)} autoComplete="off" spellCheck={false} data-testid={`blank-${idx}`} style={{ font: 'inherit', padding: '2px 4px', margin: '0 2px', borderBottom: '2px solid var(--accent)', borderTop: 'none', borderLeft: 'none', borderRight: 'none', background: 'transparent', color: 'inherit' }} onChange={(e) => setBlanks((b) => { const n = [...b]; n[idx] = e.target.value; return n; })} />; })()
+              : <span key={i}>{seg.text}</span>); })()}
+          </p>
+          <button className="primary" onClick={submitTyped} disabled={busy} data-testid="done-typing">{t('runner.done_typing')}</button>
+        </div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'axb' && (
+        <div className="card stack" style={{ textAlign: 'center' }}>
+          <p className="big" data-testid="axb-question">{t('runner.axb_question')}</p>
+          <div className="row" style={{ justifyContent: 'center', gap: 32 }}>
+            <button onClick={() => submitChoice('A')} disabled={busy} data-testid="axb-a" style={{ minWidth: 140, fontSize: '1.4rem' }}>{t('runner.a')} <span className="muted">(F)</span></button>
+            <button onClick={() => submitChoice('B')} disabled={busy} data-testid="axb-b" style={{ minWidth: 140, fontSize: '1.4rem' }}>{t('runner.b')} <span className="muted">(J)</span></button>
+          </div>
+        </div>
       )}
 
       {kind === 'typed' && state.phase === 'respond' && task.type === 'rating' && item.scale && (
@@ -334,7 +433,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
-      {kind === 'typed' && state.phase === 'respond' && task.type !== 'rating' && task.type !== 'lexical_decision' && (
+      {kind === 'typed' && state.phase === 'respond' && !['rating', 'lexical_decision', 'multiple_choice', 'reading_passage', 'c_test', 'axb'].includes(task.type) && (
         <div className="card stack">
           {task.type === 'copy_typing' && <><div className="muted">{t('runner.copy_this')}</div><p className="big" data-testid="copy-text" style={{ userSelect: 'none' }}>{item.text}</p></>}
           {item.prompt && <p className="big" data-testid="item-prompt">{item.prompt[lang]}</p>}

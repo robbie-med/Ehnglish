@@ -79,7 +79,14 @@
     "yes": "YES",
     "no": "NO",
     "copy_this": "이 글을 따라 입력하세요:",
-    "practice": "연습"
+    "practice": "연습",
+    "listen_once": "잘 들으세요. 한 번만 들려줍니다.",
+    "choose": "하나를 고르세요 (1~4 키)",
+    "done_reading": "다 읽었어요",
+    "fill_blanks": "빠진 글자를 입력하세요",
+    "axb_question": "X는 A와 같았나요, B와 같았나요?",
+    "a": "A",
+    "b": "B"
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",

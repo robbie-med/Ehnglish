@@ -79,7 +79,14 @@
     "yes": "YES",
     "no": "NO",
     "copy_this": "Copy this text:",
-    "practice": "practice"
+    "practice": "practice",
+    "listen_once": "Listen carefully. You will hear this once.",
+    "choose": "Choose one (press 1–4)",
+    "done_reading": "Done reading",
+    "fill_blanks": "Type the missing letters",
+    "axb_question": "Was X the same as A or B?",
+    "a": "A",
+    "b": "B"
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",

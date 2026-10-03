@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Form } from '../types';
-import { countItems, effectiveTiming, hasReview, initialState, reduce, taskKind, type RunnerState } from './machine';
+import { countItems, ctestSegments, effectiveTiming, hasReview, initialState, reduce, shuffledOrder, taskKind, type RunnerState } from './machine';
 
 const form: Form = {
   id: 'f', version: 1, kind: 'dummy', title: { en: 'F', ko: 'F' },
@@ -71,5 +71,27 @@ describe('runner machine', () => {
     expect(hasReview(form.tasks[0])).toBe(true);
     expect(hasReview(form.tasks[1])).toBe(false);
     expect(countItems(form)).toBe(6);
+  });
+
+  it('plays a task-level stimulus before the first item', () => {
+    const f: Form = { ...form, tasks: [{ ...form.tasks[3], audio: 'audio/x/clip.wav', type: 'multiple_choice', items: [{ id: 'q1', text: 'q', options: ['a', 'b'], target: { answer: 0 } }] }] };
+    let s = reduce(f, initialState, { type: 'BEGIN' });
+    s = reduce(f, s, { type: 'START_TASK' });
+    expect(s.phase).toBe('stimulus');
+    s = reduce(f, s, { type: 'STIMULUS_DONE' });
+    expect(s.phase).toBe('respond');
+  });
+
+  it('shuffles options deterministically and covers all indices', () => {
+    const a = shuffledOrder(4, 'sess:item');
+    expect([...a].sort()).toEqual([0, 1, 2, 3]);
+    expect(shuffledOrder(4, 'sess:item')).toEqual(a);
+    expect(shuffledOrder(4, 'other:item')).not.toEqual(shuffledOrder(4, 'sess:item2'));
+  });
+
+  it('splits c-test text into segments', () => {
+    const segs = ctestSegments('They wo{rry} about pa{in}.');
+    expect(segs.filter((x) => x.blank).map((x) => x.len)).toEqual([3, 2]);
+    expect(segs.map((x) => x.text).join('')).toBe('They wo about pa.');
   });
 });

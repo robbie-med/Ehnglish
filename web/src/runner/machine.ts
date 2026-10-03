@@ -1,7 +1,7 @@
 /** Pure state machine for the timed task runner. Driven entirely by the form definition. */
 import type { Form, Item, Task, Timing } from '../types';
 
-export type Phase = 'intro' | 'task_intro' | 'prep' | 'prompt' | 'respond' | 'review' | 'done';
+export type Phase = 'intro' | 'task_intro' | 'stimulus' | 'prep' | 'prompt' | 'respond' | 'review' | 'done';
 
 export interface RunnerState {
   phase: Phase;
@@ -13,6 +13,7 @@ export interface RunnerState {
 export type Action =
   | { type: 'BEGIN' }
   | { type: 'START_TASK' }
+  | { type: 'STIMULUS_DONE' }
   | { type: 'PREP_DONE' }
   | { type: 'PROMPT_DONE' }
   | { type: 'RESPONSE_DONE' }
@@ -67,6 +68,10 @@ export function reduce(form: Form, s: RunnerState, a: Action): RunnerState {
       return form.tasks.length ? { ...s, phase: 'task_intro' } : { ...s, phase: 'done' };
     case 'START_TASK':
       if (s.phase !== 'task_intro') return s;
+      // A task-level stimulus (clip) plays once before the first item.
+      return task.audio ? { ...s, phase: 'stimulus' } : enterItem(task, s);
+    case 'STIMULUS_DONE':
+      if (s.phase !== 'stimulus') return s;
       return enterItem(task, s);
     case 'PREP_DONE':
       if (s.phase !== 'prep') return s;
@@ -91,4 +96,38 @@ export function reduce(form: Form, s: RunnerState, a: Action): RunnerState {
 /** Total number of items, for progress display. */
 export function countItems(form: Form): number {
   return form.tasks.reduce((n, t) => n + t.items.length, 0);
+}
+
+/** Deterministic option order per (session, item) so the correct answer's position never leaks
+ *  from the YAML and never changes on reload. Returns original indices in display order. */
+export function shuffledOrder(n: number, seed: string): number[] {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  const order = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+    const j = h % (i + 1);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
+export interface CtestSegment { text: string; blank: boolean; len?: number }
+
+/** C-test: split "wo{rry} about" into segments the UI renders as text + inputs. */
+export function ctestSegments(text: string): CtestSegment[] {
+  const out: CtestSegment[] = [];
+  const re = /\{([^{}]+)\}/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push({ text: text.slice(last, m.index), blank: false });
+    out.push({ text: '', blank: true, len: m[1].length });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), blank: false });
+  return out;
 }

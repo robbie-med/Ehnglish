@@ -87,6 +87,32 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   await expect(page.getByTestId('copy-text')).toContainText('병원');
   await page.getByTestId('typed-input').fill('병원에서 전화가 왔다.');
   await page.getByTestId('done-typing').click();
+  // R1 vocabulary: options are shuffled, the testid carries the original index.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('item-text')).toContainText('fracture');
+  await page.getByTestId('option-0').click();
+  // R3 conversation: stimulus clip plays once, then the question (answered by key).
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('stimulus')).toBeVisible();
+  await expect(page.getByTestId('item-text')).toContainText('hear', { timeout: 10_000 });
+  await page.getByTestId('option-1').click(); // wrong on purpose
+  // R2 reading: passage, Done, then a question.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('passage')).toContainText('insurance');
+  await page.waitForTimeout(1200);
+  await page.getByTestId('done-reading').click();
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await page.getByTestId('option-0').click();
+  // R2 c-test: three blanks.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await page.getByTestId('blank-0').fill('ked');
+  await page.getByTestId('blank-1').fill('o');
+  await page.getByTestId('blank-2').fill('x');
+  await page.getByTestId('done-typing').click();
+  // R3 AXB: audio prompt then a key answer.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('axb-question')).toBeVisible({ timeout: 10_000 });
+  await page.keyboard.press('j');
   // W1 typed.
   await page.getByTestId('start-task').click({ timeout: 15_000 });
   await page.getByTestId('typed-input').pressSequentially('I called about my refill.', { delay: 10 });
@@ -154,5 +180,12 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   expect(results.dictation.result.mean_wer.phone).toBe(0);
   expect(results.ratings.result.C7.mean).toBe(8);
   expect(results.typing.result.ko.chars).toBe(12);
-  expect(results.completion.result.items_done).toBe(13);
+  expect(results.completion.result.items_done).toBe(19);
+  expect(results.vocabulary.result.by_band['10k'].pct).toBe(100);
+  expect(results.comprehension.result['R3-conv'].pct).toBe(0);
+  expect(results.comprehension.result['R3-conv'].genre).toBe('conversation');
+  expect(results.reading.result['R2-passage'].wpm).toBeGreaterThan(0);
+  expect(results.reading.result['R2-passage'].comprehension_pct).toBe(100);
+  expect(results.c_test.result.correct).toBe(2);
+  expect(results.axb.result.pct).toBe(100);
 });
