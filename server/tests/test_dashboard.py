@@ -4,6 +4,7 @@ dashboard / export / viewer endpoints."""
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app import metrics, processing
 from app.config import get_settings
@@ -295,3 +296,40 @@ def test_dashboard_reports_noise_and_calibration(client: TestClient, db, monkeyp
     assert ei["trend"]["noise"] == dash["retest_noise"]["ei_pct_syllables"]
     assert ei["trend"]["detectable"] is False  # identical sittings
     assert dash["calibration"] == {"external": [], "offsets": {}}
+
+
+def test_rescore_enqueues_jobs_and_keeps_old_results(client: TestClient, db, monkeypatch) -> None:
+    from sqlalchemy import func
+
+    from app import rescore
+    from app.models import ProcessingResult, SessionResult
+
+    _fake_engines(monkeypatch)
+    sid = _core_session(client, db)
+    before = db.scalar(select(func.count(ProcessingResult.id)))
+    # New pipeline version → new rows, old rows untouched
+    base = get_settings()
+    from app.main import app
+
+    app.dependency_overrides[get_settings] = lambda: base.model_copy(
+        update={"pipeline_version": "test.0.2"}
+    )
+    monkeypatch.setattr(
+        "app.processing.get_settings",
+        lambda: base.model_copy(update={"pipeline_version": "test.0.2"}),
+    )
+    out = rescore.enqueue_rescore(db, session_id=__import__("uuid").UUID(sid))
+    assert out["sessions"] == 1 and out["takes"] == 6
+    _drain(db)
+    after = db.scalar(select(func.count(ProcessingResult.id)))
+    assert after > before
+    versions = {v for (v,) in db.execute(select(ProcessingResult.pipeline_version).distinct())}
+    assert versions == {"test.0.1", "test.0.2"}
+    assert (
+        db.scalar(
+            select(func.count(SessionResult.id)).where(SessionResult.pipeline_version == "test.0.2")
+        )
+        >= 1
+    )
+    exp = client.get(f"/api/sessions/{sid}/export").json()
+    assert exp["pipeline_versions"] == ["test.0.1", "test.0.2"]

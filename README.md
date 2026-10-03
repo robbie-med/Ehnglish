@@ -128,3 +128,7 @@ Prompt audio effects (`fx:` on an item, rendered once by `content/build_audio.py
 trip, band-limited hiss), `noise_snr_db` + `noise_kind` (pink or babble at a fixed SNR, seeded).
 
 Prompt audio for real forms is built once with `content/build_audio.py` (Azure TTS) and committed.
+
+**Re-scoring.** After any metric change: bump `EHNGLISH_PIPELINE_VERSION`, redeploy, then
+`docker compose -f deploy/docker-compose.yml exec worker python -m app.rescore` (optionally
+`--form core-A` or `--session <id>`). Old result rows stay, tagged with their version.
