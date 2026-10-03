@@ -180,6 +180,33 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
     return () => keysRef.current.detach();
   }, [state.phase, state.itemIdx, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function answerLexical(answer: 'yes' | 'no') {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const takeId = await waitForTakeId();
+      mark('answer', { answer });
+      await api.submitTyped(takeId, answer, []);
+      await api.postEvents(takeId, eventsRef.current).catch(() => undefined);
+      takeIdRef.current = null;
+      dispatch({ type: 'RESPONSE_DONE' });
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (state.phase !== 'respond' || task?.type !== 'lexical_decision') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F' || e.key === 'ArrowLeft') void answerLexical('no');
+      if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowRight') void answerLexical('yes');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [state.phase, state.itemIdx, busy]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function submitTyped() {
     const el = textRef.current;
     const value = el ? el.value : rating !== null ? String(rating) : null;
@@ -296,12 +323,24 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         </div>
       )}
 
-      {kind === 'typed' && state.phase === 'respond' && task.type !== 'rating' && (
+      {kind === 'typed' && state.phase === 'respond' && task.type === 'lexical_decision' && (
+        <div className="card stack" style={{ textAlign: 'center' }}>
+          <div className="muted">{t('runner.is_word')}{item.target?.practice ? ` · ${t('runner.practice')}` : ''}</div>
+          <p className="countdown" data-testid="lexical-item" style={{ fontSize: '2.6rem', letterSpacing: '0.04em' }}>{item.text}</p>
+          <div className="row" style={{ justifyContent: 'center', gap: 32 }}>
+            <button onClick={() => answerLexical('no')} disabled={busy} data-testid="lexical-no" style={{ minWidth: 140, fontSize: '1.3rem' }}>{t('runner.no')} <span className="muted">(F)</span></button>
+            <button className="primary" onClick={() => answerLexical('yes')} disabled={busy} data-testid="lexical-yes" style={{ minWidth: 140, fontSize: '1.3rem' }}>{t('runner.yes')} <span style={{ opacity: 0.7 }}>(J)</span></button>
+          </div>
+        </div>
+      )}
+
+      {kind === 'typed' && state.phase === 'respond' && task.type !== 'rating' && task.type !== 'lexical_decision' && (
         <div className="card stack">
+          {task.type === 'copy_typing' && <><div className="muted">{t('runner.copy_this')}</div><p className="big" data-testid="copy-text" style={{ userSelect: 'none' }}>{item.text}</p></>}
           {item.prompt && <p className="big" data-testid="item-prompt">{item.prompt[lang]}</p>}
           {task.type === 'dictation' && <p className="big" data-testid="item-prompt">{t('runner.type_what_you_heard')}</p>}
           <div className="muted">{t('common.seconds', { n: typedLeft })}</div>
-          <textarea ref={textRef} placeholder={t('runner.type_here')} data-testid="typed-input" spellCheck={false} autoCorrect="off" autoComplete="off" />
+          <textarea ref={textRef} placeholder={t('runner.type_here')} data-testid="typed-input" spellCheck={false} autoCorrect="off" autoComplete="off" lang={item.target?.language === 'ko' ? 'ko' : 'en'} onPaste={(e) => e.preventDefault()} />
           <button className="primary" onClick={submitTyped} disabled={busy} data-testid="done-typing">{t('runner.done_typing')}</button>
         </div>
       )}

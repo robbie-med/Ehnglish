@@ -74,7 +74,12 @@
     "scenario": "Scenario",
     "your_turn": "Your turn",
     "next": "Next",
-    "type_what_you_heard": "Type exactly what you heard"
+    "type_what_you_heard": "Type exactly what you heard",
+    "is_word": "Is this an English word?",
+    "yes": "YES",
+    "no": "NO",
+    "copy_this": "Copy this text:",
+    "practice": "practice"
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",

@@ -76,6 +76,17 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   await page.getByTestId('rating-input').fill('8');
   await expect(page.getByTestId('rating-value')).toHaveText('8');
   await page.getByTestId('done-typing').click();
+  // B4 lexical decision: one by button, one by key.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('lexical-item')).toHaveText('scornful');
+  await page.getByTestId('lexical-yes').click();
+  await expect(page.getByTestId('lexical-item')).toHaveText('kermshaw', { timeout: 10_000 });
+  await page.keyboard.press('f');
+  // B5 copy typing in Korean.
+  await page.getByTestId('start-task').click({ timeout: 15_000 });
+  await expect(page.getByTestId('copy-text')).toContainText('병원');
+  await page.getByTestId('typed-input').fill('병원에서 전화가 왔다.');
+  await page.getByTestId('done-typing').click();
   // W1 typed.
   await page.getByTestId('start-task').click({ timeout: 15_000 });
   await page.getByTestId('typed-input').pressSequentially('I called about my refill.', { delay: 10 });
@@ -97,6 +108,8 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   expect(byTask('C4')).toHaveLength(1);
   expect(byTask('C6')[0].text).toContain('prescription');
   expect(byTask('C7')[0].text).toBe('8');
+  expect(byTask('B4').map((t) => t.text).sort()).toEqual(['no', 'yes']);
+  expect(byTask('B5')[0].text).toBe('병원에서 전화가 왔다.');
   for (const t of takes.filter((t) => t.kind === 'audio' && t.status !== 'rejected')) {
     expect(t.status).toBe('finalized');
     expect(t.duration_s).toBeGreaterThan(0.8);
@@ -104,7 +117,7 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
 
   // Run the worker to completion (wav_probe + process_take per audio take).
   execFileSync('uv', ['run', 'python', '-c',
-    'from app.db import get_sessionmaker\nfrom app import worker\nwith get_sessionmaker()() as db:\n  n=0\n  while worker.run_once(db): n+=1\nprint("ran", n)'],
+    'from datetime import UTC, datetime\nfrom sqlalchemy import select\nfrom app.db import get_sessionmaker\nfrom app import worker\nwith get_sessionmaker()() as db:\n  n=0\n  for _ in range(20):\n    while worker.run_once(db): n+=1\n    q=[j for j in db.scalars(select(worker.Job).where(worker.Job.status=="queued")).all()]\n    if not q: break\n    for j in q: j.run_after=datetime.now(UTC)\n    db.commit()\nprint("ran", n)'],
     { cwd: SERVER_DIR, env: ENV, stdio: 'pipe' });
   const after = await (await request.get(`${API}/sessions/${sessionId}`)).json();
   const kinds = (t: Record<string, any>) => Object.fromEntries(t.results.map((r: any) => [r.kind, r.result]));
@@ -129,4 +142,17 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   expect(wer.condition).toBe('phone');
   expect(wer.exact).toBe(true); // "20" normalises to "twenty"
   expect(kinds(typedAfter.find((t) => t.task_id === 'C7')!)).toEqual({});
+  for (const t of typedAfter.filter((t) => t.task_id === 'B4')) {
+    const ld = kinds(t).lexical_decision;
+    expect(ld.correct).toBe(true);
+    expect(ld.rt_ms).toBeGreaterThan(0);
+  }
+  expect(kinds(typedAfter.find((t) => t.task_id === 'B5')!).typing.accuracy).toBe(1);
+  // Session summary (the session was marked done when the form ended).
+  const results = await (await request.get(`${API}/sessions/${sessionId}/results`)).json();
+  expect(results.lextale.result.score).toBe(100);
+  expect(results.dictation.result.mean_wer.phone).toBe(0);
+  expect(results.ratings.result.C7.mean).toBe(8);
+  expect(results.typing.result.ko.chars).toBe(12);
+  expect(results.completion.result.items_done).toBe(13);
 });

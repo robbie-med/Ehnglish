@@ -74,7 +74,12 @@
     "scenario": "상황",
     "your_turn": "말할 차례",
     "next": "다음",
-    "type_what_you_heard": "들은 대로 정확히 입력하세요"
+    "type_what_you_heard": "들은 대로 정확히 입력하세요",
+    "is_word": "영어 단어인가요?",
+    "yes": "YES",
+    "no": "NO",
+    "copy_this": "이 글을 따라 입력하세요:",
+    "practice": "연습"
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",
