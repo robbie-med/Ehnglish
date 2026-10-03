@@ -6,6 +6,7 @@ import { evaluateLeak } from '../audio/headphones';
 import { analyzeTake } from '../audio/quality';
 import { getRecorder, listMics, type PcmRecorder } from '../audio/recorder';
 import { clientInfo, loadSetup, saveSetup, setupComplete, type SetupData } from '../setup/store';
+import { useProgress } from '../runner/useCountdown';
 
 const NOISE_SECONDS = 10;
 
@@ -20,6 +21,9 @@ export default function Setup() {
   const [rec, setRec] = useState<PcmRecorder | null>(null);
   const [level, setLevel] = useState(-120);
   const [busy, setBusy] = useState<'noise' | 'tone' | 'start' | null>(null);
+  const noiseSeconds = quick ? 1 : NOISE_SECONDS;
+  const noiseProgress = useProgress(noiseSeconds, busy === 'noise');
+  const toneProgress = useProgress(1.2, busy === 'tone');
   const [error, setError] = useState<string | null>(null);
   const silenceRef = useRef<Int16Array | null>(null);
 
@@ -113,6 +117,12 @@ export default function Setup() {
           <button onClick={measureNoise} disabled={!rec || busy !== null} data-testid="measure-noise">
             {busy === 'noise' ? t('setup.measuring') : t('setup.measure_noise')}
           </button>
+          {busy === 'noise' && (
+            <div style={{ flex: '1 1 160px' }}>
+              <div className="meter"><div style={{ width: `${noiseProgress.pct}%`, transition: 'width 100ms linear' }} /></div>
+              <div className="muted" data-testid="noise-countdown">{t('setup.seconds_left', { s: noiseProgress.left.toFixed(1) })}</div>
+            </div>
+          )}
           {setup.noise_floor && (
             <span data-testid="noise-result">{t('setup.noise_result', { dbfs: setup.noise_floor.rms_dbfs ?? '—' })}</span>
           )}
@@ -126,12 +136,17 @@ export default function Setup() {
           <button onClick={headphoneCheck} disabled={!rec || !setup.noise_floor || busy !== null} data-testid="headphone-check">
             {busy === 'tone' ? t('setup.headphone_running') : t('setup.run_headphone')}
           </button>
+          {busy === 'tone' && <div className="meter" style={{ flex: '1 1 120px' }}><div style={{ width: `${toneProgress.pct}%`, transition: 'width 100ms linear' }} /></div>}
           {setup.headphones && (
             <span data-testid="headphone-result" className={setup.headphones.ok ? 'status-ok' : 'status-bad'}>
               {setup.headphones.ok
-                ? t('setup.headphone_ok', { db: setup.headphones.leak_db })
-                : t('setup.headphone_leak', { db: setup.headphones.leak_db })}
+                ? t('setup.headphone_ok', { dbfs: setup.headphones.tone_dbfs })
+                : t('setup.headphone_leak', { dbfs: setup.headphones.tone_dbfs, db: setup.headphones.leak_db })}
+              {setup.headphones.override && ' · override'}
             </span>
+          )}
+          {setup.headphones && !setup.headphones.ok && (
+            <button onClick={() => update({ headphones: { ...setup.headphones!, ok: true, override: true } })} data-testid="headphone-override">{t('setup.continue_anyway')}</button>
           )}
         </div>
       </div>

@@ -11,7 +11,7 @@ import { enqueueUpload, processQueue } from '../upload/queue';
 import { sha256Hex } from '../upload/sha256';
 import { useLang } from '../useLang';
 import { countItems, ctestSegments, effectiveTiming, hasReview, initialState, reduce, shuffledOrder, taskKind, type RunnerState } from './machine';
-import { useCountdown } from './useCountdown';
+import { useCountdown, useProgress } from './useCountdown';
 
 interface Props { form: Form; session: SessionOut; onFinished: () => void }
 
@@ -287,6 +287,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   }, [state.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const prepLeft = useCountdown(timing?.prep_s ?? 0, state.phase === 'prep', () => dispatch({ type: 'PREP_DONE' }));
+  const recProgress = useProgress(timing?.respond_s ?? 0, state.phase === 'respond' && kind === 'audio');
   const respondLeft = useCountdown(timing?.respond_s ?? 0, state.phase === 'respond' && kind === 'audio', () => undefined);
   const typedLeft = useCountdown(timing?.respond_s ?? 0, state.phase === 'respond' && kind === 'typed', typedDeadline);
 
@@ -333,7 +334,10 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
           )}
           {state.phase === 'prompt' && <div className="countdown" data-testid="listening">🎧 {t('runner.listen')}</div>}
           {state.phase === 'respond' && (
-            <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : task.type === 'phone_call' ? t('runner.your_turn') : t('runner.speak_now')} · {respondLeft}</div>
+            <>
+              <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : task.type === 'phone_call' ? t('runner.your_turn') : t('runner.speak_now')} · {respondLeft}</div>
+              <div className="meter"><div style={{ width: `${recProgress.pct}%`, transition: 'width 100ms linear' }} /></div>
+            </>
           )}
         </div>
       )}

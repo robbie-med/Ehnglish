@@ -63,11 +63,18 @@ describe('goertzel + headphone leak', () => {
 
   it('detects speaker leak and passes headphones', () => {
     const silence = sine(1.2, 48000, 300, 0, 0.001);
-    const leaking = sine(1.2, 48000, 1000, 0.05, 0.001);
+    const leaking = sine(1.2, 48000, 1000, 0.05, 0.001); // -29 dBFS: speakers
     const r1 = evaluateLeak(leaking, silence, 48000);
     expect(r1.ok).toBe(false);
     expect(r1.leak_db).toBeGreaterThan(LEAK_THRESHOLD_DB);
+    expect(r1.tone_dbfs).toBeGreaterThan(-32);
     const r2 = evaluateLeak(sine(1.2, 48000, 300, 0, 0.001), silence, 48000);
     expect(r2.ok).toBe(true);
+    // Faint but measurable leak (-55 dBFS) is far above an empty bin yet inaudible: must pass.
+    const faint = sine(1.2, 48000, 1000, 0.0025, 0.001);
+    const r3 = evaluateLeak(faint, silence, 48000);
+    expect(r3.leak_db).toBeGreaterThan(LEAK_THRESHOLD_DB);
+    expect(r3.tone_dbfs).toBeLessThan(-45);
+    expect(r3.ok).toBe(true);
   });
 });

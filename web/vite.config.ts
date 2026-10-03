@@ -18,8 +18,8 @@ export default defineConfig({
         name: 'Ehnglish assessment · 영어 평가',
         short_name: 'Ehnglish',
         description: 'Private monthly English assessment. 개인 월간 영어 평가.',
-        theme_color: '#1d4ed8',
-        background_color: '#fafafa',
+        theme_color: '#f3eee4',
+        background_color: '#f3eee4',
         display: 'standalone',
         lang: 'en',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
@@ -27,7 +27,10 @@ export default defineConfig({
       workbox: {
         // Never cache API calls or audio; the upload queue handles offline.
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [{ urlPattern: /^\/api\//, handler: 'NetworkOnly' }],
+        runtimeCaching: [
+          { urlPattern: /^\/api\//, handler: 'NetworkOnly' },
+          { urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//, handler: 'CacheFirst', options: { cacheName: 'fonts', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } } },
+        ],
       },
     }),
   ],
