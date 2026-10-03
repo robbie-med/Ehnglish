@@ -1,0 +1,92 @@
+# Rotating module R3, form C (~9 min): parallel to R3-A/B. Add a sermon clip with
+# content/draft_sermon_task.py --form rotating-R3-C. Drafted to spec; native-speaker edit pending.
+id: rotating-R3-C
+version: 1
+kind: rotating
+title:
+  en: "Listening — form C"
+  ko: "듣기 — C형"
+tasks:
+  - id: R3-conv
+    type: multiple_choice
+    title: { en: "Conversation", ko: "대화" }
+    instructions:
+      en: "You will hear two colleagues talking, once. Then answer the questions from memory."
+      ko: "두 동료의 대화를 한 번 듣게 됩니다. 그다음 기억을 바탕으로 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-C/conversation.wav
+    target:
+      genre: conversation
+      tts:
+        gap_s: 0.5
+        dialogue:
+          - { voice: en-US-AndrewNeural, text: "So I finally heard back from the vendor. Good news is the new monitors ship Monday. Bad news is they're the twenty-seven inch, not the thirty-two, because somebody, not naming names, approved the wrong quote." }
+          - { voice: en-US-AvaNeural, text: "Oh, come on. We measured the desks for the thirty-twos. Can we send them back, or is that a whole thing?" }
+          - { voice: en-US-AndrewNeural, text: "It's a whole thing. Restocking fee, three weeks, the works. Honestly, I'd keep them. Twenty-seven's fine for the illustration team, and we give the big ones to the two people who actually need them when the next budget opens." }
+          - { voice: en-US-AvaNeural, text: "Fine, but you're telling Priya, because she's been waiting since March and she will absolutely bring up the printer thing again." }
+          - { voice: en-US-AndrewNeural, text: "She brings up the printer thing at birthdays. Deal, I'll tell her, but you're buying coffee. And can you update the inventory sheet before Monday? IT won't set anything up unless the serial numbers are already in there." }
+          - { voice: en-US-AvaNeural, text: "Coffee and the sheet. You drive a hard bargain for a guy who ordered the wrong monitors." }
+    items:
+      - { id: R3-conv-q1, text: "What went wrong with the order?", options: ["The wrong size was approved", "The vendor lost the order", "The monitors arrived broken", "The budget was cut"], target: { answer: 0 } }
+      - { id: R3-conv-q2, text: "Why does the man suggest keeping the monitors?", options: ["Returning them costs a fee and takes three weeks", "They are the right size after all", "Priya asked for the smaller ones", "IT has already set them up"], target: { answer: 0 } }
+      - { id: R3-conv-q3, text: "What does the man agree to do?", options: ["Tell Priya", "Buy the coffee", "Update the inventory sheet", "Call the vendor back"], target: { answer: 0 } }
+      - { id: R3-conv-q4, text: "Why must the inventory sheet be updated before Monday?", options: ["IT won't set up equipment without serial numbers in it", "The vendor needs it for shipping", "Priya checks it every Monday", "The budget closes"], target: { answer: 0 } }
+      - { id: R3-conv-q5, text: "What does 'she brings up the printer thing at birthdays' suggest?", options: ["She mentions an old complaint at every opportunity", "Her birthday is on Monday", "The printer was a birthday gift", "She works in the print room"], target: { answer: 0 } }
+
+  - id: R3-retell
+    type: describe_opinion
+    title: { en: "Retell the conversation", ko: "대화 다시 말하기" }
+    instructions:
+      en: "In your own words, say everything you remember from the conversation. Sixty seconds."
+      ko: "대화에서 기억나는 모든 내용을 자신의 말로 말하세요. 60초입니다."
+    timing: { prep_s: 5, respond_s: 60, max_s: 65 }
+    allow_rerecord: false
+    items:
+      - id: R3-retell-1
+        prompt: { en: "Retell the conversation between the two colleagues.", ko: "두 동료의 대화를 다시 말하세요." }
+        target: { stage: retell, genre: conversation }
+
+  - id: R3-lecture
+    type: multiple_choice
+    title: { en: "Mini-lecture", ko: "짧은 강의" }
+    instructions:
+      en: "You will hear a short talk, once. Then answer the questions."
+      ko: "짧은 강의를 한 번 듣게 됩니다. 그다음 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-C/lecture.wav
+    target:
+      genre: lecture
+      tts:
+        voice: en-US-AndrewNeural
+        dialogue:
+          - { text: "A quick word on color in medical diagrams, because it is misused constantly. The temptation is to make everything colorful: red arteries, blue veins, a different shade for every organ. But the eye reads color as meaning. If three things are red, the viewer assumes they are related, whether or not they are. So the first rule is to spend color only where it carries information: the one structure the diagram is about, the path a procedure follows, the difference between before and after. Everything else should be gray or a single muted tone. The second rule is to plan for people who cannot tell red from green, which is about one man in twelve. Pair every color difference with a second cue, a label, a pattern, a difference in brightness. And the third rule is simple: print the diagram in black and white once. If it still makes sense, the color was decoration, and decoration is fine; if it stops making sense, the color was doing work that something else should also do." }
+    items:
+      - { id: R3-lec-q1, text: "According to the speaker, how does the eye read color?", options: ["As meaning: things in the same color seem related", "As decoration that can be ignored", "As a sign of importance only", "As a guide to size"], target: { answer: 0 } }
+      - { id: R3-lec-q2, text: "What is the first rule?", options: ["Use color only where it carries information", "Use a different color for every organ", "Avoid red and blue", "Use only gray"], target: { answer: 0 } }
+      - { id: R3-lec-q3, text: "Why should every color difference have a second cue?", options: ["About one man in twelve cannot tell red from green", "Printers often fail", "Labels are required by journals", "Patients prefer patterns"], target: { answer: 0 } }
+      - { id: R3-lec-q4, text: "What is the black-and-white test for?", options: ["Checking whether color was doing work that something else should also do", "Saving printing costs", "Finding spelling mistakes", "Measuring brightness"], target: { answer: 0 } }
+
+  - id: R3-axb
+    type: axb
+    title: { en: "Same or different?", ko: "같은 소리일까요?" }
+    instructions:
+      en: "You will hear three words: A, then X, then B. Decide whether X is the same word as A or as B. Press A or B (or the F / J keys)."
+      ko: "단어 세 개를 듣습니다: A, 그다음 X, 그다음 B. X가 A와 같은 단어인지 B와 같은 단어인지 판단하세요. A 또는 B를 누르세요 (F / J 키)."
+    timing: { prep_s: 0, respond_s: 10 }
+    items:
+      - { id: R3-axb-01, audio: audio/rotating-R3-C/axb-01.wav, fx: { sequence: ["pray", "play", "play"] }, target: { answer: B, contrast: "r/l" } }
+      - { id: R3-axb-02, audio: audio/rotating-R3-C/axb-02.wav, fx: { sequence: ["lead", "lead", "read"] }, target: { answer: A, contrast: "r/l" } }
+      - { id: R3-axb-03, audio: audio/rotating-R3-C/axb-03.wav, fx: { sequence: ["fine", "pine", "pine"] }, target: { answer: B, contrast: "f/p" } }
+      - { id: R3-axb-04, audio: audio/rotating-R3-C/axb-04.wav, fx: { sequence: ["leaf", "leaf", "leap"] }, target: { answer: A, contrast: "f/p" } }
+      - { id: R3-axb-05, audio: audio/rotating-R3-C/axb-05.wav, fx: { sequence: ["vase", "base", "base"] }, target: { answer: B, contrast: "v/b" } }
+      - { id: R3-axb-06, audio: audio/rotating-R3-C/axb-06.wav, fx: { sequence: ["curb", "curb", "curve"] }, target: { answer: A, contrast: "v/b" } }
+      - { id: R3-axb-07, audio: audio/rotating-R3-C/axb-07.wav, fx: { sequence: ["zinc", "jink", "jink"] }, target: { answer: B, contrast: "z/dʒ" } }
+      - { id: R3-axb-08, audio: audio/rotating-R3-C/axb-08.wav, fx: { sequence: ["zoom", "zoom", "June"] }, target: { answer: A, contrast: "z/dʒ" } }
+      - { id: R3-axb-09, audio: audio/rotating-R3-C/axb-09.wav, fx: { sequence: ["thick", "sick", "sick"] }, target: { answer: B, contrast: "θ/s" } }
+      - { id: R3-axb-10, audio: audio/rotating-R3-C/axb-10.wav, fx: { sequence: ["tenth", "tenth", "tense"] }, target: { answer: A, contrast: "θ/s" } }
+      - { id: R3-axb-11, audio: audio/rotating-R3-C/axb-11.wav, fx: { sequence: ["bean", "bin", "bin"] }, target: { answer: B, contrast: "i/ɪ" } }
+      - { id: R3-axb-12, audio: audio/rotating-R3-C/axb-12.wav, fx: { sequence: ["heal", "heal", "hill"] }, target: { answer: A, contrast: "i/ɪ" } }
+      - { id: R3-axb-13, audio: audio/rotating-R3-C/axb-13.wav, fx: { sequence: ["rope", "robe", "robe"] }, target: { answer: B, contrast: "final consonants" } }
+      - { id: R3-axb-14, audio: audio/rotating-R3-C/axb-14.wav, fx: { sequence: ["bag", "bag", "back"] }, target: { answer: A, contrast: "final consonants" } }
+      - { id: R3-axb-15, audio: audio/rotating-R3-C/axb-15.wav, fx: { sequence: ["sock", "shock", "shock"] }, target: { answer: B, contrast: "ʃ/s" } }
+      - { id: R3-axb-16, audio: audio/rotating-R3-C/axb-16.wav, fx: { sequence: ["seat", "seat", "sheet"] }, target: { answer: A, contrast: "ʃ/s" } }
