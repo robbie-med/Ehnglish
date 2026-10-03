@@ -27,6 +27,7 @@ export default function App() {
       <header className="top">
         <Link to="/"><h1>{t('app.title')} <span className="muted">· {t('app.subtitle')}</span></h1></Link>
         <div className="row">
+          <Link to="/"><button className="link" data-testid="nav-home">{t('nav.tests')}</button></Link>
           <Link to="/dashboard"><button className="link" data-testid="nav-dashboard">{t('nav.dashboard')}</button></Link>
           {email && <span className="who" data-testid="who">{email}</span>}
           <button className="link" onClick={() => setLang(other)} aria-label="language">{t('nav.language')}</button>

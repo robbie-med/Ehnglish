@@ -6,7 +6,8 @@
   "nav": {
     "language": "English",
     "home": "처음으로",
-    "dashboard": "대시보드"
+    "dashboard": "대시보드",
+    "tests": "시험"
   },
   "common": {
     "loading": "불러오는 중…",
@@ -154,7 +155,8 @@
     "all_time": "누적",
     "sitting": "응시",
     "cost": "비용",
-    "by_engine": "엔진별 (호출 수)"
+    "by_engine": "엔진별 (호출 수)",
+    "start_sitting": "응시 시작"
   },
   "viewer": {
     "recordings": "녹음",

@@ -6,7 +6,8 @@
   "nav": {
     "language": "한국어",
     "home": "Home",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "tests": "Tests"
   },
   "common": {
     "loading": "Loading…",
@@ -154,7 +155,8 @@
     "all_time": "All time",
     "sitting": "Sitting",
     "cost": "Cost",
-    "by_engine": "By engine (calls)"
+    "by_engine": "By engine (calls)",
+    "start_sitting": "Start a sitting"
   },
   "viewer": {
     "recordings": "Recordings",

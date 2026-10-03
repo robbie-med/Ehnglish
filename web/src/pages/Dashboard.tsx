@@ -91,12 +91,15 @@ export default function Dashboard() {
           <h2 style={{ margin: 0 }}>{t('dash.title')}</h2>
           <div className="muted">{t('dash.subject')}: {data.subject.email} · {t('dash.sessions_n', { n: data.sessions.length })}</div>
         </div>
-        {data.viewer.role === 'anchor' && (
-          <div className="row">
-            <button className={subject === 'learner' ? 'primary' : ''} onClick={() => setSubject('learner')}>{t('dash.learner')}</button>
-            <button className={subject === 'me' ? 'primary' : ''} onClick={() => setSubject('me')}>{t('dash.me')}</button>
-          </div>
-        )}
+        <div className="row">
+          {data.viewer.role === 'anchor' && (
+            <>
+              <button className={subject === 'learner' ? 'primary' : ''} onClick={() => setSubject('learner')}>{t('dash.learner')}</button>
+              <button className={subject === 'me' ? 'primary' : ''} onClick={() => setSubject('me')}>{t('dash.me')}</button>
+            </>
+          )}
+          <Link to="/"><button className="primary" data-testid="dash-start">{t('dash.start_sitting')}</button></Link>
+        </div>
       </div>
 
       <div className="card">
