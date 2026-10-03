@@ -85,7 +85,8 @@ def normalize(
                 v,
                 t,
             )
-    t = re.sub(r"[^a-z0-9' ]+", " ", t)
+    t = re.sub(r"[^\w' ]+", " ", t)  # \w keeps Hangul and other Unicode letters
+    t = t.replace("_", " ")
     words = []
     for w in t.split():
         w = w.strip("'")

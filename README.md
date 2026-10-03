@@ -1,7 +1,7 @@
 # Ehnglish
 
 Private monthly English assessment for one learner (bilingual English/한국어). The plan is
-[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M2 (Phone + dictation)**: the whole monthly core (C0–C7) records and is scored.
+[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M3 (Baseline tasks)**: the whole monthly core (C0–C7) and the baseline day 1 form record and are scored.
 
 ```
 web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality check, resumable upload queue, timed task runner.
@@ -77,11 +77,24 @@ is skipped on retry if already present for the current pipeline version.
 | `wer` | dictation word error rate vs the key, tagged with the condition (clear/fast/phone/noise) | — |
 | `phrases` | fixed phrases used in a phone turn (fuzzy match) | — |
 | `checklist` | phone-call goal checklist over all turns so far (Claude, 3 runs, majority per goal) | Anthropic key |
+| `lexical_decision` | LexTALE answer, correctness and reaction time | — |
+| `typing` | keystroke measures: chars/min, bursts, pauses, revisions, copy accuracy | — |
+| `ideas`, `expression_gap` | idea units (Claude) and Korean→English coverage + speech-rate ratio | Anthropic key |
 
 Task → steps: silence: probe only · read_aloud: asr, vote, timing, pron, phonemes, alignment ·
 sentence_repeat: asr, vote, timing, latency, ei · quick_answer: asr, vote, timing, latency, language ·
-describe_opinion: asr, vote, timing, alignment, language · phone_call (per turn): asr, vote, timing,
-latency, language, phrases, checklist · dictation (typed): wer · typed_response: language · rating: stored only.
+describe_opinion: asr, vote, timing, alignment, language (English) or ideas (Korean baseline) · phone_call
+(per turn): asr, vote, timing, latency, language, phrases, checklist · dictation (typed): wer ·
+typed_response: typing + language (English) · lexical_decision: lexical_decision · copy_typing: typing ·
+rating: stored only.
+
+**Session level.** When a sitting is marked done, a `session_summary` job (which waits for every take to
+finish) writes `session_results` rows: `dictation` (mean WER per condition, phone/noise/fast penalties),
+`lextale`, `typing` (per language), `ratings` (per scale, reverse-keyed items flipped), `phone_call`
+(final checklist), `expression_gap`, `completion`. `GET /api/sessions/{id}/results` returns them.
+
+Forms: `core-A` (monthly core), `baseline-day1` (Korean writing/speaking, English retelling, LexTALE,
+typing baselines, self-report), plus `dummy-v0`/`e2e-core` for tests (hidden in production).
 
 Prompt audio effects (`fx:` on an item, rendered once by `content/build_audio.py`): `voice`, `rate`
 (TTS prosody, e.g. "+35%" for the fast condition), `phone` (300–3400 Hz band, 8 kHz G.711 μ-law round

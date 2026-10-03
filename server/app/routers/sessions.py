@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from .. import queue
 from ..auth import get_current_user
 from ..config import Settings, get_settings
 from ..content import get_forms
 from ..db import get_db
-from ..models import Take, TestSession, User
+from ..models import SessionResult, Take, TestSession, User
 from ..schemas import SessionCreate, SessionOut, SessionPatch, TakeCreate, TakeOut
 from .takes import take_out
 
@@ -105,6 +106,8 @@ def patch_session(
         s.status = body.status
         if body.status in ("done", "abandoned"):
             s.finished_at = datetime.now(UTC)
+        if body.status == "done":
+            queue.enqueue(db, "session_summary", {"session_id": str(s.id)}, max_attempts=30)
     db.commit()
     return session_out(own_session(db, user, session_id))
 
@@ -157,3 +160,27 @@ def create_take(
         raise HTTPException(409, "that attempt already exists") from e
     db.refresh(take)
     return take_out(take)
+
+
+@router.get("/{session_id}/results")
+def session_results(
+    session_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> dict:
+    """Session-level results (latest row per kind, any pipeline version, newest first)."""
+    own_session(db, user, session_id)
+    rows = db.scalars(
+        select(SessionResult)
+        .where(SessionResult.session_id == session_id)
+        .order_by(SessionResult.created_at.desc())
+    ).all()
+    out: dict[str, dict] = {}
+    for r in rows:
+        out.setdefault(
+            r.kind,
+            {
+                "pipeline_version": r.pipeline_version,
+                "result": r.result,
+                "created_at": r.created_at.isoformat(),
+            },
+        )
+    return out

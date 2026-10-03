@@ -1,0 +1,172 @@
+# Baseline day 1 (one time, ~30 min; plan §4.1 and §4.4): profile, Korean baseline, the same topic
+# in English (expression gap), LexTALE, typing baselines, self-report. Korean tasks appear here only.
+id: baseline-day1
+version: 1
+kind: baseline
+title:
+  en: "Baseline — day 1"
+  ko: "기준선 평가 — 1일차"
+tasks:
+  - id: B0
+    type: silence
+    title: { en: "Room noise", ko: "실내 소음" }
+    instructions:
+      en: "Stay completely silent for 10 seconds so the app can measure the room."
+      ko: "앱이 실내 소음을 측정할 수 있도록 10초 동안 완전히 조용히 있어 주세요."
+    timing: { prep_s: 2, respond_s: 10 }
+    items:
+      - id: B0-silence
+        target: { purpose: noise_floor }
+
+  - id: B1
+    type: typed_response
+    title: { en: "Korean writing", ko: "한국어 글쓰기" }
+    instructions:
+      en: "Write in Korean. Three short texts, two minutes each. Write naturally; this measures your Korean writing and typing, not your English."
+      ko: "한국어로 쓰세요. 짧은 글 세 편, 각 2분입니다. 자연스럽게 쓰세요. 영어가 아니라 한국어 글쓰기와 타이핑을 측정합니다."
+    timing: { prep_s: 0, respond_s: 120 }
+    items:
+      - id: B1-goals
+        prompt: { en: "Your goals for the next two years.", ko: "앞으로 2년 동안의 목표." }
+        target: { language: ko, topic: goals }
+      - id: B1-interests
+        prompt: { en: "What you enjoy doing and why.", ko: "즐겨 하는 일과 그 이유." }
+        target: { language: ko, topic: interests }
+      - id: B1-topic
+        prompt: { en: "A topic you know well — explain it to someone who doesn't.", ko: "잘 아는 주제 하나 — 모르는 사람에게 설명하듯이." }
+        target: { language: ko, topic: expert }
+
+  - id: B2
+    type: describe_opinion
+    title: { en: "Korean speaking", ko: "한국어 말하기" }
+    instructions:
+      en: "Speak in Korean. Two topics, two minutes each, with a short time to think first."
+      ko: "한국어로 말하세요. 주제 두 개, 각 2분이며 먼저 잠시 생각할 시간이 있습니다."
+    timing: { prep_s: 20, respond_s: 120, max_s: 125 }
+    items:
+      - id: B2-goals
+        prompt: { en: "Your goals for the next two years.", ko: "앞으로 2년 동안의 목표." }
+        target: { language: ko, topic: goals }
+      - id: B2-topic
+        prompt: { en: "Your favourite topic — tell me about it in detail.", ko: "가장 좋아하는 주제 — 자세히 이야기해 주세요." }
+        target: { language: ko, topic: favourite }
+
+  - id: B3
+    type: describe_opinion
+    title: { en: "The same topic in English", ko: "같은 주제를 영어로" }
+    instructions:
+      en: "Now the favourite topic again, in English, two minutes. Say as much of the same content as you can."
+      ko: "이제 가장 좋아하는 주제를 영어로 2분 동안 다시 말하세요. 같은 내용을 최대한 많이 말해 보세요."
+    timing: { prep_s: 10, respond_s: 120, max_s: 125 }
+    items:
+      - id: B3-topic
+        prompt: { en: "Your favourite topic, in English.", ko: "가장 좋아하는 주제, 영어로." }
+        target: { language: en, topic: favourite, pairs_with: B2-topic }
+
+  - id: B4
+    type: lexical_decision
+    title: { en: "Word test (LexTALE)", ko: "단어 판단 검사 (LexTALE)" }
+    instructions:
+      en: "You will see a string of letters. Decide whether it is an existing English word: press YES if it is, NO if it isn't. If you are not sure, answer anyway. There is no time pressure, but keep moving. The first three are practice."
+      ko: "글자 묶음이 보입니다. 실제로 존재하는 영어 단어인지 판단하세요. 단어이면 YES, 아니면 NO를 누르세요. 확실하지 않아도 답하세요. 시간 제한은 없지만 계속 진행하세요. 처음 세 개는 연습입니다."
+    timing: { prep_s: 0, respond_s: 20 }
+    items:
+      - { id: L-00, text: "platery", target: { is_word: false, practice: true } }
+      - { id: L-01, text: "denial", target: { is_word: true, practice: true } }
+      - { id: L-02, text: "generic", target: { is_word: true, practice: true } }
+      - { id: L-03, text: "mensible", target: { is_word: false } }
+      - { id: L-04, text: "scornful", target: { is_word: true } }
+      - { id: L-05, text: "stoutly", target: { is_word: true } }
+      - { id: L-06, text: "ablaze", target: { is_word: true } }
+      - { id: L-07, text: "kermshaw", target: { is_word: false } }
+      - { id: L-08, text: "moonlit", target: { is_word: true } }
+      - { id: L-09, text: "lofty", target: { is_word: true } }
+      - { id: L-10, text: "hurricane", target: { is_word: true } }
+      - { id: L-11, text: "flaw", target: { is_word: true } }
+      - { id: L-12, text: "alberation", target: { is_word: false } }
+      - { id: L-13, text: "unkempt", target: { is_word: true } }
+      - { id: L-14, text: "breeding", target: { is_word: true } }
+      - { id: L-15, text: "festivity", target: { is_word: true } }
+      - { id: L-16, text: "screech", target: { is_word: true } }
+      - { id: L-17, text: "savoury", target: { is_word: true } }
+      - { id: L-18, text: "plaudate", target: { is_word: false } }
+      - { id: L-19, text: "shin", target: { is_word: true } }
+      - { id: L-20, text: "fluid", target: { is_word: true } }
+      - { id: L-21, text: "spaunch", target: { is_word: false } }
+      - { id: L-22, text: "allied", target: { is_word: true } }
+      - { id: L-23, text: "slain", target: { is_word: true } }
+      - { id: L-24, text: "recipient", target: { is_word: true } }
+      - { id: L-25, text: "exprate", target: { is_word: false } }
+      - { id: L-26, text: "eloquence", target: { is_word: true } }
+      - { id: L-27, text: "cleanliness", target: { is_word: true } }
+      - { id: L-28, text: "dispatch", target: { is_word: true } }
+      - { id: L-29, text: "rebondicate", target: { is_word: false } }
+      - { id: L-30, text: "ingenious", target: { is_word: true } }
+      - { id: L-31, text: "bewitch", target: { is_word: true } }
+      - { id: L-32, text: "skave", target: { is_word: false } }
+      - { id: L-33, text: "plaintively", target: { is_word: true } }
+      - { id: L-34, text: "kilp", target: { is_word: false } }
+      - { id: L-35, text: "interfate", target: { is_word: false } }
+      - { id: L-36, text: "hasty", target: { is_word: true } }
+      - { id: L-37, text: "lengthy", target: { is_word: true } }
+      - { id: L-38, text: "fray", target: { is_word: true } }
+      - { id: L-39, text: "crumper", target: { is_word: false } }
+      - { id: L-40, text: "upkeep", target: { is_word: true } }
+      - { id: L-41, text: "majestic", target: { is_word: true } }
+      - { id: L-42, text: "magrity", target: { is_word: false } }
+      - { id: L-43, text: "nourishment", target: { is_word: true } }
+      - { id: L-44, text: "abergy", target: { is_word: false } }
+      - { id: L-45, text: "proom", target: { is_word: false } }
+      - { id: L-46, text: "turmoil", target: { is_word: true } }
+      - { id: L-47, text: "carbohydrate", target: { is_word: true } }
+      - { id: L-48, text: "scholar", target: { is_word: true } }
+      - { id: L-49, text: "turtle", target: { is_word: true } }
+      - { id: L-50, text: "fellick", target: { is_word: false } }
+      - { id: L-51, text: "destription", target: { is_word: false } }
+      - { id: L-52, text: "cylinder", target: { is_word: true } }
+      - { id: L-53, text: "censorship", target: { is_word: true } }
+      - { id: L-54, text: "celestial", target: { is_word: true } }
+      - { id: L-55, text: "rascality", target: { is_word: true } }
+      - { id: L-56, text: "purrage", target: { is_word: false } }
+      - { id: L-57, text: "pulsh", target: { is_word: false } }
+      - { id: L-58, text: "muddy", target: { is_word: true } }
+      - { id: L-59, text: "quirty", target: { is_word: false } }
+      - { id: L-60, text: "pudour", target: { is_word: false } }
+      - { id: L-61, text: "listless", target: { is_word: true } }
+      - { id: L-62, text: "wrought", target: { is_word: true } }
+
+  - id: B5
+    type: copy_typing
+    title: { en: "Typing speed", ko: "타이핑 속도" }
+    instructions:
+      en: "Copy the text exactly as shown, as fast as you comfortably can. Ninety seconds each: one English, one Korean."
+      ko: "보이는 글을 그대로, 편안한 한도에서 최대한 빠르게 따라 입력하세요. 각 90초: 영어 하나, 한국어 하나."
+    timing: { prep_s: 0, respond_s: 90 }
+    items:
+      - id: B5-en
+        text: "The clinic called this morning to say that my lab results were ready. The nurse explained that everything looked normal, but she asked me to keep taking the vitamins and to schedule a follow-up visit in three months. I thanked her and wrote the date on the calendar by the fridge."
+        target: { language: en }
+      - id: B5-ko
+        text: "오늘 아침 병원에서 전화가 와서 검사 결과가 나왔다고 했다. 간호사는 모든 수치가 정상이라고 설명했지만, 비타민을 계속 먹고 석 달 뒤에 다시 진료 예약을 잡으라고 했다. 나는 고맙다고 말하고 냉장고 옆 달력에 날짜를 적었다."
+        target: { language: ko }
+
+  - id: B6
+    type: rating
+    title: { en: "About your English", ko: "나의 영어에 대해" }
+    instructions:
+      en: "Rate each statement from 0 (not at all true) to 10 (completely true). Answer quickly and honestly."
+      ko: "각 문장을 0(전혀 아니다)에서 10(완전히 그렇다)까지 평가하세요. 빠르고 솔직하게 답하세요."
+    timing: { prep_s: 0, respond_s: 60 }
+    items:
+      - { id: S-cando-phone, prompt: { en: "I can handle a phone call with a clinic or pharmacy on my own.", ko: "병원이나 약국과의 전화 통화를 혼자 처리할 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-cando-doctor, prompt: { en: "I can describe my symptoms to a doctor clearly.", ko: "의사에게 내 증상을 분명하게 설명할 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-cando-colleagues, prompt: { en: "I can follow fast conversation between colleagues, including jokes.", ko: "동료들 사이의 빠른 대화를, 농담까지 포함해서 따라갈 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-cando-sermon, prompt: { en: "I can follow a sermon or lecture without missing the main points.", ko: "설교나 강의의 요점을 놓치지 않고 따라갈 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-cando-email, prompt: { en: "I can write a clear email to an office to sort out a problem.", ko: "문제를 해결하기 위해 사무실에 명확한 이메일을 쓸 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-cando-read, prompt: { en: "I can read a patient information leaflet and understand it.", ko: "환자용 안내문을 읽고 이해할 수 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: cando } }
+      - { id: S-anx-1, prompt: { en: "I feel nervous when I have to speak English without preparing.", ko: "준비 없이 영어로 말해야 할 때 긴장된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-2, prompt: { en: "I worry about making mistakes when I speak English.", ko: "영어로 말할 때 실수할까 봐 걱정된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-3, prompt: { en: "My mind goes blank when someone asks me something in English.", ko: "누가 영어로 무언가를 물으면 머리가 하얘진다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-4, prompt: { en: "I avoid phone calls in English when I can.", ko: "가능하면 영어 전화 통화를 피한다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-5, prompt: { en: "I feel relaxed speaking English in casual conversation.", ko: "가벼운 대화에서는 영어로 말하는 것이 편안하다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }
+      - { id: S-anx-6, prompt: { en: "I feel confident speaking English with people I don't know.", ko: "모르는 사람과 영어로 말하는 것이 자신 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }

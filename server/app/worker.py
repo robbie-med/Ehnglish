@@ -15,12 +15,13 @@ import traceback
 import uuid
 from collections.abc import Callable
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import processing, queue, wav
 from .config import get_settings
 from .db import get_sessionmaker
-from .models import Job, ProcessingResult, Take
+from .models import Job, ProcessingResult, Take, TestSession
 
 log = logging.getLogger("worker")
 Handler = Callable[[Session, Job], None]
@@ -63,6 +64,25 @@ def process_take(db: Session, job: Job) -> None:
         raise RuntimeError("take missing or has no audio")
     summary = processing.process_take(db, take, job.id)
     log.info("take %s: %s", take.id, summary)
+
+
+@handler("session_summary")
+def session_summary(db: Session, job: Job) -> None:
+    session = db.get(TestSession, uuid.UUID(job.payload["session_id"]))
+    if session is None:
+        raise RuntimeError("session missing")
+    # Wait until every take of the session has been processed (or failed for good).
+    pending = db.scalar(
+        select(Job).where(
+            Job.type == "process_take",
+            Job.status.in_(("queued", "running")),
+            Job.payload["take_id"].astext.in_([str(t.id) for t in session.takes]),
+        )
+    )
+    if pending is not None:
+        raise RuntimeError("takes still processing")
+    out = processing.summarize_session(db, session, job.id)
+    log.info("session %s summary: %s", session.id, sorted(out))
 
 
 def run_once(db: Session, worker_id: str = "test") -> Job | None:

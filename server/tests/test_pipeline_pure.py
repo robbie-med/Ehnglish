@@ -16,6 +16,13 @@ def test_normalize() -> None:
         "o'clock",
     ]
     assert text.normalize("Um, the... the nurse", drop_fillers=True) == ["the", "the", "nurse"]
+    assert text.normalize("나는 의료 삽화가가 되고 싶다.") == [
+        "나는",
+        "의료",
+        "삽화가가",
+        "되고",
+        "싶다",
+    ]
 
 
 class TestVote:

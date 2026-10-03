@@ -160,3 +160,19 @@ class ProcessingResult(Base):
     pipeline_version: Mapped[str] = mapped_column(String(32), nullable=False)
     result: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SessionResult(Base):
+    """Session-level derived data (dictation condition summary, LexTALE score, expression gap,
+    typing baselines, self-report vectors). Immutable per pipeline version, like take results."""
+
+    __tablename__ = "session_results"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("sessions.id"), nullable=False, index=True
+    )
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("jobs.id"))
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    pipeline_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    result: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -21,8 +21,21 @@ from .engines import azure, deepgram, mfa, whisper
 from .engines import phonemes as phoneme_engine
 from .engines.base import EngineError, Transcript
 from .engines.claude import minimal_correction
-from .models import ProcessingResult, Take, TestSession
-from .pipeline import checklist, dictation, ei, lexical, phonemes, praat, rhythm, syntax, vote
+from .models import ProcessingResult, SessionResult, Take, TestSession
+from .pipeline import (
+    checklist,
+    dictation,
+    ei,
+    ideas,
+    lexical,
+    lextale,
+    phonemes,
+    praat,
+    rhythm,
+    syntax,
+    typing,
+    vote,
+)
 from .pipeline.text import normalize
 
 log = logging.getLogger("processing")
@@ -287,6 +300,7 @@ def _phone_turns(ctx: Ctx) -> list[dict]:
             Take.status != "rejected",
         )
         .options(selectinload(Take.results))
+        .execution_options(populate_existing=True)
     ).all()
     by_item: dict[str, Take] = {}
     for t in takes:
@@ -333,6 +347,124 @@ def step_phone(ctx: Ctx, transcript: dict) -> dict:
     return ctx.step("checklist", goals)
 
 
+def step_lexical_decision(ctx: Ctx) -> dict:
+    def run() -> dict:
+        answer = (ctx.take.typed.text if ctx.take.typed else "").strip().lower() or None
+        events = {e.name: e.t_client_ms for e in ctx.take.events}
+        shown = events.get("prompt_end", events.get("item_shown"))
+        answered = events.get("answer")
+        rt = round(answered - shown, 1) if shown is not None and answered is not None else None
+        is_word = bool(ctx.item.target.get("is_word"))
+        return {
+            "item": ctx.item.text,
+            "is_word": is_word,
+            "answer": answer,
+            "correct": (answer == "yes") == is_word if answer in ("yes", "no") else None,
+            "rt_ms": rt,
+            "practice": bool(ctx.item.target.get("practice")),
+        }
+
+    return ctx.step("lexical_decision", run)
+
+
+def _keystrokes(ctx: Ctx) -> list[dict]:
+    rel = ctx.take.typed.keystroke_log_path if ctx.take.typed else None
+    if not rel:
+        return []
+    path = ctx.settings.raw_dir / rel
+    if not path.exists():
+        return []
+    import json
+
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+
+
+def step_typing(ctx: Ctx, reference: str | None) -> dict:
+    text = ctx.take.typed.text if ctx.take.typed else ""
+    return ctx.step("typing", lambda: typing.analyze(_keystrokes(ctx), text, reference).to_dict())
+
+
+def step_ideas(ctx: Ctx, transcript: dict) -> dict:
+    """Idea units of this take; for a paired retelling, coverage of the source take's units."""
+
+    def extract() -> dict:
+        text = transcript.get("text", "")
+        if not text:
+            return {"skipped": True, "reason": "empty transcript"}
+        try:
+            return ideas.extract(text, ctx.language).to_dict()
+        except EngineError as e:
+            if "not set" in str(e):
+                return {"skipped": True, "reason": str(e)}
+            raise
+
+    mine = ctx.step("ideas", extract)
+    pair = ctx.item.target.get("pairs_with")
+    if not pair:
+        return mine
+
+    def gap() -> dict:
+        source = ctx.db.scalar(
+            select(Take)
+            .where(
+                Take.session_id == ctx.take.session_id,
+                Take.item_id == pair,
+                Take.status != "rejected",
+            )
+            .order_by(Take.attempt.desc())
+            .options(selectinload(Take.results))
+            .execution_options(populate_existing=True)
+        )
+        if source is None:
+            return {"skipped": True, "reason": f"source take {pair} not found"}
+        res = {
+            r.kind: r.result
+            for r in source.results
+            if r.pipeline_version == ctx.settings.pipeline_version
+        }
+        src_ideas = res.get("ideas")
+        if src_ideas is None:
+            return {"skipped": True, "reason": "source not processed yet", "retry": True}
+        if src_ideas.get("skipped"):
+            return {"skipped": True, "reason": f"source ideas skipped: {src_ideas.get('reason')}"}
+        try:
+            cov = ideas.coverage(src_ideas["units"], transcript.get("text", "")).to_dict()
+        except EngineError as e:
+            if "not set" in str(e):
+                return {"skipped": True, "reason": str(e)}
+            raise
+        my_t = ctx.existing("timing") or {}
+        src_t = res.get("timing") or {}
+        ratio = None
+        if my_t.get("speech_rate_syl_per_s") and src_t.get("speech_rate_syl_per_s"):
+            ratio = round(my_t["speech_rate_syl_per_s"] / src_t["speech_rate_syl_per_s"], 3)
+        cov.update(
+            {
+                "source_item": pair,
+                "source_take": str(source.id),
+                "speech_rate_ratio": ratio,
+                "source_units": src_ideas["units"],
+            }
+        )
+        return cov
+
+    out = ctx.step("expression_gap", gap)
+    if out.get("retry"):
+        # Source not processed yet (jobs run in parallel): let the queue retry this take later.
+        ctx.db.execute(
+            ProcessingResult.__table__.delete().where(
+                ProcessingResult.take_id == ctx.take.id,
+                ProcessingResult.kind == "expression_gap",
+                ProcessingResult.pipeline_version == ctx.settings.pipeline_version,
+            )
+        )
+        ctx.db.commit()
+        raise RuntimeError(f"waiting for source take {pair} to be processed")
+    return out
+
+
 # ---------------------------------------------------------------------- per task type
 def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> str:
     ctx = Ctx(db, take, job_id)
@@ -341,8 +473,16 @@ def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> st
         if t == "dictation":
             step_dictation(ctx)
             return "dictation done"
+        if t == "lexical_decision":
+            step_lexical_decision(ctx)
+            return "lexical_decision done"
+        if t == "copy_typing":
+            step_typing(ctx, ctx.item.text)
+            return "copy_typing done"
         if t == "typed_response":
-            step_language_text(ctx, ctx.take.typed.text if ctx.take.typed else "")
+            step_typing(ctx, None)
+            if ctx.language == "en":
+                step_language_text(ctx, ctx.take.typed.text if ctx.take.typed else "")
             return "typed_response done"
         return f"no processing for typed {t}"
     if t == "silence":
@@ -381,7 +521,106 @@ def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> st
         asr = step_asr(ctx)
         tr = step_vote(ctx, asr)
         step_timing(ctx)
-        step_alignment(ctx, tr)
-        step_language(ctx, tr)
+        if ctx.language == "en":
+            step_alignment(ctx, tr)
+            step_language(ctx, tr)
+        if ctx.form.kind == "baseline":
+            step_ideas(ctx, tr)
         return "describe_opinion done"
     return f"no processing for {t}"
+
+
+# ---------------------------------------------------------------------- session level
+def _take_results(db: Session, session: TestSession, version: str) -> list[tuple[Take, dict]]:
+    takes = db.scalars(
+        select(Take)
+        .where(Take.session_id == session.id, Take.status != "rejected")
+        .options(selectinload(Take.results), selectinload(Take.typed))
+        .execution_options(populate_existing=True)
+    ).all()
+    return [
+        (t, {r.kind: r.result for r in t.results if r.pipeline_version == version}) for t in takes
+    ]
+
+
+def summarize_session(db: Session, session: TestSession, job_id: uuid.UUID | None = None) -> dict:
+    """Cross-take summaries. Written as session_results rows, one per kind, idempotent per version."""
+    settings = get_settings()
+    form = get_forms(str(settings.content_dir))[session.form_id]
+    tasks = {t.id: t for t in form.tasks}
+    items = {i.id: (t, i) for t in form.tasks for i in t.items}
+    rows = _take_results(db, session, settings.pipeline_version)
+    out: dict[str, dict] = {}
+
+    # dictation
+    wers = [dictation.WerReport(**r["wer"]) for _, r in rows if "wer" in r]
+    if wers:
+        out["dictation"] = dictation.condition_summary(wers)
+    # LexTALE
+    lex = [r["lexical_decision"] for _, r in rows if "lexical_decision" in r]
+    if lex:
+        out["lextale"] = lextale.score(lex).to_dict()
+    # typing baselines, per language
+    for t, r in rows:
+        if "typing" in r and t.task_id in tasks and tasks[t.task_id].type == "copy_typing":
+            lang = items[t.item_id][1].target.get("language", "en")
+            out.setdefault("typing", {})[lang] = r["typing"]
+    # ratings by scale name (reverse-keyed items flipped)
+    scales: dict[str, dict] = {}
+    for t, _r in rows:
+        if t.item_id not in items or items[t.item_id][0].type != "rating" or not t.typed:
+            continue
+        task, item = items[t.item_id]
+        try:
+            v = float(t.typed.text)
+        except ValueError:
+            continue
+        name = str(item.target.get("scale_name", task.id))
+        if item.target.get("reverse") and item.scale:
+            v = item.scale.max + item.scale.min - v
+        scales.setdefault(name, {"items": {}, "mean": None})["items"][item.id] = v
+    for sc in scales.values():
+        vals = list(sc["items"].values())
+        sc["mean"] = round(sum(vals) / len(vals), 2) if vals else None
+    if scales:
+        out["ratings"] = scales
+    # phone call: the last turn's checklist
+    for _t, r in rows:
+        if "checklist" in r and r["checklist"].get("is_last_turn"):
+            out["phone_call"] = {k: v for k, v in r["checklist"].items() if k != "turns"}
+    # expression gap
+    for _t, r in rows:
+        if "expression_gap" in r and not r["expression_gap"].get("skipped"):
+            out["expression_gap"] = r["expression_gap"]
+    # completeness
+    expected = sum(len(t.items) for t in form.tasks)
+    done_items = {t.item_id for t, _ in rows if t.status in ("finalized", "processed")}
+    out["completion"] = {
+        "items_expected": expected,
+        "items_done": len(done_items),
+        "share": round(len(done_items) / expected, 3) if expected else None,
+    }
+
+    for kind, result in out.items():
+        existing = db.scalar(
+            select(SessionResult).where(
+                SessionResult.session_id == session.id,
+                SessionResult.kind == kind,
+                SessionResult.pipeline_version == settings.pipeline_version,
+            )
+        )
+        if existing is not None:
+            existing.result = result
+            existing.job_id = job_id
+        else:
+            db.add(
+                SessionResult(
+                    session_id=session.id,
+                    job_id=job_id,
+                    kind=kind,
+                    pipeline_version=settings.pipeline_version,
+                    result=result,
+                )
+            )
+    db.commit()
+    return out

@@ -58,6 +58,8 @@ TaskType = Literal[
     "dictation",  # C6: hear a sentence (clear/fast/phone/noise), type it
     "rating",  # C7 and self-report: one slider per item, stored as a typed number
     "typed_response",  # R4 / baseline writing
+    "lexical_decision",  # LexTALE: word or not, yes/no with reaction time
+    "copy_typing",  # typing baseline: copy a shown passage
 ]
 AUDIO_TASKS = {
     "silence",
@@ -127,6 +129,12 @@ class Task(BaseModel):
                 raise ValueError(f"{where}: {self.type} items need a prompt")
             if self.type == "rating" and it.scale is None:
                 raise ValueError(f"{where}: rating items need a scale")
+            if self.type == "lexical_decision" and (
+                not it.text or it.target.get("is_word") not in (True, False)
+            ):
+                raise ValueError(f"{where}: lexical_decision items need text and target.is_word")
+            if self.type == "copy_typing" and not it.text:
+                raise ValueError(f"{where}: copy_typing items need the text to copy")
         if self.type == "phone_call" and not self.target.get("goals"):
             raise ValueError(f"{self.id}: phone_call tasks need target.goals")
         return self

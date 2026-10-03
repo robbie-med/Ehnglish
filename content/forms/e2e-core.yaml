@@ -98,6 +98,23 @@ tasks:
       - id: C7-phone
         prompt: { en: "On the phone", ko: "전화 통화에서" }
         scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } }
+  - id: B4
+    type: lexical_decision
+    title: { en: "Word test", ko: "단어 판단" }
+    instructions: { en: "Is it a word? F = no, J = yes.", ko: "단어인가요? F = 아니오, J = 예." }
+    timing: { prep_s: 0, respond_s: 20 }
+    items:
+      - { id: L-a, text: "scornful", target: { is_word: true } }
+      - { id: L-b, text: "kermshaw", target: { is_word: false } }
+  - id: B5
+    type: copy_typing
+    title: { en: "Typing", ko: "타이핑" }
+    instructions: { en: "Copy the text.", ko: "글을 따라 입력하세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - id: B5-ko
+        text: "병원에서 전화가 왔다."
+        target: { language: ko }
   - id: W1
     type: typed_response
     title: { en: "Typed", ko: "타이핑" }
