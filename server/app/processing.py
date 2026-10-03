@@ -27,6 +27,7 @@ from .pipeline import (
     dictation,
     ei,
     ideas,
+    items,
     lexical,
     lextale,
     phonemes,
@@ -465,6 +466,78 @@ def step_ideas(ctx: Ctx, transcript: dict) -> dict:
     return out
 
 
+def step_mc(ctx: Ctx) -> dict:
+    def run() -> dict:
+        r = items.score_mc(
+            ctx.take.typed.text if ctx.take.typed else None,
+            int(ctx.item.target["answer"]),
+            ctx.item.options or [],
+        )
+        r["band"] = ctx.item.target.get("band")
+        r["genre"] = ctx.task.target.get("genre")
+        events = {e.name: e.t_client_ms for e in ctx.take.events}
+        if "prompt_end" in events and "submit" in events:
+            r["rt_ms"] = round(events["submit"] - events["prompt_end"], 1)
+        return r
+
+    return ctx.step("mc", run)
+
+
+def step_reading(ctx: Ctx) -> dict:
+    def run() -> dict:
+        events = {e.name: e.t_client_ms for e in ctx.take.events}
+        return items.reading_speed(
+            ctx.item.text or "",
+            events.get("prompt_end", events.get("item_shown")),
+            events.get("submit"),
+        ).to_dict()
+
+    return ctx.step("reading", run)
+
+
+def step_ctest(ctx: Ctx) -> dict:
+    def run() -> dict:
+        raw = ctx.take.typed.text if ctx.take.typed else ""
+        answers = raw.split("\u241f") if raw else []  # ␟ unit separator between blanks
+        return items.score_ctest(ctx.item.text or "", answers)
+
+    return ctx.step("ctest", run)
+
+
+def step_axb(ctx: Ctx) -> dict:
+    def run() -> dict:
+        r = items.score_axb(
+            ctx.take.typed.text if ctx.take.typed else None,
+            str(ctx.item.target["answer"]),
+            ctx.item.target.get("contrast"),
+        )
+        events = {e.name: e.t_client_ms for e in ctx.take.events}
+        if "prompt_end" in events and "answer" in events:
+            r["rt_ms"] = round(events["answer"] - events["prompt_end"], 1)
+        return r
+
+    return ctx.step("axb", run)
+
+
+def step_email_checklist(ctx: Ctx, text: str) -> dict:
+    """R4 functional email: goal checklist over the written text (same judge as the phone call)."""
+
+    def run() -> dict:
+        goals = list(ctx.task.target.get("goals", [])) + list(ctx.item.target.get("goals", []))
+        if not goals:
+            return {"skipped": True, "reason": "no goals defined"}
+        try:
+            return checklist.score_goals(
+                goals, [{"caller": ctx.item.prompt.en if ctx.item.prompt else "", "learner": text}]
+            ).to_dict()
+        except EngineError as e:
+            if "not set" in str(e):
+                return {"skipped": True, "reason": str(e)}
+            raise
+
+    return ctx.step("checklist", run)
+
+
 # ---------------------------------------------------------------------- per task type
 def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> str:
     ctx = Ctx(db, take, job_id)
@@ -480,10 +553,25 @@ def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> st
             step_typing(ctx, ctx.item.text)
             return "copy_typing done"
         if t == "typed_response":
+            text = ctx.take.typed.text if ctx.take.typed else ""
             step_typing(ctx, None)
             if ctx.language == "en":
-                step_language_text(ctx, ctx.take.typed.text if ctx.take.typed else "")
+                step_language_text(ctx, text)
+                if ctx.task.target.get("goals") or ctx.item.target.get("goals"):
+                    step_email_checklist(ctx, text)
             return "typed_response done"
+        if t == "multiple_choice":
+            step_mc(ctx)
+            return "multiple_choice done"
+        if t == "reading_passage":
+            step_reading(ctx)
+            return "reading_passage done"
+        if t == "c_test":
+            step_ctest(ctx)
+            return "c_test done"
+        if t == "axb":
+            step_axb(ctx)
+            return "axb done"
         return f"no processing for typed {t}"
     if t == "silence":
         return "silence: wav_probe only"
@@ -524,7 +612,7 @@ def process_take(db: Session, take: Take, job_id: uuid.UUID | None = None) -> st
         if ctx.language == "en":
             step_alignment(ctx, tr)
             step_language(ctx, tr)
-        if ctx.form.kind == "baseline":
+        if ctx.form.kind == "baseline" or ctx.item.target.get("stage") == "retell":
             step_ideas(ctx, tr)
         return "describe_opinion done"
     return f"no processing for {t}"
@@ -543,12 +631,23 @@ def _take_results(db: Session, session: TestSession, version: str) -> list[tuple
     ]
 
 
+def items_map_stage(
+    items_mod: object, item_id: str
+) -> str | None:  # pragma: no cover - tiny helper
+    return _STAGE.get(item_id)
+
+
+_STAGE: dict[str, str | None] = {}
+
+
 def summarize_session(db: Session, session: TestSession, job_id: uuid.UUID | None = None) -> dict:
     """Cross-take summaries. Written as session_results rows, one per kind, idempotent per version."""
     settings = get_settings()
     form = get_forms(str(settings.content_dir))[session.form_id]
     tasks = {t.id: t for t in form.tasks}
-    items = {i.id: (t, i) for t in form.tasks for i in t.items}
+    items_by_id = {i.id: (t, i) for t in form.tasks for i in t.items}
+    _STAGE.clear()
+    _STAGE.update({i.id: i.target.get("stage") for t in form.tasks for i in t.items})
     rows = _take_results(db, session, settings.pipeline_version)
     out: dict[str, dict] = {}
 
@@ -563,14 +662,18 @@ def summarize_session(db: Session, session: TestSession, job_id: uuid.UUID | Non
     # typing baselines, per language
     for t, r in rows:
         if "typing" in r and t.task_id in tasks and tasks[t.task_id].type == "copy_typing":
-            lang = items[t.item_id][1].target.get("language", "en")
+            lang = items_by_id[t.item_id][1].target.get("language", "en")
             out.setdefault("typing", {})[lang] = r["typing"]
     # ratings by scale name (reverse-keyed items flipped)
     scales: dict[str, dict] = {}
     for t, _r in rows:
-        if t.item_id not in items or items[t.item_id][0].type != "rating" or not t.typed:
+        if (
+            t.item_id not in items_by_id
+            or items_by_id[t.item_id][0].type != "rating"
+            or not t.typed
+        ):
             continue
-        task, item = items[t.item_id]
+        task, item = items_by_id[t.item_id]
         try:
             v = float(t.typed.text)
         except ValueError:
@@ -592,6 +695,60 @@ def summarize_session(db: Session, session: TestSession, job_id: uuid.UUID | Non
     for _t, r in rows:
         if "expression_gap" in r and not r["expression_gap"].get("skipped"):
             out["expression_gap"] = r["expression_gap"]
+    # vocabulary / comprehension (multiple choice), by task
+    mc_rows = [(t, r["mc"]) for t, r in rows if "mc" in r]
+    if mc_rows:
+        vocab = [m for t, m in mc_rows if m.get("band")]
+        if vocab:
+            out["vocabulary"] = items.vocabulary_summary(vocab)
+        comp: dict[str, list[dict]] = {}
+        for t, m in mc_rows:
+            if not m.get("band"):
+                comp.setdefault(t.task_id, []).append(m)
+        if comp:
+            out["comprehension"] = {
+                tid: {
+                    **items.comprehension_summary(v),
+                    "genre": tasks[tid].target.get("genre") if tid in tasks else None,
+                }
+                for tid, v in comp.items()
+            }
+    # reading: wpm from the passage take, effective speed with the matching comprehension task
+    for t, r in rows:
+        if "reading" in r:
+            rd = dict(r["reading"])
+            task = tasks.get(t.task_id)
+            qtask = task.target.get("questions") if task else None
+            comp_pct = (
+                out.get("comprehension", {}).get(qtask or "", {}).get("pct") if qtask else None
+            )
+            rd["comprehension_pct"] = comp_pct
+            rd["effective_wpm"] = items.effective_reading_speed(rd.get("wpm"), comp_pct)
+            out.setdefault("reading", {})[t.item_id] = rd
+    ct = [r["ctest"] for _t, r in rows if "ctest" in r]
+    if ct:
+        n = sum(c["n"] for c in ct)
+        c = sum(c["correct"] for c in ct)
+        out["c_test"] = {
+            "n": n,
+            "correct": c,
+            "pct": round(100 * c / n, 1) if n else None,
+            "texts": ct,
+        }
+    ax = [r["axb"] for _t, r in rows if "axb" in r]
+    if ax:
+        out["axb"] = items.axb_summary(ax)
+    # retells: idea units per retell take
+    for t, r in rows:
+        if "ideas" in r and items_map_stage(items, t.item_id) == "retell":
+            out.setdefault("retell", {})[t.item_id] = {
+                "units": len(r["ideas"].get("units", [])),
+                "skipped": r["ideas"].get("skipped", False),
+            }
+    # email checklist (typed)
+    for t, r in rows:
+        if "checklist" in r and t.kind == "typed":
+            out["email"] = {k: v for k, v in r["checklist"].items() if k != "turns"}
     # completeness
     expected = sum(len(t.items) for t in form.tasks)
     done_items = {t.item_id for t, _ in rows if t.status in ("finalized", "processed")}

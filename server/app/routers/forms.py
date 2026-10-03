@@ -42,7 +42,9 @@ def form_audio(form_id: str, path: str, settings: Settings = Depends(get_setting
     form = forms.get(form_id)
     if form is None:
         raise HTTPException(404, "unknown form")
-    declared = {i.audio for t in form.tasks for i in t.items if i.audio}
+    declared = {i.audio for t in form.tasks for i in t.items if i.audio} | {
+        t.audio for t in form.tasks if t.audio
+    }
     if path not in declared:
         raise HTTPException(404, "audio not declared by this form")
     file = (Path(settings.content_dir) / path).resolve()

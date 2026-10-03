@@ -115,6 +115,53 @@ tasks:
       - id: B5-ko
         text: "병원에서 전화가 왔다."
         target: { language: ko }
+  - id: R1
+    type: multiple_choice
+    title: { en: "Vocabulary", ko: "어휘" }
+    instructions: { en: "Choose the meaning.", ko: "뜻을 고르세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - { id: R1-01, text: "<u>fracture</u>: They found a fracture.", options: ["a break or crack", "a small animal", "a missing page", "a secret door"], target: { band: 10k, answer: 0 } }
+  - id: R3-conv
+    type: multiple_choice
+    title: { en: "Conversation", ko: "대화" }
+    instructions: { en: "Listen once, then answer.", ko: "한 번 듣고 답하세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    audio: audio/e2e-core/clip.wav
+    target: { genre: conversation }
+    items:
+      - { id: R3-q1, text: "What did you hear?", options: ["A tone", "Silence"], target: { answer: 0 } }
+  - id: R2-read
+    type: reading_passage
+    title: { en: "Timed reading", ko: "시간 측정 읽기" }
+    instructions: { en: "Read, then press Done.", ko: "읽고 완료를 누르세요." }
+    timing: { prep_s: 0, respond_s: 120 }
+    target: { questions: R2-q, genre: patient_information }
+    items:
+      - id: R2-passage
+        text: "Your appointment is on Tuesday at nine. Please arrive ten minutes early and bring your insurance card."
+  - id: R2-q
+    type: multiple_choice
+    title: { en: "Questions", ko: "문제" }
+    instructions: { en: "Answer from memory.", ko: "기억을 바탕으로 답하세요." }
+    timing: { prep_s: 0, respond_s: 30 }
+    target: { genre: patient_information }
+    items:
+      - { id: R2-q1, text: "When is the appointment?", options: ["Tuesday at nine", "Monday at ten"], target: { answer: 0 } }
+  - id: R2-ctest
+    type: c_test
+    title: { en: "Complete the words", ko: "단어 완성" }
+    instructions: { en: "Type the missing letters.", ko: "빠진 글자를 입력하세요." }
+    timing: { prep_s: 0, respond_s: 60 }
+    items:
+      - { id: R2-c1, text: "The nurse called. She as{ked} me t{o} bring m{y} card.", target: { blanks: 3 } }
+  - id: R3-axb
+    type: axb
+    title: { en: "Same or different?", ko: "같은 소리?" }
+    instructions: { en: "A or B?", ko: "A 또는 B?" }
+    timing: { prep_s: 0, respond_s: 10 }
+    items:
+      - { id: R3-axb-01, audio: audio/e2e-core/axb-01.wav, target: { answer: B, contrast: "r/l" } }
   - id: W1
     type: typed_response
     title: { en: "Typed", ko: "타이핑" }

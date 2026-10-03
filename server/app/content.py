@@ -44,6 +44,7 @@ class Item(BaseModel):
     timing: Timing | None = None  # per-item override of the task timing
     fx: AudioFx | None = None  # how the audio is built; None = plain TTS
     scale: Scale | None = None  # rating items
+    options: list[str] | None = None  # multiple_choice
     # Target properties used by scoring (syllables, frequency band, structure, min words...).
     target: dict = Field(default_factory=dict)
 
@@ -60,6 +61,10 @@ TaskType = Literal[
     "typed_response",  # R4 / baseline writing
     "lexical_decision",  # LexTALE: word or not, yes/no with reaction time
     "copy_typing",  # typing baseline: copy a shown passage
+    "multiple_choice",  # R1 vocabulary, R2/R3 comprehension: stem + options, one correct
+    "reading_passage",  # R2: timed reading, she presses Done when finished
+    "c_test",  # R2: text with half-deleted words, typed completions
+    "axb",  # R3: hear A, X, B; is X the same as A or B?
 ]
 AUDIO_TASKS = {
     "silence",
@@ -79,6 +84,11 @@ class AudioFx(BaseModel):
     phone: bool = False  # 8 kHz G.711 μ-law round trip, 300–3400 Hz band, line hiss
     noise_snr_db: float | None = None  # mix pink/babble noise at this SNR (None = clean)
     noise_kind: Literal["pink", "babble"] = "pink"
+    sequence: list[str] | None = (
+        None  # AXB: words rendered one by one with gaps (item.text ignored)
+    )
+    dialogue: list[dict] | None = None  # [{voice, text}] rendered in turn (conversation clips)
+    gap_s: float = 0.6
 
 
 class Scale(BaseModel):
@@ -96,8 +106,12 @@ class Task(BaseModel):
     allow_rerecord: bool = True
     # Audio-prompt tasks: recording opens after this beep once the prompt has finished playing.
     tone_hz: int | None = None
-    # Task-level scoring targets: phone_call goals/phrases, etc.
+    # Task-level scoring targets: phone_call goals/phrases, listening genre, etc.
     target: dict = Field(default_factory=dict)
+    # Stimulus played once after the instructions (lecture/sermon/conversation clip) and/or a
+    # passage shown alongside the items (reading comprehension).
+    audio: str | None = None
+    text: str | None = None
     items: list[Item]
 
     @property
@@ -135,6 +149,19 @@ class Task(BaseModel):
                 raise ValueError(f"{where}: lexical_decision items need text and target.is_word")
             if self.type == "copy_typing" and not it.text:
                 raise ValueError(f"{where}: copy_typing items need the text to copy")
+            if self.type == "multiple_choice":
+                if not it.text or not it.options or len(it.options) < 2:
+                    raise ValueError(f"{where}: multiple_choice items need text and ≥2 options")
+                a = it.target.get("answer")
+                if not isinstance(a, int) or not 0 <= a < len(it.options):
+                    raise ValueError(f"{where}: target.answer must index an option")
+            if self.type == "reading_passage" and not it.text:
+                raise ValueError(f"{where}: reading_passage items need the passage text")
+            if self.type == "c_test" and (not it.text or "{" not in it.text):
+                raise ValueError(f"{where}: c_test items need text with {{blank}} markers")
+            if self.type == "axb":
+                if not it.audio or it.target.get("answer") not in ("A", "B"):
+                    raise ValueError(f"{where}: axb items need audio and target.answer A or B")
         if self.type == "phone_call" and not self.target.get("goals"):
             raise ValueError(f"{self.id}: phone_call tasks need target.goals")
         return self

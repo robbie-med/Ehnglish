@@ -1,0 +1,58 @@
+# Rotating module R1, form A (~9 min): vocabulary size by frequency band + patient-side domain items.
+# Drafted to spec (VST-style: word in a neutral carrier sentence, four short definitions). Bands
+# 1k–10k, three items each, then ten patient-side medical/service items. Native-speaker edit pending.
+id: rotating-R1-A
+version: 1
+kind: rotating
+title:
+  en: "Vocabulary — form A"
+  ko: "어휘 — A형"
+tasks:
+  - id: R1
+    type: multiple_choice
+    title: { en: "Vocabulary", ko: "어휘" }
+    instructions:
+      en: "Choose the meaning of the underlined word. If you don't know, choose your best guess. Press 1–4 or click."
+      ko: "밑줄 친 단어의 뜻을 고르세요. 모르면 가장 그럴듯한 것을 고르세요. 1~4 키를 누르거나 클릭하세요."
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - { id: R1-01, text: "<u>drive</u>: He drives in.", options: ["goes in by car", "lives nearby", "walks slowly", "waits outside"], target: { band: 1k, answer: 0 } }
+      - { id: R1-02, text: "<u>poor</u>: We are poor.", options: ["have little money", "are very tired", "feel unwell", "are late"], target: { band: 1k, answer: 0 } }
+      - { id: R1-03, text: "<u>shoe</u>: Where is your shoe?", options: ["the thing you wear on your foot", "the thing you keep money in", "the thing you write with", "the thing you cook with"], target: { band: 1k, answer: 0 } }
+      - { id: R1-04, text: "<u>patience</u>: He has no patience.", options: ["ability to wait calmly", "free time", "money saved", "close friends"], target: { band: 2k, answer: 0 } }
+      - { id: R1-05, text: "<u>nil</u>: His contribution was nil.", options: ["nothing", "very large", "late", "surprising"], target: { band: 2k, answer: 0 } }
+      - { id: R1-06, text: "<u>pub</u>: They went to the pub.", options: ["a place where people drink and talk", "a place to buy stamps", "a public swimming pool", "a small hospital"], target: { band: 2k, answer: 0 } }
+      - { id: R1-07, text: "<u>compound</u>: They made a new compound.", options: ["something made of two or more parts joined together", "a long list of rules", "a kind of promise", "a type of garden"], target: { band: 3k, answer: 0 } }
+      - { id: R1-08, text: "<u>latter</u>: I agree with the latter.", options: ["the second of two things mentioned", "the older person", "the written version", "the louder voice"], target: { band: 3k, answer: 0 } }
+      - { id: R1-09, text: "<u>candid</u>: Please be candid.", options: ["honest and direct", "quick", "careful with money", "quiet"], target: { band: 3k, answer: 0 } }
+      - { id: R1-10, text: "<u>tummy</u>: Look at my tummy.", options: ["stomach", "new haircut", "scar on the hand", "drawing"], target: { band: 4k, answer: 0 } }
+      - { id: R1-11, text: "<u>quiz</u>: We made a quiz.", options: ["a short test", "a small cake", "a kind of map", "a loud noise"], target: { band: 4k, answer: 0 } }
+      - { id: R1-12, text: "<u>input</u>: We need more input.", options: ["information or effort put into something", "space to work", "rest", "fresh air"], target: { band: 4k, answer: 0 } }
+      - { id: R1-13, text: "<u>deficit</u>: The company had a large deficit.", options: ["spent more money than it earned", "hired many new people", "built a large factory", "paid a big fine"], target: { band: 5k, answer: 0 } }
+      - { id: R1-14, text: "<u>weep</u>: He wept.", options: ["cried", "fell asleep", "ran away", "laughed loudly"], target: { band: 5k, answer: 0 } }
+      - { id: R1-15, text: "<u>nun</u>: We saw a nun.", options: ["a woman who has given her life to religion", "a rare bird", "a kind of boat", "a small deer"], target: { band: 5k, answer: 0 } }
+      - { id: R1-16, text: "<u>haunt</u>: The house is haunted.", options: ["visited by ghosts", "very old and empty", "for sale", "full of insects"], target: { band: 6k, answer: 0 } }
+      - { id: R1-17, text: "<u>cube</u>: I need one more cube.", options: ["a solid block with six square sides", "a long thin piece", "a round flat piece", "a sharp tool"], target: { band: 6k, answer: 0 } }
+      - { id: R1-18, text: "<u>miniature</u>: It is a miniature.", options: ["a very small copy of something", "a toy for babies", "an instrument", "a kind of medicine"], target: { band: 6k, answer: 0 } }
+      - { id: R1-19, text: "<u>olive</u>: We bought olives.", options: ["small oval fruits with a hard stone, often salty", "soft sweet buns", "sharp kitchen knives", "cotton shirts"], target: { band: 7k, answer: 0 } }
+      - { id: R1-20, text: "<u>quilt</u>: They made a quilt.", options: ["a thick bed cover made of pieces of cloth", "a cold drink", "a stone wall", "a short speech"], target: { band: 7k, answer: 0 } }
+      - { id: R1-21, text: "<u>stealth</u>: They did it by stealth.", options: ["secretly, without being noticed", "by paying a lot", "with great force", "very slowly"], target: { band: 7k, answer: 0 } }
+      - { id: R1-22, text: "<u>shudder</u>: The boy shuddered.", options: ["shook from cold or fear", "shouted", "fell down", "ran off"], target: { band: 8k, answer: 0 } }
+      - { id: R1-23, text: "<u>bristle</u>: The bristles are too hard.", options: ["short stiff hairs on a brush", "wooden handles", "metal springs", "thin strings"], target: { band: 8k, answer: 0 } }
+      - { id: R1-24, text: "<u>bloc</u>: They have joined this bloc.", options: ["a group of countries or parties with shared aims", "a tall building", "a sports team", "a bank"], target: { band: 8k, answer: 0 } }
+      - { id: R1-25, text: "<u>dollop</u>: Add a dollop of cream.", options: ["a soft lump", "a thin slice", "a cup", "a drop"], target: { band: 9k, answer: 0 } }
+      - { id: R1-26, text: "<u>peasantry</u>: He did a lot for the peasantry.", options: ["poor farmers", "church leaders", "sick children", "soldiers"], target: { band: 9k, answer: 0 } }
+      - { id: R1-27, text: "<u>egalitarian</u>: This organization is egalitarian.", options: ["treats everyone as equal", "is very old", "has strict rules", "is run by one family"], target: { band: 9k, answer: 0 } }
+      - { id: R1-28, text: "<u>awe</u>: They looked at him in awe.", options: ["wonder mixed with respect or fear", "anger", "boredom", "confusion"], target: { band: 10k, answer: 0 } }
+      - { id: R1-29, text: "<u>peel</u>: Shall I peel it?", options: ["take the skin off", "cut into pieces", "heat it", "throw it away"], target: { band: 10k, answer: 0 } }
+      - { id: R1-30, text: "<u>fracture</u>: They found a fracture.", options: ["a break or crack", "a small animal", "a missing page", "a secret door"], target: { band: 10k, answer: 0 } }
+      - { id: R1-31, text: "<u>copay</u>: The copay is twenty dollars.", options: ["the fixed amount you pay yourself for a visit", "the doctor's hourly fee", "the cost of parking", "a late fee"], target: { band: medical, answer: 0 } }
+      - { id: R1-32, text: "<u>referral</u>: You'll need a referral.", options: ["a note from one doctor sending you to another", "a second blood test", "a parking permit", "a signed receipt"], target: { band: medical, answer: 0 } }
+      - { id: R1-33, text: "<u>fasting</u>: The test requires fasting.", options: ["not eating for a period before it", "arriving early", "drinking extra water", "bringing a friend"], target: { band: medical, answer: 0 } }
+      - { id: R1-34, text: "<u>over-the-counter</u>: It's an over-the-counter medicine.", options: ["sold without a prescription", "given by injection", "only for children", "very expensive"], target: { band: medical, answer: 0 } }
+      - { id: R1-35, text: "<u>side effect</u>: Drowsiness is a side effect.", options: ["an unwanted result of a medicine", "a sign the medicine is working", "a reason to stop treatment", "a type of allergy"], target: { band: medical, answer: 0 } }
+      - { id: R1-36, text: "<u>deductible</u>: Your deductible is high.", options: ["the amount you pay before insurance starts paying", "the discount for paying early", "the monthly payment", "the refund"], target: { band: medical, answer: 0 } }
+      - { id: R1-37, text: "<u>triage</u>: The nurse does triage.", options: ["decides how urgent each patient is", "cleans the rooms", "takes payments", "gives vaccinations"], target: { band: medical, answer: 0 } }
+      - { id: R1-38, text: "<u>dosage</u>: Follow the dosage on the label.", options: ["how much and how often to take it", "the price", "the storage temperature", "the expiry date"], target: { band: medical, answer: 0 } }
+      - { id: R1-39, text: "<u>reschedule</u>: I need to reschedule.", options: ["change the time of an appointment", "cancel permanently", "pay in advance", "ask for a refund"], target: { band: medical, answer: 0 } }
+      - { id: R1-40, text: "<u>generic</u>: The pharmacist offered the generic.", options: ["the cheaper version with the same active ingredient", "the strongest version", "a free sample", "the children's version"], target: { band: medical, answer: 0 } }

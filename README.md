@@ -1,7 +1,7 @@
 # Ehnglish
 
 Private monthly English assessment for one learner (bilingual English/한국어). The plan is
-[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M3 (Baseline tasks)**: the whole monthly core (C0–C7) and the baseline day 1 form record and are scored.
+[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M4 (Rotating modules)**: the monthly core, the baseline day and the four rotating modules (R1–R4, form A) all record and are scored. Next: M5 dashboard + export.
 
 ```
 web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality check, resumable upload queue, timed task runner.
@@ -80,21 +80,33 @@ is skipped on retry if already present for the current pipeline version.
 | `lexical_decision` | LexTALE answer, correctness and reaction time | — |
 | `typing` | keystroke measures: chars/min, bursts, pauses, revisions, copy accuracy | — |
 | `ideas`, `expression_gap` | idea units (Claude) and Korean→English coverage + speech-rate ratio | Anthropic key |
+| `mc` | multiple-choice answer, band/genre, reaction time | — |
+| `reading` | words, reading time, words per minute (from the Done event) | — |
+| `ctest` | C-test blanks, exact-match score | — |
+| `axb` | AXB discrimination answer by contrast | — |
 
 Task → steps: silence: probe only · read_aloud: asr, vote, timing, pron, phonemes, alignment ·
 sentence_repeat: asr, vote, timing, latency, ei · quick_answer: asr, vote, timing, latency, language ·
 describe_opinion: asr, vote, timing, alignment, language (English) or ideas (Korean baseline) · phone_call
 (per turn): asr, vote, timing, latency, language, phrases, checklist · dictation (typed): wer ·
 typed_response: typing + language (English) · lexical_decision: lexical_decision · copy_typing: typing ·
-rating: stored only.
+rating: stored only · multiple_choice: mc · reading_passage: reading · c_test: ctest · axb: axb ·
+typed_response with goals (R4 email): typing, language, checklist.
 
 **Session level.** When a sitting is marked done, a `session_summary` job (which waits for every take to
 finish) writes `session_results` rows: `dictation` (mean WER per condition, phone/noise/fast penalties),
 `lextale`, `typing` (per language), `ratings` (per scale, reverse-keyed items flipped), `phone_call`
-(final checklist), `expression_gap`, `completion`. `GET /api/sessions/{id}/results` returns them.
+(final checklist), `expression_gap`, `vocabulary` (size estimate by band, medical %), `comprehension` (per
+question task, with genre), `reading` (wpm, comprehension, effective wpm), `c_test`, `axb` (by contrast),
+`retell`, `email`, `completion`. `GET /api/sessions/{id}/results` returns them.
 
 Forms: `core-A` (monthly core), `baseline-day1` (Korean writing/speaking, English retelling, LexTALE,
-typing baselines, self-report), plus `dummy-v0`/`e2e-core` for tests (hidden in production).
+typing baselines, self-report), `rotating-R1-A` (vocabulary by band + medical), `rotating-R2-A` (timed
+patient-information passage, questions, C-test), `rotating-R3-A` (conversation clip + questions + retell,
+mini-lecture + questions, AXB on Korean-L1 contrasts; sermon clip task added via
+`content/import_sermon_clip.py`), `rotating-R4-A` (clinic email with goal checklist, typing check, anxiety
+scale), plus `dummy-v0`/`e2e-core` for tests (hidden in production). Multiple-choice options are shuffled
+per session on the client; the YAML keeps the key at index 0.
 
 Prompt audio effects (`fx:` on an item, rendered once by `content/build_audio.py`): `voice`, `rate`
 (TTS prosody, e.g. "+35%" for the fast condition), `phone` (300–3400 Hz band, 8 kHz G.711 μ-law round

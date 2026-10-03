@@ -1,0 +1,67 @@
+# Rotating module R2, form A (~9 min): one timed passage (patient information, this form) with
+# comprehension questions, then a C-test (two short texts; from the second sentence on, the
+# second half of every second word is deleted). Drafted to spec; native-speaker edit pending.
+id: rotating-R2-A
+version: 1
+kind: rotating
+title:
+  en: "Reading & grammar — form A"
+  ko: "읽기와 문법 — A형"
+tasks:
+  - id: R2-read
+    type: reading_passage
+    title: { en: "Timed reading", ko: "시간 측정 읽기" }
+    instructions:
+      en: "Read the text once at your normal pace, as if you had received it from your clinic. Press Done as soon as you finish. Questions follow; you will not see the text again."
+      ko: "병원에서 받은 안내문이라고 생각하고 평소 속도로 한 번 읽으세요. 다 읽으면 바로 완료를 누르세요. 그다음 문제가 나오며, 글은 다시 볼 수 없습니다."
+    timing: { prep_s: 0, respond_s: 300 }
+    target: { questions: R2-q, genre: patient_information }
+    items:
+      - id: R2-passage
+        text: >-
+          Preparing for your colonoscopy. Your procedure is scheduled for Tuesday, March 12, at 8:30 a.m.
+          Please arrive at the endoscopy unit on the second floor thirty minutes early. Because you will
+          receive sedation, you must bring an adult who can drive you home; taxis and ride-share services
+          are not accepted unless the driver is a family member or friend who stays with you. Starting
+          three days before the procedure, avoid nuts, seeds, corn, and raw vegetables. The day before,
+          take only clear liquids: water, broth, apple juice, and tea or coffee without milk. Do not drink
+          anything red or purple. At 6 p.m. the evening before, begin drinking the first half of the
+          preparation solution, one glass every fifteen minutes, until the bottle is half empty. Finish
+          the second half at 4 a.m. on the morning of the procedure, and stop all liquids two hours
+          before your arrival time. If you take blood thinners, diabetes medication, or iron tablets,
+          call our office at least a week in advance, because some of these need to be adjusted. Most
+          other medications can be taken with a small sip of water on the morning of the procedure. The
+          procedure itself takes about thirty minutes, and you will rest in the recovery area for another
+          hour. You should not work, drive, sign legal documents, or drink alcohol for the rest of the
+          day. Results of any biopsies will be sent to you within two weeks; if we find nothing that
+          needs follow-up, you will receive a letter rather than a phone call.
+        target: { words: 290 }
+
+  - id: R2-q
+    type: multiple_choice
+    title: { en: "Questions about the text", ko: "글에 대한 문제" }
+    instructions: { en: "Answer from memory. Press 1–4 or click.", ko: "기억을 바탕으로 답하세요. 1~4 키를 누르거나 클릭하세요." }
+    timing: { prep_s: 0, respond_s: 45 }
+    target: { genre: patient_information }
+    items:
+      - { id: R2-q1, text: "How early should you arrive?", options: ["Thirty minutes before 8:30", "One hour before", "At 8:30 exactly", "The night before"], target: { answer: 0 } }
+      - { id: R2-q2, text: "Why can't you take a taxi home on your own?", options: ["You will have been sedated", "The unit closes early", "Taxis cannot reach the second floor", "You must sign documents first"], target: { answer: 0 } }
+      - { id: R2-q3, text: "Which of these is allowed the day before the procedure?", options: ["Apple juice", "Coffee with milk", "Grape juice", "A small salad"], target: { answer: 0 } }
+      - { id: R2-q4, text: "What should you do if you take iron tablets?", options: ["Call the office at least a week ahead", "Stop them the morning of the procedure", "Take them with the preparation solution", "Nothing; they are not affected"], target: { answer: 0 } }
+      - { id: R2-q5, text: "If no follow-up is needed, how will you hear about biopsy results?", options: ["By letter within two weeks", "By phone the same day", "At a visit the next week", "You will not be contacted"], target: { answer: 0 } }
+      - { id: R2-q6, text: "When must you finish the second half of the solution?", options: ["At 4 a.m. on the day of the procedure", "At 6 p.m. the evening before", "Two hours after arriving", "After the biopsy"], target: { answer: 0 } }
+
+  - id: R2-ctest
+    type: c_test
+    title: { en: "Complete the words", ko: "단어 완성하기" }
+    instructions:
+      en: "In each text, parts of some words are missing. Type the missing letters so that each word fits the sentence. Two texts; take your time but keep moving."
+      ko: "각 글에서 일부 단어의 뒷부분이 빠져 있습니다. 문장에 맞도록 빠진 글자를 입력하세요. 글 두 편입니다. 서두르지 않아도 되지만 계속 진행하세요."
+    timing: { prep_s: 0, respond_s: 240 }
+    items:
+      - id: R2-c1
+        text: "Many people put off going to the dentist. They wo{rry} about pa{in}, or th{ey} think th{at} a che{ck-up} is n{ot} really nece{ssary} if noth{ing} hurts. Unfortu{nately}, small prob{lems} are mu{ch} easier a{nd} cheaper t{o} fix th{an} large on{es}, and mo{st} dentists recom{mend} a vi{sit} every s{ix} months ev{en} when every{thing} feels fine."
+        target: { blanks: 20 }
+      - id: R2-c2
+        text: "The clinic sent a reminder about my annual check-up last week. The mes{sage} asked m{e} to arr{ive} ten min{utes} early a{nd} to br{ing} a li{st} of a{ll} my medi{cations}. It al{so} said th{at} the doc{tor} would wa{nt} to disc{uss} my blo{od} pressure, wh{ich} had be{en} slightly hi{gh} at t{he} previous vis{it}."
+        target: { blanks: 20 }

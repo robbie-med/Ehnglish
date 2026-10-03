@@ -53,3 +53,9 @@ def test_forms_api(client: TestClient) -> None:
     assert r.status_code == 200
     assert r.json()["tasks"][0]["items"][0]["text"].startswith("The pharmacist")
     assert client.get("/api/forms/nope").status_code == 404
+
+
+def test_task_level_audio_is_served(client: TestClient) -> None:
+    r = client.get("/api/forms/e2e-core/audio/audio/e2e-core/clip.wav")
+    assert r.status_code == 200 and r.content[:4] == b"RIFF"
+    assert client.get("/api/forms/e2e-core/audio/audio/e2e-core/nope.wav").status_code == 404

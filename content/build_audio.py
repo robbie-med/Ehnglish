@@ -50,13 +50,39 @@ def tts(text: str, voice: str, *, rate: str = "0%") -> bytes:
     return r.content
 
 
+def _concat(parts: list[bytes], gap_s: float, out: Path) -> None:
+    """Join WAV renders with silence between them (all Azure renders share one format)."""
+    import numpy as np
+
+    from app.wav import read_samples, write_wav
+
+    import tempfile
+
+    chunks = []
+    sr = None
+    with tempfile.TemporaryDirectory() as td:
+        for i, b in enumerate(parts):
+            p = Path(td) / f"{i}.wav"
+            p.write_bytes(b)
+            x, info = read_samples(p)
+            sr = info.sample_rate
+            chunks.append(x[:, 0])
+            chunks.append(np.zeros(int(gap_s * sr), dtype=np.float32))
+    write_wav(out, np.concatenate(chunks[:-1]).astype(np.float32), sr or 24000)
+
+
 def render(text: str, voice: str, fx: AudioFx, out: Path) -> None:
-    """TTS, then the item's effects in order: rate (TTS prosody) → phone line → noise."""
+    """TTS (or a word sequence / dialogue), then effects in order: phone line → noise."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as td:
         cur = Path(td) / "tts.wav"
-        cur.write_bytes(tts(text, voice, rate=fx.rate))
+        if fx.sequence:
+            _concat([tts(w, voice, rate=fx.rate) for w in fx.sequence], fx.gap_s, cur)
+        elif fx.dialogue:
+            _concat([tts(turn["text"], turn.get("voice") or voice, rate=fx.rate) for turn in fx.dialogue], fx.gap_s, cur)
+        else:
+            cur.write_bytes(tts(text, voice, rate=fx.rate))
         if fx.phone:
             nxt = Path(td) / "phone.wav"
             audiofx.phone_line(cur, nxt)
@@ -84,8 +110,18 @@ def main() -> None:
         if args.form and form.id != args.form:
             continue
         for task in form.tasks:
+            # Task-level stimulus built from target.tts (a dialogue/lecture script); sermon clips
+            # come from content/import_sermon_clip.py instead and are never regenerated here.
+            tts_spec = task.target.get("tts")
+            if task.audio and tts_spec and not (ROOT / task.audio).exists():
+                fx = AudioFx.model_validate(tts_spec)
+                print(f"{form.id}/{task.id}: stimulus -> {task.audio}  fx={fx.model_dump(exclude_defaults=True)}")
+                if not args.dry_run:
+                    (ROOT / task.audio).parent.mkdir(parents=True, exist_ok=True)
+                    render("", fx.voice or voices["en"], fx, ROOT / task.audio)
+                    made += 1
             for item in task.items:
-                if not item.audio or not item.text:
+                if not item.audio or not (item.text or (item.fx and (item.fx.sequence or item.fx.dialogue))):
                     continue
                 out = ROOT / item.audio
                 if out.exists():
@@ -93,11 +129,11 @@ def main() -> None:
                     continue
                 lang = "ko" if item.target.get("language") == "ko" else "en"
                 fx = item.fx or AudioFx()
-                print(f"{form.id}/{task.id}/{item.id}: {item.text[:50]!r} -> {item.audio}  fx={fx.model_dump(exclude_defaults=True) or 'plain'}")
+                print(f"{form.id}/{task.id}/{item.id}: {(item.text or '')[:50]!r} -> {item.audio}  fx={fx.model_dump(exclude_defaults=True) or 'plain'}")
                 if args.dry_run:
                     continue
                 out.parent.mkdir(parents=True, exist_ok=True)
-                render(item.text, fx.voice or voices[lang], fx, out)
+                render(item.text or "", fx.voice or voices[lang], fx, out)
                 made += 1
     print(f"built {made}, kept {skipped}")
 

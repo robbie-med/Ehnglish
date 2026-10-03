@@ -1,0 +1,94 @@
+# Rotating module R3, form A (~9 min): listening depth. A colleague-style conversation clip with
+# questions and a spoken retell, a short mini-lecture clip with questions, and AXB sound
+# discrimination on Korean-L1 contrasts. The sermon clip task is added by
+# content/import_sermon_clip.py once a clip is chosen (see docs). Drafted to spec.
+id: rotating-R3-A
+version: 1
+kind: rotating
+title:
+  en: "Listening — form A"
+  ko: "듣기 — A형"
+tasks:
+  - id: R3-conv
+    type: multiple_choice
+    title: { en: "Conversation", ko: "대화" }
+    instructions:
+      en: "You will hear two colleagues talking, once. Then answer the questions from memory."
+      ko: "두 동료의 대화를 한 번 듣게 됩니다. 그다음 기억을 바탕으로 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-A/conversation.wav
+    target:
+      genre: conversation
+      tts:
+        gap_s: 0.5
+        dialogue:
+          - { voice: en-US-AndrewNeural, text: "Hey, did you hear the four o'clock got pushed? Priya's stuck at the airport, her flight got cancelled, so she asked if we could do it first thing tomorrow instead." }
+          - { voice: en-US-AvaNeural, text: "Tomorrow morning? I've got the dentist at nine, but I can be back by ten if that works. Honestly, I'd rather do it then anyway, I haven't finished the numbers for the Q3 slide." }
+          - { voice: en-US-AndrewNeural, text: "Ten's fine, I'll move it. And don't kill yourself over the slide, the client just wants the headline. Last time we gave them twenty pages and they only read the summary." }
+          - { voice: en-US-AvaNeural, text: "Ha, I remember. Fine, headline only. Oh, and can you add Marcus? He's covering for Priya on the billing side, and he'll ask the same questions anyway if we don't loop him in." }
+          - { voice: en-US-AndrewNeural, text: "Good call. I'll put him on the invite and send the deck tonight so nobody's reading it cold. If anything changes I'll text you, not email, since you never check email on dentist days." }
+          - { voice: en-US-AvaNeural, text: "That's fair. Text me. See you at ten." }
+    items:
+      - { id: R3-conv-q1, text: "Why was the meeting moved?", options: ["Priya's flight was cancelled", "The client asked for more time", "Marcus was unavailable", "The dentist appointment clashed"], target: { answer: 0 } }
+      - { id: R3-conv-q2, text: "When will the meeting now take place?", options: ["Tomorrow at ten", "Tomorrow at nine", "Today at four", "Tonight"], target: { answer: 0 } }
+      - { id: R3-conv-q3, text: "What does the man say about the slide?", options: ["The client only wants the headline", "It needs twenty pages", "It should include the billing numbers", "Priya will finish it"], target: { answer: 0 } }
+      - { id: R3-conv-q4, text: "Why should Marcus be added?", options: ["He is covering for Priya and would ask the same questions", "He booked the room", "He is the client", "He has the flight details"], target: { answer: 0 } }
+      - { id: R3-conv-q5, text: "How will the man contact her if something changes?", options: ["By text message", "By email", "By phone call", "Through Marcus"], target: { answer: 0 } }
+
+  - id: R3-retell
+    type: describe_opinion
+    title: { en: "Retell the conversation", ko: "대화 다시 말하기" }
+    instructions:
+      en: "In your own words, say everything you remember from the conversation. Sixty seconds."
+      ko: "대화에서 기억나는 모든 내용을 자신의 말로 말하세요. 60초입니다."
+    timing: { prep_s: 5, respond_s: 60, max_s: 65 }
+    allow_rerecord: false
+    items:
+      - id: R3-retell-1
+        prompt: { en: "Retell the conversation between the two colleagues.", ko: "두 동료의 대화를 다시 말하세요." }
+        target: { stage: retell, genre: conversation }
+
+  - id: R3-lecture
+    type: multiple_choice
+    title: { en: "Mini-lecture", ko: "짧은 강의" }
+    instructions:
+      en: "You will hear a short talk, once. Then answer the questions."
+      ko: "짧은 강의를 한 번 듣게 됩니다. 그다음 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-A/lecture.wav
+    target:
+      genre: lecture
+      tts:
+        voice: en-US-AndrewNeural
+        dialogue:
+          - { text: "Let's talk briefly about why medical illustration still matters in an age of photography. A photograph shows everything that happens to be in front of the lens: shadows, blood, instruments, the surgeon's hands. An illustration shows only what the viewer needs to understand. The illustrator can make a vessel transparent, pull the layers of tissue apart, or draw a procedure from an angle no camera could reach. That selectivity is the whole point. Studies of patient education consistently find that people remember a simplified drawing better than a realistic image, and they are less frightened by it. So the illustrator's first job is not to draw well; it is to decide what to leave out. That decision has to be made with a clinician, because what looks unimportant to an artist can be the detail that matters most." }
+    items:
+      - { id: R3-lec-q1, text: "According to the speaker, what is the main advantage of an illustration over a photograph?", options: ["It shows only what the viewer needs", "It is cheaper to produce", "It is more realistic", "It can be made faster"], target: { answer: 0 } }
+      - { id: R3-lec-q2, text: "What do patient-education studies find about simplified drawings?", options: ["People remember them better and find them less frightening", "People distrust them", "They take longer to understand", "They work only for children"], target: { answer: 0 } }
+      - { id: R3-lec-q3, text: "What does the speaker say the illustrator's first job is?", options: ["Deciding what to leave out", "Drawing accurately", "Choosing the camera angle", "Learning anatomy"], target: { answer: 0 } }
+      - { id: R3-lec-q4, text: "Why must that decision involve a clinician?", options: ["An unimportant-looking detail can be the one that matters most", "Clinicians own the images", "Artists cannot read medical records", "It is a legal requirement"], target: { answer: 0 } }
+
+  - id: R3-axb
+    type: axb
+    title: { en: "Same or different?", ko: "같은 소리일까요?" }
+    instructions:
+      en: "You will hear three words: A, then X, then B. Decide whether X is the same word as A or as B. Press A or B (or the F / J keys)."
+      ko: "단어 세 개를 듣습니다: A, 그다음 X, 그다음 B. X가 A와 같은 단어인지 B와 같은 단어인지 판단하세요. A 또는 B를 누르세요 (F / J 키)."
+    timing: { prep_s: 0, respond_s: 10 }
+    items:
+      - { id: R3-axb-01, audio: audio/rotating-R3-A/axb-01.wav, fx: { sequence: ["rice", "lice", "lice"] }, target: { answer: B, contrast: "r/l" } }
+      - { id: R3-axb-02, audio: audio/rotating-R3-A/axb-02.wav, fx: { sequence: ["light", "light", "right"] }, target: { answer: A, contrast: "r/l" } }
+      - { id: R3-axb-03, audio: audio/rotating-R3-A/axb-03.wav, fx: { sequence: ["fan", "pan", "pan"] }, target: { answer: B, contrast: "f/p" } }
+      - { id: R3-axb-04, audio: audio/rotating-R3-A/axb-04.wav, fx: { sequence: ["coffee", "coffee", "copy"] }, target: { answer: A, contrast: "f/p" } }
+      - { id: R3-axb-05, audio: audio/rotating-R3-A/axb-05.wav, fx: { sequence: ["vest", "best", "best"] }, target: { answer: B, contrast: "v/b" } }
+      - { id: R3-axb-06, audio: audio/rotating-R3-A/axb-06.wav, fx: { sequence: ["berry", "berry", "very"] }, target: { answer: A, contrast: "v/b" } }
+      - { id: R3-axb-07, audio: audio/rotating-R3-A/axb-07.wav, fx: { sequence: ["zip", "jip", "jip"] }, target: { answer: B, contrast: "z/dʒ" } }
+      - { id: R3-axb-08, audio: audio/rotating-R3-A/axb-08.wav, fx: { sequence: ["zest", "zest", "jest"] }, target: { answer: A, contrast: "z/dʒ" } }
+      - { id: R3-axb-09, audio: audio/rotating-R3-A/axb-09.wav, fx: { sequence: ["thin", "sin", "sin"] }, target: { answer: B, contrast: "θ/s" } }
+      - { id: R3-axb-10, audio: audio/rotating-R3-A/axb-10.wav, fx: { sequence: ["mouth", "mouth", "mouse"] }, target: { answer: A, contrast: "θ/s" } }
+      - { id: R3-axb-11, audio: audio/rotating-R3-A/axb-11.wav, fx: { sequence: ["sheep", "ship", "ship"] }, target: { answer: B, contrast: "i/ɪ" } }
+      - { id: R3-axb-12, audio: audio/rotating-R3-A/axb-12.wav, fx: { sequence: ["leave", "leave", "live"] }, target: { answer: A, contrast: "i/ɪ" } }
+      - { id: R3-axb-13, audio: audio/rotating-R3-A/axb-13.wav, fx: { sequence: ["pill", "pin", "pin"] }, target: { answer: B, contrast: "final consonants" } }
+      - { id: R3-axb-14, audio: audio/rotating-R3-A/axb-14.wav, fx: { sequence: ["lab", "lab", "lap"] }, target: { answer: A, contrast: "final consonants" } }
+      - { id: R3-axb-15, audio: audio/rotating-R3-A/axb-15.wav, fx: { sequence: ["sip", "ship", "ship"] }, target: { answer: B, contrast: "ʃ/s" } }
+      - { id: R3-axb-16, audio: audio/rotating-R3-A/axb-16.wav, fx: { sequence: ["sue", "sue", "shoe"] }, target: { answer: A, contrast: "ʃ/s" } }
