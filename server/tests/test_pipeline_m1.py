@@ -443,3 +443,56 @@ def test_report_summarizes_session(client: TestClient, db, mocked_engines) -> No
     assert "repetition: 100.0% syllables" in text
     assert "transcript (3 engines" in text
     assert "not found" in report.summarize(db, _uuid.uuid4())[0]
+
+
+def test_google_parse_and_chunk_points() -> None:
+    import numpy as np
+
+    from app.engines import google
+
+    data = {
+        "results": [
+            {
+                "alternatives": [
+                    {
+                        "transcript": "the pharmacy closes",
+                        "confidence": 0.9,
+                        "words": [
+                            {
+                                "word": "the",
+                                "startTime": "0.100s",
+                                "endTime": "0.300s",
+                                "confidence": 0.95,
+                            },
+                            {
+                                "word": "pharmacy",
+                                "startTime": "0.300s",
+                                "endTime": "0.900s",
+                                "confidence": 0.8,
+                            },
+                        ],
+                    }
+                ]
+            },
+            {
+                "alternatives": [
+                    {
+                        "transcript": "at nine",
+                        "confidence": 0.7,
+                        "words": [{"word": "at", "startTime": "1s", "endTime": "1.2s"}],
+                    }
+                ]
+            },
+        ]
+    }
+    t = google.parse(data, offset_s=50.0)
+    assert t.text == "the pharmacy closes at nine" and t.engine == "google"
+    assert t.words[0].start == 50.1 and t.words[2].start == 51.0 and t.words[1].conf == 0.8
+    assert t.conf == 0.8
+    # chunking: 120 s of noise with a silent gap at 52 s → cut lands in the gap
+    sr = 1000
+    x = np.random.default_rng(0).normal(0, 0.1, 120 * sr).astype(np.float32)
+    x[51 * sr : 53 * sr] = 0
+    pts = google._split_points(x, sr)
+    assert pts[0] == 0 and 51 * sr <= pts[1] <= 53 * sr and len(pts) == 3
+    assert google._split_points(x[: 30 * sr], sr) == [0]

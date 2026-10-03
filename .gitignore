@@ -23,3 +23,4 @@ web/e2e/fixtures/*.wav
 .vscode/
 # owner-provided API keys (never commit)
 keys
+deploy/google-sa.json

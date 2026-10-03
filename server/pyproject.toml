@@ -24,6 +24,7 @@ dependencies = [
     "en-core-web-sm",
     "errant>=3.0.2",
     "azure-cognitiveservices-speech>=1.52.0",
+    "google-auth>=2.59.1",
 ]
 
 [project.optional-dependencies]

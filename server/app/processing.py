@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from .config import get_settings
 from .content import Form, Item, Task, get_forms
-from .engines import azure, deepgram, mfa, whisper
+from .engines import azure, deepgram, google, mfa, whisper
 from .engines import phonemes as phoneme_engine
 from .engines.base import EngineError, Transcript
 from .engines.claude import minimal_correction
@@ -94,6 +94,7 @@ ENGINES: dict[str, Callable[..., Transcript]] = {
     "deepgram": deepgram.transcribe,
     "azure": azure.transcribe,
     "whisper": whisper.transcribe,
+    "google": google.transcribe,  # optional; skipped unless EHNGLISH_GOOGLE_CREDENTIALS is set
 }
 
 
@@ -107,7 +108,7 @@ def step_asr(ctx: Ctx) -> dict[str, dict]:
             try:
                 return fn(ctx.path, language=ctx.language).to_dict()
             except EngineError as e:
-                if "not set" in str(e):
+                if "not set" in str(e) or "not enabled" in str(e):
                     log.info("%s skipped: %s", name, e)
                     return {"engine": name, "skipped": True, "reason": str(e)}
                 raise
@@ -119,7 +120,7 @@ def step_asr(ctx: Ctx) -> dict[str, dict]:
 def step_vote(ctx: Ctx, asr: dict[str, dict]) -> dict:
     def run() -> dict:
         engines: dict[str, list[vote.Word]] = {}
-        for name in ("deepgram", "whisper", "azure"):  # backbone first: the most verbatim engine
+        for name in ("deepgram", "whisper", "azure", "google"):  # backbone first: most verbatim
             t = asr.get(name)
             if not t or t.get("skipped"):
                 continue

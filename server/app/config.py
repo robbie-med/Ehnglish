@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     whisper_base_url: str = "https://api.groq.com/openai/v1"  # or https://api.openai.com/v1
     whisper_api_key: str | None = None
     whisper_model: str = "whisper-large-v3"  # OpenAI: whisper-1
+    # Optional fourth transcription voter: Google Cloud Speech-to-Text (service-account JSON path).
+    google_credentials: str | None = None
     anthropic_api_key: str | None = None
     claude_model: str = "claude-opus-5-5"
     # CPU phoneme recognizer (optional extra `phonemes`). Off by default so dev installs stay small.

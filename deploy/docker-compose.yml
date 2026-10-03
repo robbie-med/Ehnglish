@@ -30,6 +30,7 @@ services:
       - "127.0.0.1:3305:3305"
     volumes:
       - ../data:/data
+      - ./google-sa.json:/run/secrets/google-sa.json:ro
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +46,7 @@ services:
       EHNGLISH_PHONEMES_ENABLED: "true"
     volumes:
       - ../data:/data
+      - ./google-sa.json:/run/secrets/google-sa.json:ro
     depends_on:
       api:
         condition: service_started
