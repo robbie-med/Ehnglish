@@ -83,6 +83,18 @@ def _bundle(db: Session, s: TestSession, forms: dict) -> dict:
             "status": s.status,
             "started_at": s.started_at.isoformat(),
             "finished_at": s.finished_at.isoformat() if s.finished_at else None,
+            "takes": len(takes),
+            "items_total": sum(len(t.items) for t in form.tasks) if form else None,
+            "items_done": len(
+                {
+                    (t["task_id"], t["item_id"])
+                    for t in takes
+                    if t["status"] in ("finalized", "processed")
+                }
+            ),
+            "processed": sum(1 for t in takes if t["status"] == "processed"),
+            "headphone_override": bool(((s.setup or {}).get("headphones") or {}).get("override")),
+            "mic": (s.setup or {}).get("deviceLabel"),
         },
         "setup": s.setup or {},
         "client": s.client or {},
@@ -92,18 +104,23 @@ def _bundle(db: Session, s: TestSession, forms: dict) -> dict:
 
 
 def _sessions(db: Session, user: User) -> list[TestSession]:
-    return db.scalars(
-        select(TestSession)
-        .where(TestSession.user_id == user.id, TestSession.status == "done")
-        .order_by(TestSession.started_at)
-        .options(
-            selectinload(TestSession.takes).selectinload(Take.results),
-            selectinload(TestSession.takes).selectinload(Take.events),
-            selectinload(TestSession.takes).selectinload(Take.typed),
-            selectinload(TestSession.session_results),
-        )
-        .execution_options(populate_existing=True)
-    ).all()
+    """Every sitting of this user that has at least one take, finished or not (status is reported)."""
+    return [
+        s
+        for s in db.scalars(
+            select(TestSession)
+            .where(TestSession.user_id == user.id)
+            .order_by(TestSession.started_at)
+            .options(
+                selectinload(TestSession.takes).selectinload(Take.results),
+                selectinload(TestSession.takes).selectinload(Take.events),
+                selectinload(TestSession.takes).selectinload(Take.typed),
+                selectinload(TestSession.session_results),
+            )
+            .execution_options(populate_existing=True)
+        ).all()
+        if any(t.status != "rejected" for t in s.takes)
+    ]
 
 
 def _anchor_means(db: Session, forms: dict, form_id: str) -> dict[str, float]:
@@ -112,7 +129,7 @@ def _anchor_means(db: Session, forms: dict, form_id: str) -> dict[str, float]:
     acc: dict[str, list[float]] = {}
     for a in anchors:
         for s in _sessions(db, a):
-            if s.form_id != form_id:
+            if s.form_id != form_id or s.status != "done":
                 continue
             b = _bundle(db, s, forms)
             for mid, mv in metrics.evaluate(b, b["session"]["form_kind"]).items():
@@ -276,6 +293,7 @@ def export_session(
                 **mv.to_dict(),
                 "unit": metrics.BY_ID[mid].unit,
                 "direction": metrics.BY_ID[mid].direction,
+                "domain": metrics.BY_ID[mid].domain,
                 "definition": {"en": metrics.BY_ID[mid].en, "ko": metrics.BY_ID[mid].ko},
             }
             for mid, mv in vals.items()

@@ -1,0 +1,28 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api-e2e",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "3915"],
+      "cwd": "server",
+      "env": {
+        "EHNGLISH_ENV": "test",
+        "EHNGLISH_DEV_EMAIL": "e2e@example.com",
+        "EHNGLISH_DATABASE_URL": "postgresql+psycopg://ehnglish:ehnglish@127.0.0.1:3607/ehnglish",
+        "EHNGLISH_RAW_DIR": "/home/user/Projects/bobob/ultimate_english/data/raw-e2e",
+        "EHNGLISH_CONTENT_DIR": "/home/user/Projects/bobob/ultimate_english/content",
+        "EHNGLISH_PIPELINE_VERSION": "e2e.0.1"
+      },
+      "port": 3915
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "/home/user/.nvm/versions/node/v24.16.0/bin/npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "web",
+      "env": { "EHNGLISH_API_PORT": "3915", "PATH": "/home/user/.nvm/versions/node/v24.16.0/bin:/usr/local/bin:/usr/bin:/bin" },
+      "port": 3914
+    }
+  ]
+}

@@ -67,7 +67,7 @@ export const api = {
   submitTyped: (takeId: string, text: string, keystrokes: Keystroke[]) =>
     req<TakeOut>('POST', `/takes/${takeId}/typed`, { text, keystrokes }),
   postEvents: (takeId: string, events: EventIn[]) => req<void>('POST', `/takes/${takeId}/events`, events),
-  dashboard: (subject: 'learner' | 'me' = 'learner') => req<import('../pages/Dashboard').DashboardData>('GET', `/dashboard?subject=${subject}`),
+  dashboard: (subject: 'learner' | 'me' = 'learner') => req<import('../pages/dash').DashboardData>('GET', `/dashboard?subject=${subject}`),
   exportSession: (id: string) => req<Record<string, unknown>>('GET', `/sessions/${id}/export`),
   takeViewer: (takeId: string) => req<any>('GET', `/takes/${takeId}/viewer`), // eslint-disable-line @typescript-eslint/no-explicit-any
 };

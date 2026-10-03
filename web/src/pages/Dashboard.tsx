@@ -3,29 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useLang } from '../useLang';
+import { DOMAIN_ORDER, fmt, QUALITY, type DashboardData, type Point } from './dash';
 
-interface Latest { value: number | null; n: number; ci95: [number, number] | null; anchor: number | null; pct_of_anchor: number | null; scale: number | null; session_id: string; form_id: string; started_at: string }
-interface Point { session_id: string; form_id: string; started_at: string; value: number; ci95: [number, number] | null; scale: number | null }
-interface Metric { id: string; unit: string; direction: 'higher' | 'lower' | 'none'; definition: { en: string; ko: string }; latest: Latest; trend: { points: Point[]; change: number | null; detectable: boolean | null } | null }
-interface Estimate { skill: string; cefr: string | null; toefl: [number, number] | null; ielts: [number, number] | null; based_on: { metric: string; value: number; level: string }[]; spread?: number; label: string }
-interface SessionRow { id: string; form_id: string; form_kind: string; started_at: string; finished_at: string | null }
-export interface DashboardData {
-  subject: { email: string; role: string };
-  viewer: { email: string; role: string };
-  sessions: SessionRow[];
-  domains: Record<string, Metric[]>;
-  estimates: Estimate[];
-  anchors_available: Record<string, boolean>;
-  costs: { sessions: Record<string, { total_usd: number; by_engine: Record<string, { cost_usd: number; calls: number; units: Record<string, number> }> }>; all_time: { total_usd: number; by_engine: Record<string, number> } } | null;
-}
-
-const DOMAIN_ORDER = ['speaking', 'listening', 'reading', 'writing', 'vocabulary', 'self', 'quality'];
-
-function fmt(v: number | null | undefined, unit = ''): string {
-  if (v === null || v === undefined) return '—';
-  const s = Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2);
-  return unit ? `${s} ${unit}` : s;
-}
+const small = { fontSize: '0.75rem' } as const;
 
 /** Tiny inline trend chart with a CI band. */
 export function Sparkline({ points, width = 160, height = 40 }: { points: Point[]; width?: number; height?: number }) {
@@ -52,17 +32,16 @@ export function Sparkline({ points, width = 160, height = 40 }: { points: Point[
 export default function Dashboard() {
   const { t } = useTranslation();
   const lang = useLang();
-  const [data, setData] = useState<DashboardData | null>(null);
   const [subject, setSubject] = useState<'learner' | 'me'>('learner');
+  const [loaded, setLoaded] = useState<{ subject: string; data: DashboardData } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
 
   useEffect(() => {
-    setData(null);
-    api.dashboard(subject).then(setData).catch((e) => setError(String(e.message)));
+    api.dashboard(subject).then((data) => setLoaded({ subject, data })).catch((e) => setError(String(e.message)));
   }, [subject]);
-
-  const sessionsNewestFirst = useMemo(() => (data ? [...data.sessions].reverse() : []), [data]);
+  const data = loaded?.subject === subject ? loaded.data : null;
+  const newestFirst = useMemo(() => (data ? [...data.per_session].reverse() : []), [data]);
 
   async function exportSession(id: string) {
     setExporting(id);
@@ -83,6 +62,7 @@ export default function Dashboard() {
 
   if (error) return <div className="card status-bad">{error}</div>;
   if (!data) return <div className="card muted">{t('common.loading')}</div>;
+  const latest = newestFirst[0]?.session;
 
   return (
     <div className="stack" data-testid="dashboard">
@@ -90,6 +70,11 @@ export default function Dashboard() {
         <div>
           <h2 style={{ margin: 0 }}>{t('dash.title')}</h2>
           <div className="muted">{t('dash.subject')}: {data.subject.email} · {t('dash.sessions_n', { n: data.sessions.length })}</div>
+          {latest && (
+            <div className="muted" data-testid="latest-sitting">
+              {t('dash.latest')}: {new Date(latest.started_at).toLocaleString()} · {latest.form_id} · {t(`dash.status.${latest.status}`)} · {t('dash.items_done', { done: latest.items_done, total: latest.items_total ?? '?' })}
+            </div>
+          )}
         </div>
         <div className="row">
           {data.viewer.role === 'anchor' && (
@@ -110,7 +95,11 @@ export default function Dashboard() {
               <div className="muted">{t(`dash.skill.${e.skill}`)}</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 700 }}>{e.cefr ?? '—'}</div>
               <div className="muted">TOEFL {e.toefl ? `${e.toefl[0]}–${e.toefl[1]}` : '—'} · IELTS {e.ielts ? `${e.ielts[0]}–${e.ielts[1]}` : '—'}</div>
-              {e.based_on.length > 0 && <div className="muted" style={{ fontSize: '0.75rem' }}>{t('dash.based_on', { n: e.based_on.length })}{e.spread ? ` · ${t('dash.spread', { n: e.spread })}` : ''}</div>}
+              {e.based_on.length > 0 && (
+                <div className="muted" style={small}>
+                  {t('dash.based_on', { n: e.based_on.length })}{e.spread ? ` · ${t('dash.spread', { n: e.spread })}` : ''}{e.form_id ? ` · ${e.form_id}` : ''}
+                </div>
+              )}
             </div>
           ))}
           {data.estimates.length === 0 && <span className="muted">{t('dash.no_data')}</span>}
@@ -121,28 +110,27 @@ export default function Dashboard() {
         <div className="card" key={d} data-testid={`domain-${d}`}>
           <h3>{t(`dash.domain.${d}`)}</h3>
           <table className="stats" style={{ width: '100%' }}>
-            <thead><tr className="muted"><th style={{ textAlign: 'left' }}>{t('dash.metric')}</th><th>{t('dash.value')}</th><th>{t('dash.anchor')}</th><th>{t('dash.scale')}</th><th>{t('dash.trend')}</th></tr></thead>
+            <thead><tr><th>{t('dash.metric')}</th><th>{t('dash.value')}</th><th>{t('dash.anchor')}</th><th>{t('dash.scale')}</th><th>{t('dash.trend')}</th></tr></thead>
             <tbody>
               {data.domains[d].map((m) => (
                 <tr key={m.id} data-testid={`metric-${m.id}`}>
                   <td style={{ maxWidth: 320 }}>
                     <div>{m.definition[lang]}</div>
-                    <div className="muted" style={{ fontSize: '0.75rem' }}>{m.id}{m.direction !== 'none' ? ` · ${m.direction === 'higher' ? t('dash.higher_better') : t('dash.lower_better')}` : ''}</div>
+                    <div className="muted" style={small}>{m.id}{m.direction !== 'none' ? ` · ${m.direction === 'higher' ? t('dash.higher_better') : t('dash.lower_better')}` : ''}</div>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <strong>{fmt(m.latest.value, m.unit)}</strong>
-                    {m.latest.ci95 && <div className="muted" style={{ fontSize: '0.75rem' }}>95% CI {fmt(m.latest.ci95[0])}–{fmt(m.latest.ci95[1])} · n={m.latest.n}</div>}
+                    {m.latest.ci95 && <div className="muted" style={small}>95% CI {fmt(m.latest.ci95[0])}–{fmt(m.latest.ci95[1])} · n={m.latest.n}</div>}
+                    <div className="muted" style={small}>{new Date(m.latest.started_at).toLocaleDateString()} · {m.latest.form_id}</div>
                   </td>
-                  <td>{fmt(m.latest.anchor)}{m.latest.pct_of_anchor !== null && <div className="muted" style={{ fontSize: '0.75rem' }}>{m.latest.pct_of_anchor}%</div>}</td>
+                  <td>{fmt(m.latest.anchor)}{m.latest.pct_of_anchor !== null && <div className="muted" style={small}>{m.latest.pct_of_anchor}%</div>}</td>
                   <td style={{ minWidth: 90 }}>
-                    {m.latest.scale !== null ? (
-                      <div className="meter" title={`${m.latest.scale}/100`}><div style={{ width: `${m.latest.scale}%` }} /></div>
-                    ) : <span className="muted">—</span>}
+                    {m.latest.scale !== null ? <div className="meter" title={`${m.latest.scale}/100`}><div style={{ width: `${m.latest.scale}%` }} /></div> : <span className="muted">—</span>}
                   </td>
                   <td>
                     {m.trend && <Sparkline points={m.trend.points} />}
                     {m.trend?.change !== null && m.trend?.change !== undefined && (
-                      <div className="muted" style={{ fontSize: '0.75rem' }}>
+                      <div className="muted" style={small}>
                         {m.trend.change > 0 ? '+' : ''}{fmt(m.trend.change)} · {m.trend.detectable === true ? t('dash.detectable') : m.trend.detectable === false ? t('dash.not_detectable') : t('dash.uncertain_change')}
                       </div>
                     )}
@@ -154,6 +142,24 @@ export default function Dashboard() {
         </div>
       ))}
 
+      {newestFirst.length > 0 && (
+        <div className="card" data-testid="domain-quality">
+          <h3>{t('dash.domain.quality')} <span className="muted" style={{ fontWeight: 400 }}>· {t('dash.quality_note')}</span></h3>
+          <table className="stats" style={{ width: '100%' }}>
+            <thead><tr><th>{t('dash.sitting')}</th>{QUALITY.map((q) => <th key={q}>{t(`dash.q.${q}`)}</th>)}<th>{t('dash.q.covariates')}</th></tr></thead>
+            <tbody>
+              {newestFirst.map(({ session: s, metrics: m }) => (
+                <tr key={s.id} data-testid={`quality-${s.id}`}>
+                  <td>{new Date(s.started_at).toLocaleDateString()} · {s.form_id}<div className="muted" style={small}>{t(`dash.status.${s.status}`)}{s.mic ? ` · ${s.mic}` : ''}</div></td>
+                  {QUALITY.map((q) => <td key={q}>{fmt(m[q]?.value, unitOf(q))}{q === 'headphone_leak_db' && s.headphone_override ? ' ⚠' : ''}</td>)}
+                  <td className="muted">{t('dash.q.sleep')} {m.sleep_h?.value ?? '—'} · {t('dash.q.stress')} {m.stress?.value ?? '—'} · {t('dash.q.mood')} {m.mood?.value ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {data.costs && (
         <div className="card" data-testid="costs">
           <h3>{t('dash.costs')} <span className="muted" style={{ fontWeight: 400 }}>· {t('dash.costs_note')}</span></h3>
@@ -161,7 +167,7 @@ export default function Dashboard() {
           <table className="stats" style={{ width: '100%' }}>
             <thead><tr><th>{t('dash.sitting')}</th><th>{t('dash.cost')}</th><th>{t('dash.by_engine')}</th></tr></thead>
             <tbody>
-              {sessionsNewestFirst.map((s) => {
+              {newestFirst.map(({ session: s }) => {
                 const c = data.costs!.sessions[s.id];
                 return (
                   <tr key={s.id}>
@@ -178,11 +184,15 @@ export default function Dashboard() {
 
       <div className="card">
         <h3>{t('dash.sessions')}</h3>
-        {sessionsNewestFirst.length === 0 && <p className="muted">{t('dash.no_data')}</p>}
-        {sessionsNewestFirst.map((s) => (
-          <div key={s.id} className="row" style={{ justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-            <div>{new Date(s.started_at).toLocaleString()} · <strong>{s.form_id}</strong> <span className="muted">({s.form_kind})</span></div>
+        {newestFirst.length === 0 && <p className="muted">{t('dash.no_data')}</p>}
+        {newestFirst.map(({ session: s }) => (
+          <div key={s.id} className="row" style={{ justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--rule)' }}>
+            <div>
+              {new Date(s.started_at).toLocaleString()} · <strong>{s.form_id}</strong> <span className="muted">({s.form_kind})</span>
+              <div className="muted" style={{ fontSize: '0.8rem' }}>{t(`dash.status.${s.status}`)} · {t('dash.items_done', { done: s.items_done, total: s.items_total ?? '?' })} · {t('dash.processed_n', { n: s.processed, total: s.takes })}</div>
+            </div>
             <div className="row">
+              <Link to={`/sitting/${s.id}`}><button data-testid={`sitting-${s.id}`}>{t('dash.details')}</button></Link>
               <Link to={`/session-takes/${s.id}`}><button>{t('dash.recordings')}</button></Link>
               <button onClick={() => exportSession(s.id)} disabled={exporting === s.id} data-testid={`export-${s.id}`}>{t('dash.export')}</button>
             </div>
@@ -191,4 +201,8 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function unitOf(q: (typeof QUALITY)[number]): string {
+  return q.endsWith('_dbfs') ? 'dBFS' : q.endsWith('_db') ? 'dB' : q.endsWith('_pct') || q === 'transcript_agreement' ? '%' : '';
 }

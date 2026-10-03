@@ -29,9 +29,8 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   await page.waitForURL(/\/setup\/e2e-core/);
   await page.goto(page.url() + '?quick=1');
   await page.getByTestId('enable-mic').click();
-  await page.getByTestId('measure-noise').click();
+  await page.getByTestId('run-checks').click();
   await expect(page.getByTestId('noise-result')).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId('headphone-check').click();
   await expect(page.getByTestId('headphone-result')).toHaveClass(/status-ok/, { timeout: 15_000 });
   await page.getByTestId('start-session').click();
   await page.waitForURL(/\/session\//);

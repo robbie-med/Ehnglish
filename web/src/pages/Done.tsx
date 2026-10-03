@@ -24,7 +24,10 @@ export default function Done() {
         {pending === null ? t('common.loading') : pending > 0 ? t('done.uploads_pending', { n: pending }) : t('done.uploads_done')}
       </p>
       <p className="muted">{t('done.session')}: <code data-testid="session-id">{sessionId}</code></p>
-      <Link to="/"><button>{t('done.home')}</button></Link>
+      <div className="row">
+        <Link to="/dashboard"><button className="primary">{t('nav.dashboard')}</button></Link>
+        <Link to="/"><button>{t('done.home')}</button></Link>
+      </div>
     </div>
   );
 }

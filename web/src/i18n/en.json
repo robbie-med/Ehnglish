@@ -20,9 +20,6 @@
     "start": "Start",
     "tasks": "{{tasks}} tasks · {{items}} items",
     "pending": "Uploads waiting: {{n}}",
-    "all_uploaded": "All recordings uploaded",
-    "sessions": "Past sittings",
-    "no_sessions": "No sittings yet",
     "open_sessions": "Unfinished sittings",
     "resume": "Resume",
     "takes_n": "{{n}} takes"
@@ -34,15 +31,7 @@
     "enable_mic": "Enable microphone",
     "headphones_required": "Headphones are required. Test audio must not reach the microphone.",
     "level": "Input level",
-    "noise_title": "Noise floor",
-    "noise_help": "Stay silent for {{n}} seconds.",
-    "measure_noise": "Record silence",
-    "measuring": "Recording silence… stay quiet",
     "noise_result": "Noise floor: {{dbfs}} dBFS",
-    "headphone_title": "Headphone check",
-    "headphone_help": "A short tone will play. With headphones on, the microphone should not hear it.",
-    "run_headphone": "Play test tone",
-    "headphone_running": "Playing tone…",
     "headphone_ok": "Headphones OK (tone at {{dbfs}} dBFS)",
     "headphone_leak": "The microphone hears the test tone ({{dbfs}} dBFS, {{db}} dB over silence). Put on headphones, lower the volume, and try again.",
     "covariates": "Right now",
@@ -52,7 +41,14 @@
     "continue": "Start the test",
     "need_all": "Complete the microphone, noise and headphone checks first.",
     "continue_anyway": "Continue anyway (will be noted)",
-    "seconds_left": "{{s}} s left"
+    "seconds_left": "{{s}} s left",
+    "checks_title": "Noise and headphone check",
+    "checks_help": "Press the button, then stay silent for {{n}} seconds. A short tone follows through the headphones; the microphone should not hear it.",
+    "run_checks": "Run the checks",
+    "run_checks_again": "Run the checks again",
+    "step_noise": "Recording silence… stay quiet",
+    "step_tone": "Playing the tone…",
+    "override_noted": "override noted"
   },
   "runner": {
     "intro_title": "{{title}}",
@@ -121,7 +117,7 @@
   "dash": {
     "title": "Dashboard",
     "subject": "Subject",
-    "sessions_n": "{{n}} completed sittings",
+    "sessions_n": "{{n}} sittings",
     "learner": "Learner",
     "me": "Me (anchor)",
     "estimates": "Estimated levels",
@@ -163,7 +159,28 @@
     "sitting": "Sitting",
     "cost": "Cost",
     "by_engine": "By engine (calls)",
-    "start_sitting": "Start a sitting"
+    "start_sitting": "Start a sitting",
+    "latest": "Latest",
+    "items_done": "{{done}}/{{total}} items",
+    "processed_n": "{{n}} of {{total}} takes processed",
+    "details": "Details",
+    "quality_note": "one row per sitting",
+    "status": {
+      "open": "unfinished",
+      "done": "finished",
+      "abandoned": "abandoned"
+    },
+    "q": {
+      "noise_floor_dbfs": "Noise floor",
+      "headphone_leak_db": "Headphone leak",
+      "clipped_takes": "Clipped takes",
+      "transcript_agreement": "Transcript agreement",
+      "completion_pct": "Completed",
+      "covariates": "Covariates",
+      "sleep": "sleep",
+      "stress": "stress",
+      "mood": "mood"
+    }
   },
   "viewer": {
     "recordings": "Recordings",

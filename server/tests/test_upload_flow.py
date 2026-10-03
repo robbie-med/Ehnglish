@@ -175,7 +175,7 @@ def test_rerecord_supersedes_previous_attempt(client: TestClient, db) -> None:
     t2 = _audio_take(client, sid, attempt=2)
     statuses = {str(t.id): t.status for t in db.scalars(select(Take)).all()}
     assert statuses[t1] == "rejected" and statuses[t2] == "uploading"
-    # Same attempt twice is a conflict.
+    # Same attempt twice (a resumed sitting): the server assigns the next attempt number.
     r = client.post(
         f"/api/sessions/{sid}/takes",
         json={
@@ -187,7 +187,7 @@ def test_rerecord_supersedes_previous_attempt(client: TestClient, db) -> None:
             "channels": 1,
         },
     )
-    assert r.status_code == 409
+    assert r.status_code == 201 and r.json()["attempt"] == 3
 
 
 def test_take_validation(client: TestClient) -> None:

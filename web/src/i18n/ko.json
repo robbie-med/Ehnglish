@@ -20,9 +20,6 @@
     "start": "시작",
     "tasks": "과제 {{tasks}}개 · 문항 {{items}}개",
     "pending": "업로드 대기 중: {{n}}",
-    "all_uploaded": "모든 녹음이 업로드되었습니다",
-    "sessions": "지난 응시",
-    "no_sessions": "아직 응시 기록이 없습니다",
     "open_sessions": "끝내지 않은 응시",
     "resume": "이어서 하기",
     "takes_n": "녹음 {{n}}개"
@@ -34,15 +31,7 @@
     "enable_mic": "마이크 켜기",
     "headphones_required": "헤드폰이 필수입니다. 시험 음성이 마이크에 들어가면 안 됩니다.",
     "level": "입력 레벨",
-    "noise_title": "배경 소음",
-    "noise_help": "{{n}}초 동안 조용히 있어 주세요.",
-    "measure_noise": "무음 녹음",
-    "measuring": "무음 녹음 중… 조용히 해 주세요",
     "noise_result": "배경 소음: {{dbfs}} dBFS",
-    "headphone_title": "헤드폰 확인",
-    "headphone_help": "짧은 신호음이 재생됩니다. 헤드폰을 쓰면 마이크에 들리지 않아야 합니다.",
-    "run_headphone": "신호음 재생",
-    "headphone_running": "신호음 재생 중…",
     "headphone_ok": "헤드폰 정상 (신호음 {{dbfs}} dBFS)",
     "headphone_leak": "마이크에 신호음이 들립니다 ({{dbfs}} dBFS, 무음 대비 {{db}} dB). 헤드폰을 쓰고 볼륨을 낮춘 뒤 다시 시도하세요.",
     "covariates": "지금 상태",
@@ -52,7 +41,14 @@
     "continue": "시험 시작",
     "need_all": "먼저 마이크, 소음, 헤드폰 확인을 완료하세요.",
     "continue_anyway": "그래도 계속 (기록에 남음)",
-    "seconds_left": "{{s}}초 남음"
+    "seconds_left": "{{s}}초 남음",
+    "checks_title": "소음 및 헤드폰 확인",
+    "checks_help": "버튼을 누른 뒤 {{n}}초 동안 조용히 있어 주세요. 이어서 헤드폰으로 짧은 신호음이 나오며, 마이크에 들리지 않아야 합니다.",
+    "run_checks": "확인 시작",
+    "run_checks_again": "다시 확인",
+    "step_noise": "무음 녹음 중… 조용히 해 주세요",
+    "step_tone": "신호음 재생 중…",
+    "override_noted": "확인 무시 (기록됨)"
   },
   "runner": {
     "intro_title": "{{title}}",
@@ -121,7 +117,7 @@
   "dash": {
     "title": "대시보드",
     "subject": "대상",
-    "sessions_n": "완료한 응시 {{n}}회",
+    "sessions_n": "응시 {{n}}회",
     "learner": "학습자",
     "me": "나 (기준 화자)",
     "estimates": "추정 수준",
@@ -163,7 +159,28 @@
     "sitting": "응시",
     "cost": "비용",
     "by_engine": "엔진별 (호출 수)",
-    "start_sitting": "응시 시작"
+    "start_sitting": "응시 시작",
+    "latest": "최근",
+    "items_done": "문항 {{done}}/{{total}}",
+    "processed_n": "녹음 {{total}}개 중 {{n}}개 처리됨",
+    "details": "자세히",
+    "quality_note": "응시 한 번당 한 줄",
+    "status": {
+      "open": "미완료",
+      "done": "완료",
+      "abandoned": "중단"
+    },
+    "q": {
+      "noise_floor_dbfs": "배경 소음",
+      "headphone_leak_db": "헤드폰 누출",
+      "clipped_takes": "클리핑 녹음",
+      "transcript_agreement": "전사 일치율",
+      "completion_pct": "완료율",
+      "covariates": "공변량",
+      "sleep": "수면",
+      "stress": "스트레스",
+      "mood": "기분"
+    }
   },
   "viewer": {
     "recordings": "녹음",

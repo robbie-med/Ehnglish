@@ -132,19 +132,20 @@ def create_take(
         raise HTTPException(400, f"task {task.id} expects kind={expected_kind}")
     if body.kind == "audio" and not (body.sample_rate and body.channels):
         raise HTTPException(400, "audio takes need sample_rate and channels")
-    # A new attempt supersedes earlier ones for the same item.
-    for prev in s.takes:
-        if (
-            prev.task_id == body.task_id
-            and prev.item_id == body.item_id
-            and prev.status != "rejected"
-        ):
+    # A new attempt supersedes earlier ones for the same item. If the requested attempt number is
+    # already taken (a resumed sitting), the server assigns the next one rather than refusing.
+    existing = [t for t in s.takes if t.task_id == body.task_id and t.item_id == body.item_id]
+    attempt = body.attempt
+    if any(t.attempt == attempt for t in existing):
+        attempt = max(t.attempt for t in existing) + 1
+    for prev in existing:
+        if prev.status != "rejected":
             prev.status = "rejected"
     take = Take(
         session_id=s.id,
         task_id=body.task_id,
         item_id=body.item_id,
-        attempt=body.attempt,
+        attempt=attempt,
         kind=body.kind,
         sample_rate=body.sample_rate,
         channels=body.channels,

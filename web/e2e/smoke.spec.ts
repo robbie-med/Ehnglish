@@ -41,9 +41,8 @@ test('dummy form end to end: record, upload, store, process', async ({ page, req
   await page.goto(page.url() + '?quick=1');
   await page.getByTestId('enable-mic').click();
   await expect(page.getByTestId('mic-select')).toBeVisible();
-  await page.getByTestId('measure-noise').click();
+  await page.getByTestId('run-checks').click();
   await expect(page.getByTestId('noise-result')).toBeVisible({ timeout: 15_000 });
-  await page.getByTestId('headphone-check').click();
   await expect(page.getByTestId('headphone-result')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId('headphone-result')).toHaveClass(/status-ok/);
   await page.getByTestId('sleep').fill('6.5');

@@ -33,10 +33,6 @@ export function effectiveTiming(task: Task, item: Item): Timing {
   return item.timing ?? task.timing;
 }
 
-export function currentTask(form: Form, s: RunnerState): Task | undefined {
-  return form.tasks[s.taskIdx];
-}
-
 /** Review (accept / re-record) exists only for audio tasks that allow re-recording. */
 export function hasReview(task: Task): boolean {
   return taskKind(task) === 'audio' && task.allow_rerecord;
@@ -102,6 +98,11 @@ export function countItems(form: Form): number {
   return form.tasks.reduce((n, t) => n + t.items.length, 0);
 }
 
+/** Items before the current one, for the progress bar. */
+export function itemsBefore(form: Form, s: RunnerState): number {
+  return form.tasks.slice(0, s.taskIdx).reduce((n, t) => n + t.items.length, 0) + s.itemIdx;
+}
+
 /** Deterministic option order per (session, item) so the correct answer's position never leaks
  *  from the YAML and never changes on reload. Returns original indices in display order. */
 export function shuffledOrder(n: number, seed: string): number[] {
@@ -117,6 +118,29 @@ export function shuffledOrder(n: number, seed: string): number[] {
     [order[i], order[j]] = [order[j], order[i]];
   }
   return order;
+}
+
+/** Keyboard shortcuts for the one-tap answer tasks. Returns the stored value and the event name
+ *  the pipeline expects (`submit` for choices, `answer` for timed yes/no and AXB), or null. */
+export function keyAnswer(task: Task, key: string, order: number[]): { value: string; event: 'submit' | 'answer' } | null {
+  const k = key.length === 1 ? key.toLowerCase() : key;
+  switch (task.type) {
+    case 'multiple_choice': {
+      if (!/^[1-9]$/.test(k)) return null;
+      const pos = Number(k) - 1;
+      return pos < order.length ? { value: String(order[pos]), event: 'submit' } : null;
+    }
+    case 'axb':
+      if (k === 'f' || k === 'a' || k === 'ArrowLeft') return { value: 'A', event: 'answer' };
+      if (k === 'j' || k === 'b' || k === 'ArrowRight') return { value: 'B', event: 'answer' };
+      return null;
+    case 'lexical_decision':
+      if (k === 'f' || k === 'ArrowLeft') return { value: 'no', event: 'answer' };
+      if (k === 'j' || k === 'ArrowRight') return { value: 'yes', event: 'answer' };
+      return null;
+    default:
+      return null;
+  }
 }
 
 export interface CtestSegment { text: string; blank: boolean; len?: number }
@@ -136,8 +160,32 @@ export function ctestSegments(text: string): CtestSegment[] {
   return out;
 }
 
+// --- resuming an unfinished sitting -------------------------------------------------------
+// The position is kept in localStorage per session: the server only learns that an audio take is
+// complete once its upload finishes, which can lag the sitting by minutes.
 
 export interface Progress { taskIdx: number; itemIdx: number }
+
+const progressKey = (sessionId: string) => `ehnglish.progress.${sessionId}`;
+
+export function loadProgress(sessionId: string): Progress | null {
+  try {
+    const raw = localStorage.getItem(progressKey(sessionId));
+    const p = raw ? (JSON.parse(raw) as Progress) : null;
+    return p && (p.taskIdx > 0 || p.itemIdx > 0) ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveProgress(sessionId: string, s: RunnerState | null): void {
+  try {
+    if (s) localStorage.setItem(progressKey(sessionId), JSON.stringify({ taskIdx: s.taskIdx, itemIdx: s.itemIdx }));
+    else localStorage.removeItem(progressKey(sessionId));
+  } catch {
+    /* storage unavailable: the sitting simply restarts at the top */
+  }
+}
 
 /** State to start from when a sitting is resumed: the saved item itself (its take will be a new
  *  attempt), via the task intro when it is the first item of a task. */
@@ -147,8 +195,4 @@ export function resumeState(form: Form, p: Progress): RunnerState {
   const itemIdx = Math.min(p.itemIdx, task.items.length - 1);
   if (itemIdx === 0) return { phase: 'task_intro', taskIdx, itemIdx: 0, attempt: 1 };
   return enterItem(task, { phase: 'intro', taskIdx, itemIdx, attempt: 1 });
-}
-
-export function progressKey(sessionId: string): string {
-  return `ehnglish.progress.${sessionId}`;
 }

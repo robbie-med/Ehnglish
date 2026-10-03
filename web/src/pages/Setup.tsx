@@ -1,33 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { evaluateLeak } from '../audio/headphones';
 import { analyzeTake } from '../audio/quality';
 import { getRecorder, listMics, type PcmRecorder } from '../audio/recorder';
+import { useTimer } from '../runner/useTimer';
 import { clientInfo, loadSetup, saveSetup, setupComplete, type SetupData } from '../setup/store';
-import { useProgress } from '../runner/useCountdown';
 
 const NOISE_SECONDS = 10;
+const TONE_SECONDS = 1.2;
 
+/**
+ * C0: pick the microphone, then one button runs both checks in order (10 s of silence for the
+ * noise floor, then a tone through the headphones that the microphone must not hear), then the
+ * sleep / stress / mood sliders. Results persist in sessionStorage until the sitting starts.
+ */
 export default function Setup() {
   const { t } = useTranslation();
   const { formId = '' } = useParams();
   const [params] = useSearchParams();
-  const quick = params.get('quick') === '1'; // test/dev shortcut: 1 s silence instead of 10 s
+  const quick = params.get('quick') === '1'; // test/dev shortcut: 1 s of silence instead of 10 s
   const nav = useNavigate();
   const [setup, setSetup] = useState<SetupData>(() => loadSetup());
   const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
   const [rec, setRec] = useState<PcmRecorder | null>(null);
   const [level, setLevel] = useState(-120);
-  const [busy, setBusy] = useState<'noise' | 'tone' | 'start' | null>(null);
-  const noiseSeconds = quick ? 1 : NOISE_SECONDS;
-  const noiseProgress = useProgress(noiseSeconds, busy === 'noise');
-  const toneProgress = useProgress(1.2, busy === 'tone');
+  const [step, setStep] = useState<'noise' | 'tone' | 'start' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const silenceRef = useRef<Int16Array | null>(null);
+  const noiseSeconds = quick ? 1 : NOISE_SECONDS;
+  const timer = useTimer(step === 'noise' ? noiseSeconds : TONE_SECONDS, step === 'noise' || step === 'tone');
 
   const update = (patch: Partial<SetupData>) => setSetup((s) => { const n = { ...s, ...patch }; saveSetup(n); return n; });
+  const showError = (e: unknown) => setError(String((e as Error).message ?? e));
 
   async function enableMic(deviceId?: string) {
     setError(null);
@@ -36,59 +41,54 @@ export default function Setup() {
       r.onLevel = (db) => setLevel(db);
       setRec(r);
       setMics(await listMics());
+      // A different microphone invalidates earlier checks.
       update({ deviceId: r.info.deviceId, deviceLabel: r.info.label, sampleRate: r.info.sampleRate, noise_floor: null, headphones: null });
-      silenceRef.current = null;
     } catch (e) {
-      setError(String((e as Error).message ?? e));
+      showError(e);
     }
   }
 
   useEffect(() => () => { if (rec) rec.onLevel = null; }, [rec]);
 
-  async function measureNoise() {
+  async function runChecks() {
     if (!rec) return;
-    setBusy('noise');
+    setError(null);
     try {
-      const pcm = await rec.recordFor((quick ? 1 : NOISE_SECONDS) * 1000);
-      silenceRef.current = pcm;
-      update({ noise_floor: analyzeTake(pcm, rec.info.sampleRate), headphones: null });
+      setStep('noise');
+      const silence = await rec.recordFor(noiseSeconds * 1000);
+      setStep('tone');
+      const withTone = await rec.recordWithTone(TONE_SECONDS * 1000);
+      update({
+        noise_floor: analyzeTake(silence, rec.info.sampleRate),
+        headphones: evaluateLeak(withTone, silence, rec.info.sampleRate),
+      });
+    } catch (e) {
+      showError(e);
     } finally {
-      setBusy(null);
-    }
-  }
-
-  async function headphoneCheck() {
-    if (!rec || !silenceRef.current) return;
-    setBusy('tone');
-    try {
-      const withTone = await rec.recordWithTone(1200);
-      update({ headphones: evaluateLeak(withTone, silenceRef.current, rec.info.sampleRate) });
-    } finally {
-      setBusy(null);
+      setStep(null);
     }
   }
 
   async function start() {
-    setBusy('start');
+    setStep('start');
     setError(null);
     try {
-      const s = await api.createSession(formId, { ...setup, noise_seconds: quick ? 1 : NOISE_SECONDS }, clientInfo());
+      const s = await api.createSession(formId, { ...setup, noise_seconds: noiseSeconds }, clientInfo());
       nav(`/session/${s.id}`);
     } catch (e) {
-      setError(String((e as Error).message ?? e));
-      setBusy(null);
+      showError(e);
+      setStep(null);
     }
   }
 
-  const ready = setupComplete(setup);
-  const pct = Math.max(0, Math.min(100, ((level + 60) / 60) * 100));
+  const hp = setup.headphones;
+  const levelPct = Math.max(0, Math.min(100, ((level + 60) / 60) * 100));
 
   return (
     <div className="stack">
       <div className="card">
         <h2>{t('setup.title')}</h2>
-        <p>{t('setup.intro')}</p>
-        <p><strong>{t('setup.headphones_required')}</strong></p>
+        <p>{t('setup.intro')} <strong>{t('setup.headphones_required')}</strong></p>
         {error && <p className="status-bad">{error}</p>}
       </div>
 
@@ -97,58 +97,40 @@ export default function Setup() {
         {!rec && <button className="primary" onClick={() => enableMic()} data-testid="enable-mic">{t('setup.enable_mic')}</button>}
         {rec && (
           <>
-            <label className="field">
-              <span>{t('setup.mic')}</span>
-              <select value={setup.deviceId} onChange={(e) => enableMic(e.target.value)} data-testid="mic-select">
-                {mics.map((m) => <option key={m.deviceId} value={m.deviceId}>{m.label || m.deviceId}</option>)}
-              </select>
-            </label>
-            <div className="muted">{setup.deviceLabel} · {setup.sampleRate} Hz</div>
-            <div>{t('setup.level')}</div>
-            <div className="meter"><div style={{ width: `${pct}%` }} /></div>
+            <select value={setup.deviceId} onChange={(e) => enableMic(e.target.value)} data-testid="mic-select">
+              {mics.map((m) => <option key={m.deviceId} value={m.deviceId}>{m.label || m.deviceId}</option>)}
+            </select>
+            <div className="muted">{t('setup.level')} · {setup.sampleRate} Hz</div>
+            <div className="meter"><div style={{ width: `${levelPct}%` }} /></div>
           </>
         )}
       </div>
 
       <div className="card stack">
-        <h3>{t('setup.noise_title')}</h3>
-        <p>{t('setup.noise_help', { n: quick ? 1 : NOISE_SECONDS })}</p>
-        <div className="row">
-          <button onClick={measureNoise} disabled={!rec || busy !== null} data-testid="measure-noise">
-            {busy === 'noise' ? t('setup.measuring') : t('setup.measure_noise')}
-          </button>
-          {busy === 'noise' && (
-            <div style={{ flex: '1 1 160px' }}>
-              <div className="meter"><div style={{ width: `${noiseProgress.pct}%`, transition: 'width 100ms linear' }} /></div>
-              <div className="muted" data-testid="noise-countdown">{t('setup.seconds_left', { s: noiseProgress.left.toFixed(1) })}</div>
+        <h3>{t('setup.checks_title')}</h3>
+        <p>{t('setup.checks_help', { n: noiseSeconds })}</p>
+        {step === 'noise' || step === 'tone' ? (
+          <div className="stack" style={{ gap: 6 }}>
+            <div className="meter"><div style={{ width: `${timer.pct}%`, transition: 'width 100ms linear' }} /></div>
+            <div className="muted" data-testid="check-step">
+              {step === 'noise' ? t('setup.step_noise') : t('setup.step_tone')} · {t('setup.seconds_left', { s: timer.left.toFixed(1) })}
             </div>
-          )}
-          {setup.noise_floor && (
-            <span data-testid="noise-result">{t('setup.noise_result', { dbfs: setup.noise_floor.rms_dbfs ?? '—' })}</span>
-          )}
-        </div>
-      </div>
-
-      <div className="card stack">
-        <h3>{t('setup.headphone_title')}</h3>
-        <p>{t('setup.headphone_help')}</p>
-        <div className="row">
-          <button onClick={headphoneCheck} disabled={!rec || !setup.noise_floor || busy !== null} data-testid="headphone-check">
-            {busy === 'tone' ? t('setup.headphone_running') : t('setup.run_headphone')}
+          </div>
+        ) : (
+          <button onClick={runChecks} disabled={!rec || step !== null} data-testid="run-checks">
+            {setup.noise_floor ? t('setup.run_checks_again') : t('setup.run_checks')}
           </button>
-          {busy === 'tone' && <div className="meter" style={{ flex: '1 1 120px' }}><div style={{ width: `${toneProgress.pct}%`, transition: 'width 100ms linear' }} /></div>}
-          {setup.headphones && (
-            <span data-testid="headphone-result" className={setup.headphones.ok ? 'status-ok' : 'status-bad'}>
-              {setup.headphones.ok
-                ? t('setup.headphone_ok', { dbfs: setup.headphones.tone_dbfs })
-                : t('setup.headphone_leak', { dbfs: setup.headphones.tone_dbfs, db: setup.headphones.leak_db })}
-              {setup.headphones.override && ' · override'}
+        )}
+        {setup.noise_floor && <div data-testid="noise-result">{t('setup.noise_result', { dbfs: setup.noise_floor.rms_dbfs ?? '—' })}</div>}
+        {hp && (
+          <div className="row">
+            <span data-testid="headphone-result" className={hp.ok ? 'status-ok' : 'status-bad'}>
+              {hp.ok ? t('setup.headphone_ok', { dbfs: hp.tone_dbfs }) : t('setup.headphone_leak', { dbfs: hp.tone_dbfs, db: hp.leak_db })}
+              {hp.override && ` · ${t('setup.override_noted')}`}
             </span>
-          )}
-          {setup.headphones && !setup.headphones.ok && (
-            <button onClick={() => update({ headphones: { ...setup.headphones!, ok: true, override: true } })} data-testid="headphone-override">{t('setup.continue_anyway')}</button>
-          )}
-        </div>
+            {!hp.ok && <button onClick={() => update({ headphones: { ...hp, ok: true, override: true } })} data-testid="headphone-override">{t('setup.continue_anyway')}</button>}
+          </div>
+        )}
       </div>
 
       <div className="card stack">
@@ -168,8 +150,8 @@ export default function Setup() {
       </div>
 
       <div className="card">
-        {!ready && <p className="muted">{t('setup.need_all')}</p>}
-        <button className="primary" disabled={!ready || busy !== null} onClick={start} data-testid="start-session">{t('setup.continue')}</button>
+        {!setupComplete(setup) && <p className="muted">{t('setup.need_all')}</p>}
+        <button className="primary" disabled={!setupComplete(setup) || step !== null} onClick={start} data-testid="start-session">{t('setup.continue')}</button>
       </div>
     </div>
   );

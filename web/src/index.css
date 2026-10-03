@@ -63,6 +63,8 @@ button.primary { background: var(--ink); color: var(--paper); border-color: var(
 button.primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 button.link { border: 0; background: none; color: var(--accent); padding: 4px 6px; font-weight: 600; }
+button.choice { min-width: 140px; font-size: 1.3rem; }
+input.blank { font: inherit; padding: 2px 4px; margin: 0 2px; border: 0; border-bottom: 2px solid var(--accent); background: transparent; color: inherit; }
 
 label.field { display: flex; flex-direction: column; gap: 6px; }
 select, textarea { font: inherit; }

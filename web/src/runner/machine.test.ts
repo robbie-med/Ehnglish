@@ -105,3 +105,21 @@ describe('resume', () => {
     expect(reduce(form, initialState, { type: 'RESUME', state: { phase: 'prep', taskIdx: 0, itemIdx: 1, attempt: 1 } }).itemIdx).toBe(1);
   });
 });
+
+describe('keyboard answers', () => {
+  it('maps keys per task type and ignores the rest', async () => {
+    const { keyAnswer, itemsBefore } = await import('./machine');
+    const mc = { ...form.tasks[3], type: 'multiple_choice' as const };
+    expect(keyAnswer(mc, '2', [3, 0, 1, 2])).toEqual({ value: '0', event: 'submit' });
+    expect(keyAnswer(mc, '5', [3, 0, 1, 2])).toBeNull();
+    expect(keyAnswer(mc, 'f', [3, 0, 1, 2])).toBeNull();
+    const axb = { ...form.tasks[3], type: 'axb' as const };
+    expect(keyAnswer(axb, 'F', [])).toEqual({ value: 'A', event: 'answer' });
+    expect(keyAnswer(axb, 'ArrowRight', [])).toEqual({ value: 'B', event: 'answer' });
+    const lex = { ...form.tasks[3], type: 'lexical_decision' as const };
+    expect(keyAnswer(lex, 'j', [])).toEqual({ value: 'yes', event: 'answer' });
+    expect(keyAnswer(lex, 'ArrowLeft', [])).toEqual({ value: 'no', event: 'answer' });
+    expect(keyAnswer(form.tasks[3], 'j', [])).toBeNull(); // typed_response: no shortcuts
+    expect(itemsBefore(form, { phase: 'prep', taskIdx: 2, itemIdx: 1, attempt: 1 })).toBe(4);
+  });
+});

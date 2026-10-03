@@ -10,6 +10,14 @@ import Session from './pages/Session';
 import Done from './pages/Done';
 import Dashboard from './pages/Dashboard';
 import Viewer, { SessionTakes } from './pages/Viewer';
+import Sitting from './pages/Sitting';
+
+/** The git sha of a deployed build, or the last digits of the timestamp for a dev build. */
+function shortBuild(id: string): string {
+  const [, rest = ''] = id.split('+');
+  const [sha, ts = ''] = rest.split('.');
+  return sha === 'dev' ? ts.slice(-5) : sha;
+}
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -30,7 +38,7 @@ export default function App() {
           <Link to="/"><button className="link" data-testid="nav-home">{t('nav.tests')}</button></Link>
           <Link to="/dashboard"><button className="link" data-testid="nav-dashboard">{t('nav.dashboard')}</button></Link>
           {email && <span className="who" data-testid="who">{email}</span>}
-          <span className="who" title="build" data-testid="build" style={{ opacity: 0.6 }}>{__BUILD_ID__.split('+')[1]?.split('.')[0]}</span>
+          <span className="who" title={__BUILD_ID__} data-testid="build" style={{ opacity: 0.6 }}>{shortBuild(__BUILD_ID__)}</span>
           <button className="link" onClick={() => setLang(other)} aria-label="language">{t('nav.language')}</button>
         </div>
       </header>
@@ -42,6 +50,7 @@ export default function App() {
         <Route path="/done/:sessionId" element={<Done />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/session-takes/:sessionId" element={<SessionTakes />} />
+        <Route path="/sitting/:sessionId" element={<Sitting />} />
         <Route path="/viewer/:takeId" element={<Viewer />} />
       </Routes>
     </>
