@@ -8,7 +8,7 @@ web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality c
 server/    FastAPI + Postgres (SQLAlchemy 2, Alembic). Chunked uploads, raw store on disk, Postgres job queue + worker.
 content/   Item bank as YAML (content/forms/*.yaml), validated by content/lint.py.
 deploy/    Dockerfile, docker-compose.yml, Cloudflare scripts, .env.example.
-docs/      PLAN.md (spec), DEPLOY.md, SERVER.md.
+docs/      PLAN.md (Assessment spec), TRAINER_PLAN.md (Tool 2 design), DEPLOY.md, SERVER.md.
 ```
 
 ## Run locally
