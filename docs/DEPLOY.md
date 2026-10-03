@@ -25,6 +25,10 @@ Add to `deploy/.env` (see `.env.example`): `EHNGLISH_DEEPGRAM_API_KEY`, `EHNGLIS
 so the rest of the pipeline still runs. Re-scoring after keys arrive: bump `EHNGLISH_PIPELINE_VERSION`
 and re-queue (`process_take` jobs) — earlier results stay, tagged with the old version.
 
+Optional Google Speech-to-Text voter: put the service-account JSON at `deploy/google-sa.json`
+(gitignored, mounted read-only into api and worker) and keep `EHNGLISH_GOOGLE_CREDENTIALS` set; enable the
+Speech-to-Text API on that Google project once in the console. Until then the step is skipped.
+
 The `mfa` container downloads the English ARPA models at build time; the phoneme model (~400 MB)
 downloads into `data/hf-cache` on first use.
 

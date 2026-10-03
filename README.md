@@ -79,7 +79,7 @@ is skipped on retry if already present for the current pipeline version.
 
 | Step (kind) | What | Needs |
 |---|---|---|
-| `asr:deepgram`, `asr:azure`, `asr:whisper` | three transcripts with word timings | API keys (each optional; skipped if blank) |
+| `asr:deepgram`, `asr:azure`, `asr:whisper`, `asr:google` | transcripts with word timings; Google is an optional fourth voter | API keys (each optional; skipped if blank or not enabled) |
 | `transcript` | ROVER-style majority vote, uncertain words marked, agreement % | — |
 | `timing` | Praat syllable nuclei, pauses ≥250 ms, speech/articulation rate, MLR, onset, pitch | — |
 | `latency` | response latency from `prompt_end`/`record_start` events + voice onset | — |
@@ -115,12 +115,11 @@ finish) writes `session_results` rows: `dictation` (mean WER per condition, phon
 question task, with genre), `reading` (wpm, comprehension, effective wpm), `c_test`, `axb` (by contrast),
 `retell`, `email`, `completion`. `GET /api/sessions/{id}/results` returns them.
 
-Forms: `core-A` (monthly core), `baseline-day1` (Korean writing/speaking, English retelling, LexTALE,
-typing baselines, self-report), `rotating-R1-A` (vocabulary by band + medical), `rotating-R2-A` (timed
-patient-information passage, questions, C-test), `rotating-R3-A` (conversation clip + questions + retell,
-mini-lecture + questions, AXB on Korean-L1 contrasts; sermon clip task added via
-`content/import_sermon_clip.py`), `rotating-R4-A` (clinic email with goal checklist, typing check, anxiety
-scale), plus `dummy-v0`/`e2e-core` for tests (hidden in production). Multiple-choice options are shuffled
+Forms: `core-A` … `core-F` (six parallel monthly cores, so a form returns only every six months), `baseline-day1` (Korean writing/speaking, English retelling, LexTALE,
+typing baselines, self-report), `rotating-R1-{A,B,C}` (vocabulary by band + medical), `rotating-R2-{A,B,C}` (timed passage, questions,
+C-test), `rotating-R3-{A,B,C}` (conversation clip + questions + retell, mini-lecture + questions, AXB on
+Korean-L1 contrasts; A also has one basic sermon clip), `rotating-R4-{A,B,C}` (email with goal checklist,
+typing check, anxiety scale), plus `dummy-v0`/`e2e-core` for tests (hidden in production). Multiple-choice options are shuffled
 per session on the client; the YAML keeps the key at index 0.
 
 Prompt audio effects (`fx:` on an item, rendered once by `content/build_audio.py`): `voice`, `rate`

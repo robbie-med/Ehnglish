@@ -355,4 +355,6 @@ Decisions and deviations made while building, for the record. None reopens a §0
 | Estimates | CEFR per skill from labelled heuristic thresholds (median over indicators), mapped with the official ETS/IELTS concordances; refit by level offset once `content/calibration.yaml` has a real score. | §0 Official tests, §5.5. |
 | Export | `assessment_result.v1.json` = session, setup, every take with item-level responses and results, session rollups, metrics with CIs, estimates, pipeline versions. | §6.2. |
 | Pipeline versions | `m0.0.1` … `m5.0.0`; every result row carries the version that produced it; re-scoring appends rows. | §2.6. |
-| Not yet | Core forms B–F and rotating forms B–C (content); the sermon clip task (needs a clip chosen); recorded caller audio; mid-clause vs boundary pause share (needs alignment + clause boundaries, M6 follow-up). | — |
+| Content | Six core forms (A–F) and three forms of each rotating module, all with built audio; one basic sermon clip in R3-A (owner chose not to expand the sermon part). | §4.5 |
+| Google voter | Google Cloud Speech-to-Text added as an optional fourth engine using the owner's existing project; needs the API enabled in the console. | §5.2 |
+| Not yet | Recorded (human) caller audio; mid-clause vs boundary pause share (needs alignment + clause boundaries, M6 follow-up); native-speaker review of all drafted items (`content/REVIEW.md`). | — |
