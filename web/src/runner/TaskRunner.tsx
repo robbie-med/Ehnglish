@@ -10,7 +10,7 @@ import type { EventIn, Form, SessionOut } from '../types';
 import { enqueueUpload, processQueue } from '../upload/queue';
 import { sha256Hex } from '../upload/sha256';
 import { useLang } from '../useLang';
-import { countItems, ctestSegments, effectiveTiming, hasReview, initialState, reduce, shuffledOrder, taskKind, type RunnerState } from './machine';
+import { countItems, ctestSegments, effectiveTiming, hasReview, initialState, progressKey, reduce, resumeState, shuffledOrder, taskKind, type Progress, type RunnerState } from './machine';
 import { useCountdown, useProgress } from './useCountdown';
 
 interface Props { form: Form; session: SessionOut; onFinished: () => void }
@@ -37,6 +37,9 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const stopEarlyRef = useRef<(() => void) | null>(null);
   const [canStop, setCanStop] = useState(false);
   const setup = useMemo(() => loadSetup(), []);
+  const saved = useMemo<Progress | null>(() => {
+    try { const raw = localStorage.getItem(progressKey(session.id)); return raw ? (JSON.parse(raw) as Progress) : null; } catch { return null; }
+  }, [session.id]);
 
   const task = form.tasks[state.taskIdx];
   const item = task?.items[state.itemIdx];
@@ -48,7 +51,18 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const mark = useCallback((name: string, meta?: Record<string, unknown>) => {
     eventsRef.current.push({ name, t_client_ms: performance.now(), meta });
   }, []);
-  const fail = (e: unknown) => setError(String((e as Error).message ?? e));
+  const fail = (e: unknown) => {
+    const msg = String((e as Error).message ?? e);
+    setError(/not allowed|denied|NotAllowedError/i.test(msg) ? `${msg} — ${t('runner.mic_denied')}` : msg);
+  };
+
+  // Remember where we are so a reload (or a new build) can resume at this item.
+  useEffect(() => {
+    if (state.phase === 'done') { try { localStorage.removeItem(progressKey(session.id)); } catch { /* ignore */ } return; }
+    if (['task_intro', 'stimulus', 'prep', 'prompt', 'respond', 'review'].includes(state.phase)) {
+      try { localStorage.setItem(progressKey(session.id), JSON.stringify({ taskIdx: state.taskIdx, itemIdx: state.itemIdx })); } catch { /* ignore */ }
+    }
+  }, [state.phase, state.taskIdx, state.itemIdx, session.id]);
 
   // Create the take row when an item starts (first active phase of each attempt).
   useEffect(() => {
@@ -74,7 +88,11 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
     try {
       const r = await getRecorder(setup.deviceId || undefined);
       setRec(r);
-      dispatch({ type: 'BEGIN' });
+      if (saved && (saved.taskIdx > 0 || saved.itemIdx > 0)) {
+        dispatch({ type: 'RESUME', state: resumeState(form, saved) });
+      } else {
+        dispatch({ type: 'BEGIN' });
+      }
     } catch (e) {
       fail(e);
     }
@@ -309,7 +327,10 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
       <div className="card stack">
         <h2>{form.title[lang]}</h2>
         <p>{t('runner.intro_body', { tasks: form.tasks.length })}</p>
-        <button className="primary" onClick={begin} data-testid="begin">{t('runner.begin')}</button>
+        {saved && (saved.taskIdx > 0 || saved.itemIdx > 0) && (
+          <p className="status-ok" data-testid="resume-note">{t('runner.resume_note', { task: saved.taskIdx + 1, item: saved.itemIdx + 1 })}</p>
+        )}
+        <button className="primary" onClick={begin} data-testid="begin">{saved && (saved.taskIdx > 0 || saved.itemIdx > 0) ? t('runner.resume') : t('runner.begin')}</button>
       </div>
     );
   }

@@ -42,11 +42,22 @@ export default function Home() {
         <p data-testid="pending" className={pending ? 'status-warn' : 'status-ok'}>
           {pending ? t('home.pending', { n: pending }) : t('home.all_uploaded')}
         </p>
+        {sessions.filter((s) => s.status === 'open').length > 0 && (
+          <>
+            <h3>{t('home.open_sessions')}</h3>
+            {sessions.filter((s) => s.status === 'open').map((s) => (
+              <div key={s.id} className="row" style={{ justifyContent: 'space-between', padding: '6px 0' }}>
+                <span>{new Date(s.started_at).toLocaleString()} · <strong>{s.form_id}</strong> · {t('home.takes_n', { n: s.takes.filter((tk) => tk.status !== 'rejected').length })}</span>
+                <Link to={`/session/${s.id}`}><button className="primary" data-testid={`resume-${s.id}`}>{t('home.resume')}</button></Link>
+              </div>
+            ))}
+          </>
+        )}
         <h3>{t('home.sessions')}</h3>
-        {sessions.length === 0 && <p className="muted">{t('home.no_sessions')}</p>}
-        {sessions.map((s) => (
+        {sessions.filter((s) => s.status !== 'open').length === 0 && <p className="muted">{t('home.no_sessions')}</p>}
+        {sessions.filter((s) => s.status !== 'open').map((s) => (
           <div key={s.id} className="muted">
-            {new Date(s.started_at).toLocaleString()} · {s.form_id} · {s.status} · {s.takes.length} takes
+            {new Date(s.started_at).toLocaleString()} · {s.form_id} · {s.status} · {t('home.takes_n', { n: s.takes.length })}
           </div>
         ))}
       </div>

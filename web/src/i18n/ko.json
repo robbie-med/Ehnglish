@@ -22,7 +22,10 @@
     "pending": "업로드 대기 중: {{n}}",
     "all_uploaded": "모든 녹음이 업로드되었습니다",
     "sessions": "지난 응시",
-    "no_sessions": "아직 응시 기록이 없습니다"
+    "no_sessions": "아직 응시 기록이 없습니다",
+    "open_sessions": "끝내지 않은 응시",
+    "resume": "이어서 하기",
+    "takes_n": "녹음 {{n}}개"
   },
   "setup": {
     "title": "준비",
@@ -91,7 +94,10 @@
     "axb_question": "X는 A와 같았나요, B와 같았나요?",
     "a": "A",
     "b": "B",
-    "done_speaking": "다 말했어요"
+    "done_speaking": "다 말했어요",
+    "resume": "이어서 하기",
+    "resume_note": "과제 {{task}}, 문항 {{item}}부터 이어서 합니다. 이전 녹음은 저장되어 있습니다.",
+    "mic_denied": "브라우저가 마이크를 차단했습니다. iPad에서는 설정 → Safari → 마이크 → 허용으로 바꾼 뒤 새로고침하고 이어서 하기를 누르세요."
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",

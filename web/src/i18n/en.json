@@ -22,7 +22,10 @@
     "pending": "Uploads waiting: {{n}}",
     "all_uploaded": "All recordings uploaded",
     "sessions": "Past sittings",
-    "no_sessions": "No sittings yet"
+    "no_sessions": "No sittings yet",
+    "open_sessions": "Unfinished sittings",
+    "resume": "Resume",
+    "takes_n": "{{n}} takes"
   },
   "setup": {
     "title": "Setup",
@@ -91,7 +94,10 @@
     "axb_question": "Was X the same as A or B?",
     "a": "A",
     "b": "B",
-    "done_speaking": "I'm done"
+    "done_speaking": "I'm done",
+    "resume": "Resume",
+    "resume_note": "Resuming at task {{task}}, item {{item}}. Earlier recordings are saved.",
+    "mic_denied": "The browser blocked the microphone. On an iPad: Settings → Safari → Microphone → Allow, then reload and press Resume."
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",

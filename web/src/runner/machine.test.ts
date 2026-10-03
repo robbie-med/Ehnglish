@@ -16,7 +16,7 @@ const form: Form = {
   ],
 };
 
-const run = (s: RunnerState, ...types: Parameters<typeof reduce>[2]['type'][]) => types.reduce((st, type) => reduce(form, st, { type }), s);
+const run = (s: RunnerState, ...types: Exclude<Parameters<typeof reduce>[2]['type'], 'RESUME'>[]) => types.reduce((st, type) => reduce(form, st, { type } as Parameters<typeof reduce>[2]), s);
 
 describe('runner machine', () => {
   it('walks the whole form', () => {
@@ -93,5 +93,15 @@ describe('runner machine', () => {
     const segs = ctestSegments('They wo{rry} about pa{in}.');
     expect(segs.filter((x) => x.blank).map((x) => x.len)).toEqual([3, 2]);
     expect(segs.map((x) => x.text).join('')).toBe('They wo about pa.');
+  });
+});
+
+describe('resume', () => {
+  it('starts at the saved item, via the task intro for a first item', async () => {
+    const { resumeState } = await import('./machine');
+    expect(resumeState(form, { taskIdx: 1, itemIdx: 0 })).toMatchObject({ phase: 'task_intro', taskIdx: 1, itemIdx: 0 });
+    expect(resumeState(form, { taskIdx: 0, itemIdx: 1 })).toMatchObject({ phase: 'prep', taskIdx: 0, itemIdx: 1, attempt: 1 });
+    expect(resumeState(form, { taskIdx: 99, itemIdx: 99 }).taskIdx).toBe(form.tasks.length - 1);
+    expect(reduce(form, initialState, { type: 'RESUME', state: { phase: 'prep', taskIdx: 0, itemIdx: 1, attempt: 1 } }).itemIdx).toBe(1);
   });
 });

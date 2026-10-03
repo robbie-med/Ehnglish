@@ -12,6 +12,7 @@ export interface RunnerState {
 
 export type Action =
   | { type: 'BEGIN' }
+  | { type: 'RESUME'; state: RunnerState }
   | { type: 'START_TASK' }
   | { type: 'STIMULUS_DONE' }
   | { type: 'PREP_DONE' }
@@ -63,6 +64,9 @@ export function reduce(form: Form, s: RunnerState, a: Action): RunnerState {
   const task = form.tasks[s.taskIdx];
   const item = task?.items[s.itemIdx];
   switch (a.type) {
+    case 'RESUME':
+      if (s.phase !== 'intro') return s;
+      return a.state;
     case 'BEGIN':
       if (s.phase !== 'intro') return s;
       return form.tasks.length ? { ...s, phase: 'task_intro' } : { ...s, phase: 'done' };
@@ -130,4 +134,21 @@ export function ctestSegments(text: string): CtestSegment[] {
   }
   if (last < text.length) out.push({ text: text.slice(last), blank: false });
   return out;
+}
+
+
+export interface Progress { taskIdx: number; itemIdx: number }
+
+/** State to start from when a sitting is resumed: the saved item itself (its take will be a new
+ *  attempt), via the task intro when it is the first item of a task. */
+export function resumeState(form: Form, p: Progress): RunnerState {
+  const taskIdx = Math.min(p.taskIdx, form.tasks.length - 1);
+  const task = form.tasks[taskIdx];
+  const itemIdx = Math.min(p.itemIdx, task.items.length - 1);
+  if (itemIdx === 0) return { phase: 'task_intro', taskIdx, itemIdx: 0, attempt: 1 };
+  return enterItem(task, { phase: 'intro', taskIdx, itemIdx, attempt: 1 });
+}
+
+export function progressKey(sessionId: string): string {
+  return `ehnglish.progress.${sessionId}`;
 }
