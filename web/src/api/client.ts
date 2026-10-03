@@ -44,7 +44,7 @@ export interface UploadApi {
 }
 
 export const api = {
-  me: () => req<{ email: string; env: string }>('GET', '/me'),
+  me: () => req<{ email: string; env: string; role: string }>('GET', '/me'),
   listForms: () => req<FormSummary[]>('GET', '/forms'),
   getForm: (id: string) => req<Form>('GET', `/forms/${encodeURIComponent(id)}`),
   listSessions: () => req<SessionOut[]>('GET', '/sessions'),
@@ -67,4 +67,7 @@ export const api = {
   submitTyped: (takeId: string, text: string, keystrokes: Keystroke[]) =>
     req<TakeOut>('POST', `/takes/${takeId}/typed`, { text, keystrokes }),
   postEvents: (takeId: string, events: EventIn[]) => req<void>('POST', `/takes/${takeId}/events`, events),
+  dashboard: (subject: 'learner' | 'me' = 'learner') => req<import('../pages/Dashboard').DashboardData>('GET', `/dashboard?subject=${subject}`),
+  exportSession: (id: string) => req<Record<string, unknown>>('GET', `/sessions/${id}/export`),
+  takeViewer: (takeId: string) => req<any>('GET', `/takes/${takeId}/viewer`), // eslint-disable-line @typescript-eslint/no-explicit-any
 };

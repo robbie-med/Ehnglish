@@ -5,7 +5,8 @@
   },
   "nav": {
     "language": "English",
-    "home": "처음으로"
+    "home": "처음으로",
+    "dashboard": "대시보드"
   },
   "common": {
     "loading": "불러오는 중…",
@@ -106,5 +107,55 @@
     "uploads_done": "모든 녹음이 서버에 저장되었습니다.",
     "session": "세션",
     "home": "처음으로"
+  },
+  "dash": {
+    "title": "대시보드",
+    "subject": "대상",
+    "sessions_n": "완료한 응시 {{n}}회",
+    "learner": "학습자",
+    "me": "나 (기준 화자)",
+    "estimates": "추정 수준",
+    "estimate_note": "공식 점수가 아니라 검사 지표에서 추정한 값이며, 실제 TOEFL/IELTS 점수가 생기면 재보정합니다",
+    "based_on": "지표 {{n}}개 기준",
+    "spread": "수준 편차 {{n}}",
+    "no_data": "아직 완료한 응시가 없습니다.",
+    "metric": "지표",
+    "value": "값",
+    "anchor": "원어민 기준",
+    "scale": "척도 (0–100)",
+    "trend": "추세",
+    "higher_better": "높을수록 좋음",
+    "lower_better": "낮을수록 좋음",
+    "detectable": "유의미한 변화",
+    "not_detectable": "감지되는 변화 없음",
+    "uncertain_change": "변화 (신뢰구간 없음)",
+    "sessions": "응시 기록",
+    "recordings": "녹음",
+    "export": "JSON 내보내기",
+    "skill": {
+      "speaking": "말하기",
+      "listening": "듣기",
+      "reading": "읽기",
+      "writing": "쓰기"
+    },
+    "domain": {
+      "speaking": "말하기",
+      "listening": "듣기",
+      "reading": "읽기",
+      "writing": "쓰기",
+      "vocabulary": "어휘",
+      "self": "자가 평가 및 공변량",
+      "quality": "응시 품질"
+    }
+  },
+  "viewer": {
+    "recordings": "녹음",
+    "open": "열기",
+    "back": "대시보드로",
+    "pause": "250 ms 이상 휴지",
+    "legend": "단어를 클릭하면 그 지점부터 재생됩니다. ··는 250 ms 이상 휴지입니다. 물결 밑줄: 발음 불일치. 점선: 불확실한 전사.",
+    "mismatches": "발음 불일치",
+    "phonemes": "음소 인식기",
+    "extra_vowels": "삽입 모음"
   }
 }

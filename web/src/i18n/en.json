@@ -5,7 +5,8 @@
   },
   "nav": {
     "language": "한국어",
-    "home": "Home"
+    "home": "Home",
+    "dashboard": "Dashboard"
   },
   "common": {
     "loading": "Loading…",
@@ -106,5 +107,55 @@
     "uploads_done": "All recordings are on the server.",
     "session": "Session",
     "home": "Back to start"
+  },
+  "dash": {
+    "title": "Dashboard",
+    "subject": "Subject",
+    "sessions_n": "{{n}} completed sittings",
+    "learner": "Learner",
+    "me": "Me (anchor)",
+    "estimates": "Estimated levels",
+    "estimate_note": "estimates from the test metrics, not official scores; recalibrated when a real TOEFL/IELTS score exists",
+    "based_on": "based on {{n}} metrics",
+    "spread": "spread {{n}} levels",
+    "no_data": "No completed sittings yet.",
+    "metric": "Metric",
+    "value": "Value",
+    "anchor": "Native anchor",
+    "scale": "Scale (0–100)",
+    "trend": "Trend",
+    "higher_better": "higher is better",
+    "lower_better": "lower is better",
+    "detectable": "detectable change",
+    "not_detectable": "no detectable change",
+    "uncertain_change": "change (no CI)",
+    "sessions": "Sittings",
+    "recordings": "Recordings",
+    "export": "Export JSON",
+    "skill": {
+      "speaking": "Speaking",
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing"
+    },
+    "domain": {
+      "speaking": "Speaking",
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "vocabulary": "Vocabulary",
+      "self": "Self-ratings & covariates",
+      "quality": "Session quality"
+    }
+  },
+  "viewer": {
+    "recordings": "Recordings",
+    "open": "Open",
+    "back": "Back to dashboard",
+    "pause": "pause ≥250 ms",
+    "legend": "Click a word to play from there. ·· marks a pause ≥250 ms. Wavy underline: pronunciation mismatch. Dotted: uncertain transcription.",
+    "mismatches": "Pronunciation mismatches",
+    "phonemes": "Phoneme recognizer",
+    "extra_vowels": "extra vowels"
   }
 }

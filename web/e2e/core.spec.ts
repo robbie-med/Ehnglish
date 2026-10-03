@@ -188,4 +188,18 @@ test('e2e-core form: every task type records, uploads and processes', async ({ p
   expect(results.reading.result['R2-passage'].comprehension_pct).toBe(100);
   expect(results.c_test.result.correct).toBe(2);
   expect(results.axb.result.pct).toBe(100);
+
+  // Dashboard: domains, an estimate card, export and the recording viewer.
+  await page.goto('/dashboard');
+  await expect(page.getByTestId('dashboard')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId('domain-listening')).toBeVisible();
+  await expect(page.getByTestId('metric-wer_phone')).toContainText('0');
+  await expect(page.getByTestId('domain-quality')).toBeVisible();
+  await expect(page.getByTestId('estimate-reading')).toBeVisible();
+  const exp = await (await request.get(`${API}/sessions/${sessionId}/export`)).json();
+  expect(exp.schema).toBe('assessment_result.v1');
+  expect(Object.keys(exp.metrics)).toEqual(expect.arrayContaining(['wer_phone', 'ctest_pct', 'axb_pct']));
+  await page.goto(`/session-takes/${sessionId}`);
+  await page.getByRole('button', { name: /Open|열기/ }).first().click();
+  await expect(page.getByTestId('viewer')).toBeVisible({ timeout: 15_000 });
 });
