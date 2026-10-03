@@ -14,7 +14,7 @@ from app.engines.base import Transcript, TWord
 from app.pipeline import ideas, lextale, typing
 
 from .conftest import make_wav
-from .test_pipeline_m1 import _drain, _kinds
+from .test_pipeline_m1 import _drain, _drain_once, _kinds
 from .test_pipeline_m2 import _typed_take
 
 
@@ -187,7 +187,7 @@ def test_expression_gap_waits_for_source(client: TestClient, db, baseline_engine
     )
     db.delete(ko_job)
     db.commit()
-    _drain(db)
+    _drain_once(db)
     job = db.scalar(select(worker.Job).where(worker.Job.type == "process_take"))
     assert job.status == "queued" and "waiting for source" in job.last_error
     assert "expression_gap" not in _kinds(db, en)

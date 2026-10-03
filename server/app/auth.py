@@ -94,4 +94,8 @@ def get_current_user(
         db.commit()
         user = db.scalar(select(User).where(User.email == email))
         assert user is not None
+    role = settings.role_for(email)
+    if user.role != role:
+        user.role = role
+        db.commit()
     return user

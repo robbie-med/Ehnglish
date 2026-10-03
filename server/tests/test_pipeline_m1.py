@@ -259,6 +259,25 @@ def _finalized_take(
 
 
 def _drain(db) -> int:
+    """Run every job, re-arming backed-off retries (e.g. the session summary waiting for takes)
+    up to a few rounds, like the worker loop would over time."""
+    from datetime import UTC, datetime
+
+    n = 0
+    for _ in range(8):
+        while worker.run_once(db):
+            n += 1
+        queued = db.scalars(select(worker.Job).where(worker.Job.status == "queued")).all()
+        if not queued:
+            break
+        for j in queued:
+            j.run_after = datetime.now(UTC)
+        db.commit()
+    return n
+
+
+def _drain_once(db) -> int:
+    """Run runnable jobs only; backed-off retries stay queued (for tests that assert that)."""
     n = 0
     while worker.run_once(db):
         n += 1
@@ -379,7 +398,7 @@ def test_engine_failure_retries_and_keeps_partial_results(
     )
     monkeypatch.setitem(processing.ENGINES, "whisper", flaky)
     tid = _finalized_take(client, "core-A", "C2", "C2-02")
-    _drain(db)
+    _drain_once(db)
     k = _kinds(db, tid)
     assert "asr:deepgram" in k and "asr:whisper" not in k  # partial progress kept
     job = db.scalar(select(worker.Job).where(worker.Job.type == "process_take"))

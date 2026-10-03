@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     cf_access_aud: str | None = None
     # Optional belt-and-braces allow list (comma separated). Empty = trust Access alone.
     allowed_emails: str = ""
+    # Who is the learner (the dashboard's subject) and who are native/advanced anchors (plan §7).
+    learner_email: str | None = None
+    anchor_emails: str = ""
 
     # External engines (plan §9). Read at call time; missing keys make that step skip, not crash.
     deepgram_api_key: str | None = None
@@ -51,6 +54,18 @@ class Settings(BaseSettings):
     pipeline_version: str = "m1.0.0"
     chunk_max_bytes: int = 4 * 1024 * 1024
     worker_poll_s: float = 2.0
+
+    @property
+    def anchor_email_set(self) -> set[str]:
+        return {e.strip().lower() for e in self.anchor_emails.split(",") if e.strip()}
+
+    def role_for(self, email: str) -> str:
+        e = email.lower()
+        if e in self.anchor_email_set:
+            return "anchor"
+        if self.learner_email and e == self.learner_email.lower():
+            return "learner"
+        return "learner" if not self.learner_email else "other"
 
     @property
     def allowed_email_set(self) -> set[str]:

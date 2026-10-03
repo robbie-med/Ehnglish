@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 class MeOut(BaseModel):
     email: str
     env: str
+    role: str = "learner"
 
 
 class FormSummary(BaseModel):

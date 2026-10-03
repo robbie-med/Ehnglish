@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
 from .content import get_forms
-from .routers import forms, sessions, system, takes
+from .routers import dashboard, forms, sessions, system, takes
 
 log = logging.getLogger("ehnglish")
 
@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
     app.include_router(forms.router, prefix="/api")
     app.include_router(sessions.router, prefix="/api")
     app.include_router(takes.router, prefix="/api")
+    app.include_router(dashboard.router, prefix="/api")
 
     dist = settings.web_dist
     if dist and Path(dist).is_dir():

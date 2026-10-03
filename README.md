@@ -1,7 +1,7 @@
 # Ehnglish
 
 Private monthly English assessment for one learner (bilingual English/한국어). The plan is
-[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M4 (Rotating modules)**: the monthly core, the baseline day and the four rotating modules (R1–R4, form A) all record and are scored. Next: M5 dashboard + export.
+[docs/PLAN.md](docs/PLAN.md); this repo is at milestone **M5 (Dashboard + export)**: every task records and is scored, and the bilingual dashboard, anchor-relative scales with bootstrapped CIs, trends, quality panel, recording viewer, TOEFL/IELTS estimates and the `assessment_result.v1.json` export are live. Next: M6 calibration (anchor sittings, test–retest, baseline week).
 
 ```
 web/       Vite + React + TypeScript PWA. AudioWorklet → 16-bit WAV, quality check, resumable upload queue, timed task runner.
@@ -53,8 +53,23 @@ All under `/api`, identity from Cloudflare Access (or `EHNGLISH_DEV_EMAIL` in de
 | POST | `/takes/{id}/typed` | text + keystroke log (JSONL on disk) |
 | POST | `/takes/{id}/events` | client timeline (`prompt_end`, `record_start`, …) |
 | GET | `/takes/{id}`, `/takes/{id}/audio` | take with results; the WAV |
+| GET | `/sessions/{id}/results` | session-level rollups |
+| GET | `/dashboard?subject=learner\|me\|<email>` | per-domain metrics (value, 95% CI, anchor %, 0–100 scale, trend), estimates, sessions |
+| GET | `/sessions/{id}/export` | `assessment_result.v1.json`, the contract with the Trainer |
+| GET | `/takes/{id}/viewer` | word timings, pauses, nuclei, pronunciation mismatches for the recording viewer |
 
 Every `processing_results` row carries `pipeline_version` (`EHNGLISH_PIPELINE_VERSION`).
+
+## Dashboard and scales (M5)
+
+`server/app/metrics.py` is the registry: every metric has a domain, a direction, a bilingual one-line
+definition and an extractor over a session's stored results. Values carry a bootstrapped 95% CI over
+their items. If anchor sittings exist on the same form (users listed in `EHNGLISH_ANCHOR_EMAILS`,
+plan §7), each metric also shows % of the anchor and a 0–100 scale. Trends compare sittings; a change
+whose CIs overlap is labelled "no detectable change". CEFR → TOEFL/IELTS are heuristics
+(`ESTIMATE_RULES`, median level over the available indicators) and are always labelled estimates.
+The learner is the default dashboard subject (`EHNGLISH_LEARNER_EMAIL`); anchors can switch to
+themselves. Dummy/e2e forms are hidden in production.
 
 ## Processing pipeline (M1)
 

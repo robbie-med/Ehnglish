@@ -19,4 +19,4 @@ def health(db: Session = Depends(get_db), settings: Settings = Depends(get_setti
 
 @router.get("/me", response_model=MeOut)
 def me(user: User = Depends(get_current_user), settings: Settings = Depends(get_settings)) -> MeOut:
-    return MeOut(email=user.email, env=settings.env)
+    return MeOut(email=user.email, env=settings.env, role=user.role)
