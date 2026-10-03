@@ -1,0 +1,93 @@
+# Rotating module R3, form B (~9 min): parallel to R3-A. Conversation clip + questions + retell,
+# mini-lecture + questions, AXB on the same contrasts with different pairs. Add a sermon clip with
+# content/draft_sermon_task.py --form rotating-R3-B. Drafted to spec; native-speaker edit pending.
+id: rotating-R3-B
+version: 1
+kind: rotating
+title:
+  en: "Listening — form B"
+  ko: "듣기 — B형"
+tasks:
+  - id: R3-conv
+    type: multiple_choice
+    title: { en: "Conversation", ko: "대화" }
+    instructions:
+      en: "You will hear two colleagues talking, once. Then answer the questions from memory."
+      ko: "두 동료의 대화를 한 번 듣게 됩니다. 그다음 기억을 바탕으로 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-B/conversation.wav
+    target:
+      genre: conversation
+      tts:
+        gap_s: 0.5
+        dialogue:
+          - { voice: en-US-AvaNeural, text: "Okay, so the printer on three is dead again, and facilities says Thursday at the earliest. I've got the grant packet due Wednesday, which, you know, is not Thursday." }
+          - { voice: en-US-AndrewNeural, text: "Use the one in the library. It's slow, but it works, and nobody's ever there before nine. Just don't send the whole thing at once or it chokes and you lose the queue." }
+          - { voice: en-US-AvaNeural, text: "Noted. Twenty pages at a time, got it. Hey, totally different thing, are you going to Dana's farewell on Friday? I was going to chip in for the gift, but I don't know who's collecting." }
+          - { voice: en-US-AndrewNeural, text: "Tom's collecting, twenty bucks, cash only because he's allergic to apps. And it's not a farewell anymore, it's a 'see you later', she's going part-time, not leaving. Classic Dana, told everyone a different story." }
+          - { voice: en-US-AvaNeural, text: "Of course she did. Fine, twenty to Tom. And if facilities actually shows up Thursday, I'll eat my hat." }
+          - { voice: en-US-AndrewNeural, text: "I'll bring the salt." }
+    items:
+      - { id: R3-conv-q1, text: "What is the woman's problem?", options: ["The printer on her floor is broken and her packet is due before it's fixed", "She lost the grant packet", "The library is closed on Wednesday", "She doesn't know where Tom sits"], target: { answer: 0 } }
+      - { id: R3-conv-q2, text: "What advice does the man give about the library printer?", options: ["Print in smaller batches so it doesn't choke", "Go after nine when it's free", "Ask facilities to fix it first", "Send the whole file at once"], target: { answer: 0 } }
+      - { id: R3-conv-q3, text: "How should she contribute to the gift?", options: ["Twenty dollars in cash to Tom", "Twenty dollars through an app", "Ten dollars to Dana", "By bringing food on Friday"], target: { answer: 0 } }
+      - { id: R3-conv-q4, text: "What does the man say about Dana?", options: ["She is going part-time, not leaving", "She has already left", "She is collecting the money", "She moved to the library"], target: { answer: 0 } }
+      - { id: R3-conv-q5, text: "What does 'I'll bring the salt' mean here?", options: ["He is joking that she will have to eat her hat", "He is offering to cook on Friday", "He thinks facilities will bring tools", "He wants to buy salt for the gift"], target: { answer: 0 } }
+
+  - id: R3-retell
+    type: describe_opinion
+    title: { en: "Retell the conversation", ko: "대화 다시 말하기" }
+    instructions:
+      en: "In your own words, say everything you remember from the conversation. Sixty seconds."
+      ko: "대화에서 기억나는 모든 내용을 자신의 말로 말하세요. 60초입니다."
+    timing: { prep_s: 5, respond_s: 60, max_s: 65 }
+    allow_rerecord: false
+    items:
+      - id: R3-retell-1
+        prompt: { en: "Retell the conversation between the two colleagues.", ko: "두 동료의 대화를 다시 말하세요." }
+        target: { stage: retell, genre: conversation }
+
+  - id: R3-lecture
+    type: multiple_choice
+    title: { en: "Mini-lecture", ko: "짧은 강의" }
+    instructions:
+      en: "You will hear a short talk, once. Then answer the questions."
+      ko: "짧은 강의를 한 번 듣게 됩니다. 그다음 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-B/lecture.wav
+    target:
+      genre: lecture
+      tts:
+        voice: en-US-AndrewNeural
+        dialogue:
+          - { text: "I want to say something about why patients forget what their doctors tell them. Studies that record real consultations and then quiz patients afterwards find that people forget somewhere between forty and eighty percent of the information within minutes, and that about half of what they do remember is wrong. The reasons are not mysterious. Patients are anxious, the information is new, and it is delivered fast, in a sitting position, by someone who seems busy. Three things reliably help. First, less: the fewer instructions given, the larger the share that survives. Second, order: whatever is said first is remembered best, so the most important instruction should come first, not last. Third, a second channel: a written sheet, a drawing, or having the patient repeat the plan back in their own words, which is called teach-back. Teach-back alone roughly doubles recall in several trials. None of this costs money. It costs the clinician a habit." }
+    items:
+      - { id: R3-lec-q1, text: "What do the recording studies find?", options: ["Patients forget much of what they are told, and half of what they remember is wrong", "Patients remember almost everything if the doctor is kind", "Only elderly patients forget instructions", "Written sheets make recall worse"], target: { answer: 0 } }
+      - { id: R3-lec-q2, text: "Why should the most important instruction come first?", options: ["Because what is said first is remembered best", "Because patients leave early", "Because doctors are busy", "Because it is required by law"], target: { answer: 0 } }
+      - { id: R3-lec-q3, text: "What is teach-back?", options: ["The patient repeats the plan in their own words", "The doctor repeats the plan twice", "A written sheet given at the end", "A follow-up phone call the next day"], target: { answer: 0 } }
+      - { id: R3-lec-q4, text: "What does the speaker say these methods cost?", options: ["Nothing but a new habit for the clinician", "A small fee per visit", "Extra staff", "Expensive software"], target: { answer: 0 } }
+
+  - id: R3-axb
+    type: axb
+    title: { en: "Same or different?", ko: "같은 소리일까요?" }
+    instructions:
+      en: "You will hear three words: A, then X, then B. Decide whether X is the same word as A or as B. Press A or B (or the F / J keys)."
+      ko: "단어 세 개를 듣습니다: A, 그다음 X, 그다음 B. X가 A와 같은 단어인지 B와 같은 단어인지 판단하세요. A 또는 B를 누르세요 (F / J 키)."
+    timing: { prep_s: 0, respond_s: 10 }
+    items:
+      - { id: R3-axb-01, audio: audio/rotating-R3-B/axb-01.wav, fx: { sequence: ["road", "road", "load"] }, target: { answer: A, contrast: "r/l" } }
+      - { id: R3-axb-02, audio: audio/rotating-R3-B/axb-02.wav, fx: { sequence: ["collect", "correct", "correct"] }, target: { answer: B, contrast: "r/l" } }
+      - { id: R3-axb-03, audio: audio/rotating-R3-B/axb-03.wav, fx: { sequence: ["fill", "fill", "pill"] }, target: { answer: A, contrast: "f/p" } }
+      - { id: R3-axb-04, audio: audio/rotating-R3-B/axb-04.wav, fx: { sequence: ["fast", "past", "past"] }, target: { answer: B, contrast: "f/p" } }
+      - { id: R3-axb-05, audio: audio/rotating-R3-B/axb-05.wav, fx: { sequence: ["vote", "vote", "boat"] }, target: { answer: A, contrast: "v/b" } }
+      - { id: R3-axb-06, audio: audio/rotating-R3-B/axb-06.wav, fx: { sequence: ["bet", "vet", "vet"] }, target: { answer: B, contrast: "v/b" } }
+      - { id: R3-axb-07, audio: audio/rotating-R3-B/axb-07.wav, fx: { sequence: ["zeal", "zeal", "jeel"] }, target: { answer: A, contrast: "z/dʒ" } }
+      - { id: R3-axb-08, audio: audio/rotating-R3-B/axb-08.wav, fx: { sequence: ["zone", "Joan", "Joan"] }, target: { answer: B, contrast: "z/dʒ" } }
+      - { id: R3-axb-09, audio: audio/rotating-R3-B/axb-09.wav, fx: { sequence: ["think", "think", "sink"] }, target: { answer: A, contrast: "θ/s" } }
+      - { id: R3-axb-10, audio: audio/rotating-R3-B/axb-10.wav, fx: { sequence: ["bath", "bass", "bass"] }, target: { answer: B, contrast: "θ/s" } }
+      - { id: R3-axb-11, audio: audio/rotating-R3-B/axb-11.wav, fx: { sequence: ["feel", "feel", "fill"] }, target: { answer: A, contrast: "i/ɪ" } }
+      - { id: R3-axb-12, audio: audio/rotating-R3-B/axb-12.wav, fx: { sequence: ["seat", "sit", "sit"] }, target: { answer: B, contrast: "i/ɪ" } }
+      - { id: R3-axb-13, audio: audio/rotating-R3-B/axb-13.wav, fx: { sequence: ["cab", "cab", "cap"] }, target: { answer: A, contrast: "final consonants" } }
+      - { id: R3-axb-14, audio: audio/rotating-R3-B/axb-14.wav, fx: { sequence: ["bed", "bet", "bet"] }, target: { answer: B, contrast: "final consonants" } }
+      - { id: R3-axb-15, audio: audio/rotating-R3-B/axb-15.wav, fx: { sequence: ["see", "see", "she"] }, target: { answer: A, contrast: "ʃ/s" } }
+      - { id: R3-axb-16, audio: audio/rotating-R3-B/axb-16.wav, fx: { sequence: ["same", "shame", "shame"] }, target: { answer: B, contrast: "ʃ/s" } }

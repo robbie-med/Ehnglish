@@ -1,0 +1,242 @@
+# Core form B (monthly core, ~22 min). Parallel to form A: same structure, timing, contrasts and
+# difficulty ladder, different content. Drafted to spec; native-speaker edit pending (REVIEW.md).
+# Syllable targets for C2 are recomputed from CMUdict by content/lint.py --fix-syllables.
+id: core-B
+version: 1
+kind: core
+title:
+  en: "Monthly core — form B"
+  ko: "월간 핵심 시험 — B형"
+tasks:
+  - id: C0
+    type: silence
+    title:
+      en: "Room noise"
+      ko: "실내 소음"
+    instructions:
+      en: "Stay completely silent for 10 seconds so the app can measure the room."
+      ko: "앱이 실내 소음을 측정할 수 있도록 10초 동안 완전히 조용히 있어 주세요."
+    timing: { prep_s: 2, respond_s: 10 }
+    allow_rerecord: true
+    items:
+      - id: C0-silence
+        target: { purpose: noise_floor }
+
+  - id: C1
+    type: read_aloud
+    title:
+      en: "Read aloud"
+      ko: "소리 내어 읽기"
+    instructions:
+      en: "Read the paragraph aloud at a natural pace, then the ten words one at a time. Recording starts after the countdown."
+      ko: "문단을 자연스러운 속도로 소리 내어 읽은 뒤, 열 개의 단어를 하나씩 읽으세요. 카운트다운 후 녹음이 시작됩니다."
+    timing: { prep_s: 5, respond_s: 75, max_s: 90 }
+    allow_rerecord: true
+    items:
+      - id: C1-para
+        text: >-
+          Hello, this is the pharmacy on Franklin Street with a message about your refill. The
+          doctor approved a different brand because the first one was out of stock, so the label
+          will look a little unfamiliar. Take one tablet every morning with a full glass of water,
+          and avoid grapefruit while you are on it. If you notice a rash, swelling, or trouble
+          breathing, stop and call us right away. Your insurance covered most of the cost, and the
+          balance is eleven dollars. Would you like us to text you when it is ready?
+        target:
+          words: 84
+          contrasts: ["r/l", "f/p", "v/b", "z/dʒ", "θ/s", "i/ɪ", "final consonants", "clusters"]
+      - id: C1-words
+        text: "prescription, flu, vitamin, breathing, allergy, physician, swelling, lab, fifteen, receipt"
+        target:
+          words: 10
+          contrasts_per_word:
+            prescription: ["r/l", "clusters", "ʃ"]
+            flu: ["f/p", "r/l", "u"]
+            vitamin: ["v/b", "i/ɪ"]
+            breathing: ["ð", "r/l", "i/ɪ"]
+            allergy: ["r/l", "dʒ"]
+            physician: ["f/p", "ʃ", "z/dʒ"]
+            swelling: ["clusters", "final ŋ"]
+            lab: ["l", "final b"]
+            fifteen: ["f/p", "i/ɪ", "final n"]
+            receipt: ["r/l", "i/ɪ", "final t"]
+
+  - id: C2
+    type: sentence_repeat
+    title:
+      en: "Repeat the sentence"
+      ko: "문장 따라 말하기"
+    instructions:
+      en: "You will hear each sentence once. After the beep, repeat it exactly. The sentences get longer."
+      ko: "각 문장을 한 번만 듣게 됩니다. 삐 소리 후 정확히 따라 말하세요. 문장은 점점 길어집니다."
+    timing: { prep_s: 0, respond_s: 8, max_s: 10 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - { id: C2-01, text: "The clinic opens at eight.", audio: audio/core-B/C2-01.wav, target: { syllables: 7 } }
+      - { id: C2-02, text: "Please sign the consent form today.", audio: audio/core-B/C2-02.wav, target: { syllables: 8 } }
+      - { id: C2-03, text: "My son needs a flu shot today.", audio: audio/core-B/C2-03.wav, target: { syllables: 8 } }
+      - { id: C2-04, text: "The doctor will see you in ten minutes.", audio: audio/core-B/C2-04.wav, target: { syllables: 10 } }
+      - { id: C2-05, text: "I would like to cancel my appointment on Monday.", audio: audio/core-B/C2-05.wav, target: { syllables: 13 } }
+      - { id: C2-06, text: "Take two capsules after breakfast and dinner.", audio: audio/core-B/C2-06.wav, target: { syllables: 11 } }
+      - { id: C2-07, text: "The nurse said the swelling should go down by Friday.", audio: audio/core-B/C2-07.wav, target: { syllables: 12 } }
+      - { id: C2-08, text: "Can I pick up the prescription for my mother?", audio: audio/core-B/C2-08.wav, target: { syllables: 12 } }
+      - { id: C2-09, text: "The X-ray showed nothing serious, but the pain continued.", audio: audio/core-B/C2-09.wav, target: { syllables: 15 } }
+      - { id: C2-10, text: "If the medicine makes you dizzy, do not drive until it wears off.", audio: audio/core-B/C2-10.wav, target: { syllables: 17 } }
+      - { id: C2-11, text: "She wondered whether the clinic would accept her new insurance plan.", audio: audio/core-B/C2-11.wav, target: { syllables: 17 } }
+      - { id: C2-12, text: "The receptionist mentioned that the specialist only works on Tuesdays and Thursdays.", audio: audio/core-B/C2-12.wav, target: { syllables: 21 } }
+      - { id: C2-13, text: "Although the test was negative, the doctor wanted to repeat it next month.", audio: audio/core-B/C2-13.wav, target: { syllables: 19 } }
+      - { id: C2-14, text: "The pharmacy still hasn't received the authorization from the insurance company.", audio: audio/core-B/C2-14.wav, target: { syllables: 23 } }
+      - { id: C2-15, text: "Before you leave, I need to check your address and your emergency contact.", audio: audio/core-B/C2-15.wav, target: { syllables: 19 } }
+      - { id: C2-16, text: "My neighbor assumed the office was open, but nobody answered when she called.", audio: audio/core-B/C2-16.wav, target: { syllables: 20 } }
+      - { id: C2-17, text: "The thermometer still reads ninety-nine, which is why I kept him home today.", audio: audio/core-B/C2-17.wav, target: { syllables: 19 } }
+      - { id: C2-18, text: "Unless the cough improves over the weekend, they would rather see him on Monday.", audio: audio/core-B/C2-18.wav, target: { syllables: 20 } }
+      - { id: C2-19, text: "The pharmacist apologized for the delay and offered to deliver it tomorrow.", audio: audio/core-B/C2-19.wav, target: { syllables: 23 } }
+      - { id: C2-20, text: "Even though the referral was approved, the specialist's office needed one more signature.", audio: audio/core-B/C2-20.wav, target: { syllables: 23 } }
+
+  - id: C3
+    type: quick_answer
+    title:
+      en: "Quick answers"
+      ko: "빠른 대답"
+    instructions:
+      en: "You will hear a short question. Answer right away in a full sentence. Speed matters more than perfection."
+      ko: "짧은 질문을 듣게 됩니다. 바로 완전한 문장으로 대답하세요. 완벽함보다 속도가 중요합니다."
+    timing: { prep_s: 0, respond_s: 12, max_s: 15 }
+    tone_hz: 880
+    allow_rerecord: false
+    items:
+      - { id: C3-01, text: "What do you usually have for breakfast?", audio: audio/core-B/C3-01.wav, target: { type: personal } }
+      - { id: C3-02, text: "How do you get to work or school?", audio: audio/core-B/C3-02.wav, target: { type: personal } }
+      - { id: C3-03, text: "What would you say if the receptionist couldn't find your appointment?", audio: audio/core-B/C3-03.wav, target: { type: patient_side } }
+      - { id: C3-04, text: "Why do people need to wash their hands before eating?", audio: audio/core-B/C3-04.wav, target: { type: explain } }
+      - { id: C3-05, text: "What is the difference between a pharmacy and a grocery store?", audio: audio/core-B/C3-05.wav, target: { type: compare } }
+      - { id: C3-06, text: "If you lost your insurance card, what would you do first?", audio: audio/core-B/C3-06.wav, target: { type: hypothetical } }
+
+  - id: C4
+    type: phone_call
+    title:
+      en: "Phone call"
+      ko: "전화 통화"
+    instructions:
+      en: "You will call a pharmacy. The person on the line speaks, then you reply. Your goals are shown on screen during the call. Speak naturally; the line sounds like a real phone."
+      ko: "약국에 전화를 겁니다. 상대방이 말한 뒤 당신이 대답합니다. 통화 중 목표가 화면에 표시됩니다. 자연스럽게 말하세요. 실제 전화처럼 들립니다."
+    timing: { prep_s: 0, respond_s: 15, max_s: 18 }
+    allow_rerecord: false
+    target:
+      scenario: "Call the pharmacy to ask for a refill of your blood pressure medication, check whether the generic is in stock, and ask when it will be ready for pickup."
+      goals:
+        - "States who they are and what they need (a refill)."
+        - "Names the medication or says what it is for (blood pressure)."
+        - "Gives their date of birth when asked."
+        - "Asks whether the generic version is in stock."
+        - "Asks when the refill will be ready."
+        - "Ends the call politely (thanks, goodbye)."
+      phrases: ["I need a refill", "is the generic in stock", "when will it be ready", "thank you"]
+    items:
+      - id: C4-01
+        text: "Franklin Street Pharmacy, this is Dana. What can I do for you?"
+        audio: audio/core-B/C4-01.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "Your goal: get a refill. Say who you are and what you need."
+          ko: "목표: 처방 재조제. 누구인지, 무엇이 필요한지 말하세요."
+      - id: C4-02
+        text: "Okay. Which medication is that, and can I get your date of birth?"
+        audio: audio/core-B/C4-02.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "Say what the medication is for and give your date of birth (any date is fine)."
+          ko: "약의 용도를 말하고 생년월일을 말하세요 (아무 날짜나 괜찮습니다)."
+      - id: C4-03
+        text: "Got it, I see one refill left on that. Anything else you need to know?"
+        audio: audio/core-B/C4-03.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "Ask whether the generic version is in stock."
+          ko: "제네릭(복제약)이 재고에 있는지 물어보세요."
+      - id: C4-04
+        text: "We do have the generic. It's about a third of the price, if that works for you."
+        audio: audio/core-B/C4-04.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "Say that the generic is fine, and ask when it will be ready."
+          ko: "제네릭도 괜찮다고 말하고 언제 준비되는지 물어보세요."
+      - id: C4-05
+        text: "It should be ready in about forty minutes. We close at seven tonight."
+        audio: audio/core-B/C4-05.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "Confirm you'll come before seven."
+          ko: "7시 전에 가겠다고 확인하세요."
+      - id: C4-06
+        text: "Perfect. We'll see you then. Have a good one."
+        audio: audio/core-B/C4-06.wav
+        fx: { voice: en-US-AvaNeural, phone: true }
+        prompt:
+          en: "End the call politely."
+          ko: "정중하게 통화를 마치세요."
+
+  - id: C5
+    type: describe_opinion
+    title:
+      en: "Describe, then give an opinion"
+      ko: "묘사하기, 그리고 의견 말하기"
+    instructions:
+      en: "First, describe the process for 90 seconds. Then you get 30 seconds to think about a question and 90 seconds to answer it."
+      ko: "먼저 과정을 90초 동안 설명하세요. 그다음 질문에 대해 30초 동안 생각하고 90초 동안 대답합니다."
+    timing: { prep_s: 10, respond_s: 90, max_s: 95 }
+    allow_rerecord: false
+    items:
+      - id: C5-describe
+        prompt:
+          en: "Describe, step by step, what happens from the moment you drop off a prescription at a pharmacy until you leave with the medication."
+          ko: "약국에 처방전을 맡긴 순간부터 약을 받아 나올 때까지 무슨 일이 일어나는지 단계별로 설명하세요."
+        timing: { prep_s: 10, respond_s: 90, max_s: 95 }
+        target: { stage: describe, genre: process }
+      - id: C5-opinion
+        prompt:
+          en: "Some people think clinics should charge a fee when patients miss an appointment without calling. Do you agree? Give reasons."
+          ko: "환자가 연락 없이 예약을 놓치면 병원이 수수료를 받아야 한다고 생각하는 사람들이 있습니다. 동의하나요? 이유를 말하세요."
+        timing: { prep_s: 30, respond_s: 90, max_s: 95 }
+        target: { stage: opinion }
+
+  - id: C6
+    type: dictation
+    title:
+      en: "Dictation"
+      ko: "받아쓰기"
+    instructions:
+      en: "You will hear twelve sentences, each once. Some are fast, some sound like a phone, some have background noise. Type exactly what you hear, then press Done."
+      ko: "열두 문장을 각각 한 번씩 듣습니다. 어떤 것은 빠르고, 어떤 것은 전화처럼 들리고, 어떤 것은 배경 소음이 있습니다. 들은 대로 정확히 입력한 뒤 완료를 누르세요."
+    timing: { prep_s: 0, respond_s: 25 }
+    allow_rerecord: false
+    items:
+      - { id: C6-01, text: "Your appointment has been moved to Thursday morning.", audio: audio/core-B/C6-01.wav, target: { condition: clear } }
+      - { id: C6-02, text: "The doctor wants to check your blood pressure again.", audio: audio/core-B/C6-02.wav, target: { condition: clear } }
+      - { id: C6-03, text: "Please stop taking the vitamins the night before.", audio: audio/core-B/C6-03.wav, target: { condition: clear } }
+      - { id: C6-04, text: "The lab opens at seven and closes at four.", audio: audio/core-B/C6-04.wav, fx: { rate: "+35%" }, target: { condition: fast } }
+      - { id: C6-05, text: "Bring a list of everything you take, including supplements.", audio: audio/core-B/C6-05.wav, fx: { rate: "+35%" }, target: { condition: fast } }
+      - { id: C6-06, text: "The referral is good for ninety days from today.", audio: audio/core-B/C6-06.wav, fx: { rate: "+35%" }, target: { condition: fast } }
+      - { id: C6-07, text: "The nurse will call you back after lunch.", audio: audio/core-B/C6-07.wav, fx: { phone: true }, target: { condition: phone } }
+      - { id: C6-08, text: "Your copay will be twenty-five dollars at the door.", audio: audio/core-B/C6-08.wav, fx: { phone: true }, target: { condition: phone } }
+      - { id: C6-09, text: "The clinic on Main Street has moved to the second floor.", audio: audio/core-B/C6-09.wav, fx: { phone: true }, target: { condition: phone } }
+      - { id: C6-10, text: "Come back right away if the fever goes above a hundred and two.", audio: audio/core-B/C6-10.wav, fx: { noise_snr_db: 5, noise_kind: babble }, target: { condition: noise } }
+      - { id: C6-11, text: "The flu clinic runs every Saturday until the end of November.", audio: audio/core-B/C6-11.wav, fx: { noise_snr_db: 5, noise_kind: babble }, target: { condition: noise } }
+      - { id: C6-12, text: "You can renew this prescription online before it runs out.", audio: audio/core-B/C6-12.wav, fx: { noise_snr_db: 5, noise_kind: babble }, target: { condition: noise } }
+
+  - id: C7
+    type: rating
+    title:
+      en: "Confidence"
+      ko: "자신감"
+    instructions:
+      en: "How confident do you feel speaking English in each situation right now? Move the slider and press Next."
+      ko: "지금 각 상황에서 영어로 말하는 것이 얼마나 자신 있나요? 슬라이더를 움직이고 다음을 누르세요."
+    timing: { prep_s: 0, respond_s: 60 }
+    allow_rerecord: false
+    items:
+      - { id: C7-phone, prompt: { en: "On the phone", ko: "전화 통화에서" }, scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } } }
+      - { id: C7-doctor, prompt: { en: "At the doctor's office", ko: "병원에서" }, scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } } }
+      - { id: C7-colleagues, prompt: { en: "With colleagues", ko: "동료들과" }, scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } } }
+      - { id: C7-church, prompt: { en: "At church", ko: "교회에서" }, scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } } }
+      - { id: C7-class, prompt: { en: "In class", ko: "수업에서" }, scale: { min: 0, max: 10, labels: { "0": { en: "not at all", ko: "전혀" }, "10": { en: "completely", ko: "완전히" } } } }

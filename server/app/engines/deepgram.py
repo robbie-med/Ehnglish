@@ -8,6 +8,7 @@ import httpx
 
 from ..config import get_settings
 from .base import EngineError, Transcript, TWord
+from .http import request_with_retry
 
 URL = "https://api.deepgram.com/v1/listen"
 
@@ -26,13 +27,16 @@ def transcribe(path: Path, *, language: str = "en", timeout: float = 120) -> Tra
         "profanity_filter": "false",
     }
     with path.open("rb") as f:
-        r = httpx.post(
+        body = f.read()
+    r = request_with_retry(
+        lambda: httpx.post(
             URL,
             params=params,
-            content=f.read(),
+            content=body,
             headers={"Authorization": f"Token {s.deepgram_api_key}", "Content-Type": "audio/wav"},
             timeout=timeout,
         )
+    )
     if r.status_code != 200:
         raise EngineError(f"deepgram {r.status_code}: {r.text[:300]}")
     return parse(r.json(), language)

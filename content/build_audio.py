@@ -6,6 +6,7 @@ once, committed, and never regenerated unless you delete them, so every sitting 
 audio. Run from server/: `uv run python ../content/build_audio.py [--voice en-US-AndrewNeural]`.
 Requires EHNGLISH_AZURE_SPEECH_KEY and _REGION in the environment (or server/.env).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT.parent / "server"))
 from app.config import get_settings  # noqa: E402
 from app.content import AudioFx, load_forms  # noqa: E402
+from app.engines.http import request_with_retry  # noqa: E402
 from app.pipeline import audiofx  # noqa: E402
 
 # US voices. Azure has no explicit Northeast-accent voice; these are the most neutral-Northern
@@ -34,16 +36,20 @@ def tts(text: str, voice: str, *, rate: str = "0%") -> bytes:
         f'<speak version="1.0" xml:lang="{lang}"><voice name="{voice}">'
         f'<prosody rate="{rate}">{text}</prosody></voice></speak>'
     )
-    r = httpx.post(
-        f"https://{s.azure_speech_region}.tts.speech.microsoft.com/cognitiveservices/v1",
-        headers={
-            "Ocp-Apim-Subscription-Key": s.azure_speech_key,
-            "Content-Type": "application/ssml+xml",
-            "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
-            "User-Agent": "ehnglish-build-audio",
-        },
-        content=ssml.encode("utf-8"),
-        timeout=60,
+    r = request_with_retry(
+        lambda: httpx.post(
+            f"https://{s.azure_speech_region}.tts.speech.microsoft.com/cognitiveservices/v1",
+            headers={
+                "Ocp-Apim-Subscription-Key": s.azure_speech_key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
+                "User-Agent": "ehnglish-build-audio",
+            },
+            content=ssml.encode("utf-8"),
+            timeout=60,
+        ),
+        attempts=6,
+        base_delay=10.0,
     )
     if r.status_code != 200:
         raise SystemExit(f"TTS failed {r.status_code}: {r.text[:200]}")
@@ -80,7 +86,14 @@ def render(text: str, voice: str, fx: AudioFx, out: Path) -> None:
         if fx.sequence:
             _concat([tts(w, voice, rate=fx.rate) for w in fx.sequence], fx.gap_s, cur)
         elif fx.dialogue:
-            _concat([tts(turn["text"], turn.get("voice") or voice, rate=fx.rate) for turn in fx.dialogue], fx.gap_s, cur)
+            _concat(
+                [
+                    tts(turn["text"], turn.get("voice") or voice, rate=fx.rate)
+                    for turn in fx.dialogue
+                ],
+                fx.gap_s,
+                cur,
+            )
         else:
             cur.write_bytes(tts(text, voice, rate=fx.rate))
         if fx.phone:
@@ -115,13 +128,17 @@ def main() -> None:
             tts_spec = task.target.get("tts")
             if task.audio and tts_spec and not (ROOT / task.audio).exists():
                 fx = AudioFx.model_validate(tts_spec)
-                print(f"{form.id}/{task.id}: stimulus -> {task.audio}  fx={fx.model_dump(exclude_defaults=True)}")
+                print(
+                    f"{form.id}/{task.id}: stimulus -> {task.audio}  fx={fx.model_dump(exclude_defaults=True)}"
+                )
                 if not args.dry_run:
                     (ROOT / task.audio).parent.mkdir(parents=True, exist_ok=True)
                     render("", fx.voice or voices["en"], fx, ROOT / task.audio)
                     made += 1
             for item in task.items:
-                if not item.audio or not (item.text or (item.fx and (item.fx.sequence or item.fx.dialogue))):
+                if not item.audio or not (
+                    item.text or (item.fx and (item.fx.sequence or item.fx.dialogue))
+                ):
                     continue
                 out = ROOT / item.audio
                 if out.exists():
@@ -129,7 +146,9 @@ def main() -> None:
                     continue
                 lang = "ko" if item.target.get("language") == "ko" else "en"
                 fx = item.fx or AudioFx()
-                print(f"{form.id}/{task.id}/{item.id}: {(item.text or '')[:50]!r} -> {item.audio}  fx={fx.model_dump(exclude_defaults=True) or 'plain'}")
+                print(
+                    f"{form.id}/{task.id}/{item.id}: {(item.text or '')[:50]!r} -> {item.audio}  fx={fx.model_dump(exclude_defaults=True) or 'plain'}"
+                )
                 if args.dry_run:
                     continue
                 out.parent.mkdir(parents=True, exist_ok=True)

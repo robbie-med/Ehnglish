@@ -1,0 +1,65 @@
+# Rotating module R2, form B (~9 min): the general-academic passage (the plan alternates patient
+# information and general academic), six questions, then two C-texts. Drafted to spec;
+# native-speaker edit pending (REVIEW.md).
+id: rotating-R2-B
+version: 1
+kind: rotating
+title:
+  en: "Reading & grammar — form B"
+  ko: "읽기와 문법 — B형"
+tasks:
+  - id: R2-read
+    type: reading_passage
+    title: { en: "Timed reading", ko: "시간 측정 읽기" }
+    instructions:
+      en: "Read the text once at your normal pace. Press Done as soon as you finish. Questions follow; you will not see the text again."
+      ko: "평소 속도로 한 번 읽으세요. 다 읽으면 바로 완료를 누르세요. 그다음 문제가 나오며, 글은 다시 볼 수 없습니다."
+    timing: { prep_s: 0, respond_s: 300 }
+    target: { questions: R2-q, genre: academic }
+    items:
+      - id: R2-passage
+        text: >-
+          Why do people remember pictures better than words? In a classic series of experiments in the
+          1970s, participants were shown thousands of photographs for a few seconds each and, days later,
+          could still tell which of two pictures they had seen with surprising accuracy. The same test with
+          lists of words produced far weaker results. One explanation, known as dual coding, proposes that
+          a picture is stored twice: once as an image and once as the label we silently attach to it. A word,
+          by contrast, usually gets only a verbal code, unless the reader makes the effort to imagine it.
+          Two records give the memory two routes back. The effect has limits. Pictures that are abstract or
+          hard to name lose their advantage, and the benefit shrinks when the test asks for exact details
+          rather than simple recognition. Still, the finding has shaped practice far beyond the laboratory.
+          Medical illustrators rely on it when they simplify an anatomical drawing so that a patient can hold
+          one clear image of what a procedure will do. Textbook designers pair diagrams with short captions
+          for the same reason. And teachers who ask students to sketch a concept, even badly, are using dual
+          coding whether they know the term or not. The lesson is not that words are weak, but that a word
+          with an image attached is remembered by more of the mind than a word alone.
+        target: { words: 290 }
+
+  - id: R2-q
+    type: multiple_choice
+    title: { en: "Questions about the text", ko: "글에 대한 문제" }
+    instructions: { en: "Answer from memory. Press 1–4 or click.", ko: "기억을 바탕으로 답하세요. 1~4 키를 누르거나 클릭하세요." }
+    timing: { prep_s: 0, respond_s: 45 }
+    target: { genre: academic }
+    items:
+      - { id: R2-q1, text: "What did the 1970s experiments compare?", options: ["Memory for photographs versus lists of words", "Memory in children versus adults", "Short captions versus long captions", "Drawings versus photographs"], target: { answer: 0 } }
+      - { id: R2-q2, text: "According to dual coding, why are pictures remembered better?", options: ["They are stored as an image and as a label", "They are larger than words", "They are seen for longer", "They are always in colour"], target: { answer: 0 } }
+      - { id: R2-q3, text: "When does the picture advantage shrink?", options: ["When exact details are required", "When the pictures are in black and white", "When the test is given the same day", "When the words are short"], target: { answer: 0 } }
+      - { id: R2-q4, text: "Why do medical illustrators simplify drawings, according to the text?", options: ["So a patient can hold one clear image", "To save printing costs", "Because photographs are not allowed", "To hide frightening details"], target: { answer: 0 } }
+      - { id: R2-q5, text: "What do teachers do that uses dual coding?", options: ["Ask students to sketch a concept", "Read aloud from the textbook", "Give longer word lists", "Test students on exact wording"], target: { answer: 0 } }
+      - { id: R2-q6, text: "What is the author's final point?", options: ["A word with an image is remembered by more of the mind", "Words are weak and should be avoided", "Pictures always beat words", "Memory cannot be improved"], target: { answer: 0 } }
+
+  - id: R2-ctest
+    type: c_test
+    title: { en: "Complete the words", ko: "단어 완성하기" }
+    instructions:
+      en: "In each text, parts of some words are missing. Type the missing letters so that each word fits the sentence. Two texts; take your time but keep moving."
+      ko: "각 글에서 일부 단어의 뒷부분이 빠져 있습니다. 문장에 맞도록 빠진 글자를 입력하세요. 글 두 편입니다. 서두르지 않아도 되지만 계속 진행하세요."
+    timing: { prep_s: 0, respond_s: 240 }
+    items:
+      - id: R2-c1
+        text: "Most pharmacies will text you when a prescription is ready. The mes{sage} usu{ally} arrives wit{hin} an ho{ur}, but du{ring} busy per{iods} it c{an} take lon{ger}. If y{ou} have n{ot} heard any{thing} by t{he} end o{f} the d{ay}, it i{s} worth cal{ling}, bec{ause} some{times} the or{der} is wai{ting} on an approval."
+        target: { blanks: 20 }
+      - id: R2-c2
+        text: "Reading speed is not the same as reading well. Fa{st} readers of{ten} skip wo{rds} they expe{ct} to s{ee}, which wo{rks} until t{he} text sa{ys} something surpr{ising}. Car{eful} readers sl{ow} down a{t} exactly th{ose} points, a{nd} that i{s} why th{ey} remember mo{re} of wh{at} they re{ad}, even th{ough} they finish later."
+        target: { blanks: 20 }

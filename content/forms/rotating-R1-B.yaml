@@ -1,0 +1,57 @@
+# Rotating module R1, form B (~9 min): parallel to R1-A. Bands 1k–10k, three items each, then ten
+# patient-side medical/service items. Drafted to spec; native-speaker edit pending (REVIEW.md).
+id: rotating-R1-B
+version: 1
+kind: rotating
+title:
+  en: "Vocabulary — form B"
+  ko: "어휘 — B형"
+tasks:
+  - id: R1
+    type: multiple_choice
+    title: { en: "Vocabulary", ko: "어휘" }
+    instructions:
+      en: "Choose the meaning of the underlined word. If you don't know, choose your best guess. Press 1–4 or click."
+      ko: "밑줄 친 단어의 뜻을 고르세요. 모르면 가장 그럴듯한 것을 고르세요. 1~4 키를 누르거나 클릭하세요."
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - { id: R1-01, text: "<u>time</u>: They have a lot of time.", options: ["hours and minutes available", "money", "friends", "space"], target: { band: 1k, answer: 0 } }
+      - { id: R1-02, text: "<u>figure</u>: Is this the right figure?", options: ["number", "answer to a question", "address", "colour"], target: { band: 1k, answer: 0 } }
+      - { id: R1-03, text: "<u>period</u>: It was a difficult period.", options: ["length of time", "question", "lesson", "test"], target: { band: 1k, answer: 0 } }
+      - { id: R1-04, text: "<u>maintain</u>: Can they maintain it?", options: ["keep it as it is", "make it larger", "get a better one than it", "sell it"], target: { band: 2k, answer: 0 } }
+      - { id: R1-05, text: "<u>stone</u>: He sat on a stone.", options: ["hard piece of rock", "soft chair", "fallen tree", "wooden box"], target: { band: 2k, answer: 0 } }
+      - { id: R1-06, text: "<u>upset</u>: I am upset.", options: ["unhappy or worried", "tired", "famous", "rich"], target: { band: 2k, answer: 0 } }
+      - { id: R1-07, text: "<u>restore</u>: It has been restored.", options: ["brought back to its former condition", "sold again", "described", "hidden"], target: { band: 3k, answer: 0 } }
+      - { id: R1-08, text: "<u>jug</u>: He was holding a jug.", options: ["container for pouring liquids", "small gun", "informal talk", "type of hat"], target: { band: 3k, answer: 0 } }
+      - { id: R1-09, text: "<u>scrub</u>: He is scrubbing it.", options: ["cleaning it by rubbing hard", "cutting it into pieces", "painting it", "throwing it away"], target: { band: 3k, answer: 0 } }
+      - { id: R1-10, text: "<u>dinosaur</u>: The children were pretending to be dinosaurs.", options: ["animals that lived long ago", "people who fight", "fish that fly", "giant trees"], target: { band: 4k, answer: 0 } }
+      - { id: R1-11, text: "<u>strap</u>: He broke the strap.", options: ["narrow band for holding something", "promise", "wooden handle", "small window"], target: { band: 4k, answer: 0 } }
+      - { id: R1-12, text: "<u>pave</u>: It was paved.", options: ["covered with a hard surface", "divided into parts", "given a name", "painted white"], target: { band: 4k, answer: 0 } }
+      - { id: R1-13, text: "<u>remedy</u>: We found a good remedy.", options: ["way to fix a problem", "place to eat", "kind of flower", "song"], target: { band: 5k, answer: 0 } }
+      - { id: R1-14, text: "<u>compost</u>: We need some compost.", options: ["decayed plant material for the garden", "strong thread", "financial help", "medicine"], target: { band: 5k, answer: 0 } }
+      - { id: R1-15, text: "<u>bacterium</u>: They didn't find a single bacterium.", options: ["very small living thing that can cause disease", "plant with purple flowers", "stolen item", "coin"], target: { band: 5k, answer: 0 } }
+      - { id: R1-16, text: "<u>devious</u>: Your plans are devious.", options: ["dishonest and tricky", "expensive", "very detailed", "likely to succeed"], target: { band: 6k, answer: 0 } }
+      - { id: R1-17, text: "<u>premier</u>: The premier spoke for an hour.", options: ["leader of a government", "actor", "religious leader", "doctor"], target: { band: 6k, answer: 0 } }
+      - { id: R1-18, text: "<u>butler</u>: They have a butler.", options: ["male servant who manages a house", "large dog", "old car", "garden shed"], target: { band: 6k, answer: 0 } }
+      - { id: R1-19, text: "<u>vocabulary</u>: You will need more vocabulary.", options: ["words", "money", "time to practise", "patience"], target: { band: 7k, answer: 0 } }
+      - { id: R1-20, text: "<u>remorse</u>: He showed no remorse.", options: ["regret for doing wrong", "fear", "interest", "surprise"], target: { band: 7k, answer: 0 } }
+      - { id: R1-21, text: "<u>skirmish</u>: There was a skirmish at the border.", options: ["short fight", "long argument", "celebration", "traffic jam"], target: { band: 7k, answer: 0 } }
+      - { id: R1-22, text: "<u>erratic</u>: He was erratic.", options: ["behaving in an unpredictable way", "very angry", "extremely careful", "quiet and shy"], target: { band: 8k, answer: 0 } }
+      - { id: R1-23, text: "<u>palette</u>: He lost his palette.", options: ["board an artist mixes paints on", "wallet", "pet", "set of keys"], target: { band: 8k, answer: 0 } }
+      - { id: R1-24, text: "<u>null</u>: His influence was null.", options: ["had no effect", "was helpful", "was harmful", "was growing"], target: { band: 8k, answer: 0 } }
+      - { id: R1-25, text: "<u>strangle</u>: He strangled her.", options: ["killed her by pressing her throat", "ignored her", "praised her", "followed her"], target: { band: 9k, answer: 0 } }
+      - { id: R1-26, text: "<u>demography</u>: This book is about demography.", options: ["the study of populations", "the study of ancient languages", "the study of weather", "the study of money"], target: { band: 9k, answer: 0 } }
+      - { id: R1-27, text: "<u>apex</u>: They reached the apex.", options: ["highest point", "lowest point", "entrance", "end of the road"], target: { band: 9k, answer: 0 } }
+      - { id: R1-28, text: "<u>roulette</u>: They played roulette.", options: ["gambling game with a spinning wheel", "card game for children", "team sport", "board game with dice"], target: { band: 10k, answer: 0 } }
+      - { id: R1-29, text: "<u>crowbar</u>: He used a crowbar.", options: ["iron bar for forcing things open", "bird trap", "small boat", "whip"], target: { band: 10k, answer: 0 } }
+      - { id: R1-30, text: "<u>eclipse</u>: There was an eclipse.", options: ["the moon or sun was hidden", "a sudden storm", "a flood", "an earthquake"], target: { band: 10k, answer: 0 } }
+      - { id: R1-31, text: "<u>premium</u>: The monthly premium went up.", options: ["the amount paid for insurance coverage", "the clinic's parking fee", "the doctor's salary", "the cost of a prescription"], target: { band: medical, answer: 0 } }
+      - { id: R1-32, text: "<u>outpatient</u>: It's an outpatient procedure.", options: ["you go home the same day", "you stay overnight", "it happens outside the hospital", "only a nurse is present"], target: { band: medical, answer: 0 } }
+      - { id: R1-33, text: "<u>symptom</u>: Fatigue is a common symptom.", options: ["a sign of an illness", "a cure", "a type of test", "a medicine"], target: { band: medical, answer: 0 } }
+      - { id: R1-34, text: "<u>prior authorization</u>: The insurer needs prior authorization.", options: ["approval before the treatment is covered", "a signature from the patient", "the previous doctor's notes", "payment in advance"], target: { band: medical, answer: 0 } }
+      - { id: R1-35, text: "<u>booster</u>: You're due for a booster.", options: ["an extra dose of a vaccine", "a higher insurance plan", "a physical exam", "a stronger pair of glasses"], target: { band: medical, answer: 0 } }
+      - { id: R1-36, text: "<u>discharge</u>: Discharge papers are ready.", options: ["leaving the hospital", "a type of infection", "a bill", "a transfer to another ward"], target: { band: medical, answer: 0 } }
+      - { id: R1-37, text: "<u>specimen</u>: Please leave the specimen at the lab.", options: ["a sample for testing", "the completed form", "the old prescription", "the appointment card"], target: { band: medical, answer: 0 } }
+      - { id: R1-38, text: "<u>waiting list</u>: You're on the waiting list.", options: ["you will be seen when a place opens", "you have been refused", "you must pay first", "you have been discharged"], target: { band: medical, answer: 0 } }
+      - { id: R1-39, text: "<u>chronic</u>: It's a chronic condition.", options: ["long-lasting", "life-threatening", "contagious", "temporary"], target: { band: medical, answer: 0 } }
+      - { id: R1-40, text: "<u>check in</u>: Please check in at the front desk.", options: ["announce that you have arrived", "pay your bill", "pick up your results", "make a complaint"], target: { band: medical, answer: 0 } }

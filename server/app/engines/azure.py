@@ -11,6 +11,7 @@ import httpx
 
 from ..config import get_settings
 from .base import EngineError, Transcript, TWord
+from .http import request_with_retry
 
 
 def _region_key() -> tuple[str, str]:
@@ -26,16 +27,20 @@ def transcribe(path: Path, *, language: str = "en", timeout: float = 180) -> Tra
     locale = {"en": "en-US", "ko": "ko-KR"}.get(language, language)
     url = f"https://{region}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15"
     definition = {"locales": [locale], "profanityFilterMode": "None"}
-    with path.open("rb") as f:
-        r = httpx.post(
-            url,
-            headers={"Ocp-Apim-Subscription-Key": key},
-            files={
-                "audio": (path.name, f, "audio/wav"),
-                "definition": (None, json.dumps(definition), "application/json"),
-            },
-            timeout=timeout,
-        )
+
+    def _post() -> httpx.Response:
+        with path.open("rb") as f:
+            return httpx.post(
+                url,
+                headers={"Ocp-Apim-Subscription-Key": key},
+                files={
+                    "audio": (path.name, f, "audio/wav"),
+                    "definition": (None, json.dumps(definition), "application/json"),
+                },
+                timeout=timeout,
+            )
+
+    r = request_with_retry(_post)
     if r.status_code != 200:
         raise EngineError(f"azure stt {r.status_code}: {r.text[:300]}")
     return parse_stt(r.json(), language)

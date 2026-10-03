@@ -1,7 +1,7 @@
 # Rotating module R3, form A (~9 min): listening depth. A colleague-style conversation clip with
 # questions and a spoken retell, a short mini-lecture clip with questions, and AXB sound
-# discrimination on Korean-L1 contrasts. The sermon clip task is added by
-# content/import_sermon_clip.py once a clip is chosen (see docs). Drafted to spec.
+# discrimination on Korean-L1 contrasts, and a two-minute sermon clip from the family's church
+# (drafted by content/draft_sermon_task.py; questions need the native-speaker edit). Drafted to spec.
 id: rotating-R3-A
 version: 1
 kind: rotating
@@ -67,6 +67,36 @@ tasks:
       - { id: R3-lec-q2, text: "What do patient-education studies find about simplified drawings?", options: ["People remember them better and find them less frightening", "People distrust them", "They take longer to understand", "They work only for children"], target: { answer: 0 } }
       - { id: R3-lec-q3, text: "What does the speaker say the illustrator's first job is?", options: ["Deciding what to leave out", "Drawing accurately", "Choosing the camera angle", "Learning anatomy"], target: { answer: 0 } }
       - { id: R3-lec-q4, text: "Why must that decision involve a clinician?", options: ["An unimportant-looking detail can be the one that matters most", "Clinicians own the images", "Artists cannot read medical records", "It is a legal requirement"], target: { answer: 0 } }
+
+  - id: R3-sermon
+    type: multiple_choice
+    title: { en: "Sermon clip", ko: "설교 발췌" }
+    instructions:
+      en: "You will hear two minutes of a sermon from your church, once. Then answer the questions from memory."
+      ko: "교회 설교 두 분 분량을 한 번 듣게 됩니다. 그다음 기억을 바탕으로 문제에 답하세요."
+    timing: { prep_s: 0, respond_s: 40 }
+    audio: audio/rotating-R3-A/sermon-fse5pcDpXto-1586.wav
+    target:
+      genre: sermon
+      source: { video: fse5pcDpXto, start_s: 1586, clip_s: 120 }
+      transcript: "but i wanna end with the children's sermon there's coloring sheets in the the foyer for you to take home for your kids this is genesis fifteen god calls abraham and when abraham's struggling because again the the problem's the same i don't have i don't see your promise coming true in a child of the covenant we can modify that can't we i don't see your promise coming true in the child in the covenant who i raised lord until you come with saving grace what have you given me genesis fifteen so god says to abram a he calls him abram and and and doesn't change his name till chapter seventeen but he takes abram outside and says look at the stars and when i'm fighting which is what a sacrament is when i'm fighting for every single covenant child in this church because of the covenant promise of god what i want to say is when abram went outside and looked at those stars all those who would believe like him those children are in the heavens and so god's strength enabled abram to believe and to be justified because he saw i can say to a three year old i believe one day you're gonna say i believe in the lord jesus i was one of those stars that abraham saw now that can take a lifetime to happen and you wait but you never let god forget you showed abram all those who would believe through him don't forget don't forget your promises so it's really the promises of god that's the engine of the covenant of grace so let's pray and thank god for these sacraments of the old and new testament together dear lord thank you that your promise in genesis seventeen is so physical and hands on for"
+    items:
+      - { id: R3-sermon-q1, text: "What is the speaker's main message in this part of the sermon?", options: ["God's promises are what keep the covenant going, so parents can trust them for their children.", "Parents should make their children read Genesis every day until they believe.", "Children should wait until they are adults before they learn about God's covenant.", "Abraham's faith was strong enough that he never doubted God's promise."], target: { answer: 0, kind: main point } }
+      - { id: R3-sermon-q2, text: "According to the speaker, what did God tell Abram to do in Genesis 15?", options: ["Go outside and look at the stars", "Change his name to Abraham right away", "Build an altar and pray at night", "Count the sand by the sea"], target: { answer: 0, kind: detail } }
+      - { id: R3-sermon-q3, text: "Why does the speaker say he can tell a three-year-old, 'One day you're going to say, I believe'?", options: ["Because he sees the child as one of the stars God showed Abram", "Because the child has already been to many church services", "Because the child's parents have promised to teach the Bible", "Because small children always believe what adults tell them"], target: { answer: 0, kind: reason/consequence } }
+      - { id: R3-sermon-q4, text: "The speaker says God's promises are 'the engine of the covenant of grace.' What does he mean?", options: ["God's promises are the main power that makes the covenant work.", "The covenant is a hard job that people must work at every day.", "God's promises are an old idea that people no longer need.", "The covenant moves quickly and changes from year to year."], target: { answer: 0, kind: phrase meaning } }
+  - id: R3-sermon-retell
+    type: describe_opinion
+    title: { en: "Retell the sermon excerpt", ko: "설교 발췌 다시 말하기" }
+    instructions:
+      en: "In your own words, say everything you remember from the sermon excerpt. Sixty seconds."
+      ko: "설교 발췌에서 기억나는 모든 내용을 자신의 말로 말하세요. 60초입니다."
+    timing: { prep_s: 5, respond_s: 60, max_s: 65 }
+    allow_rerecord: false
+    items:
+      - id: R3-sermon-retell-1
+        prompt: { en: "Retell the sermon excerpt.", ko: "설교 발췌를 다시 말하세요." }
+        target: { stage: retell, genre: sermon }
 
   - id: R3-axb
     type: axb

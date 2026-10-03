@@ -1,0 +1,53 @@
+# Rotating module R4, form B (~9 min): parallel to R4-A. Patient-side email (8 min, checklist),
+# 30 s typing check, speaking-anxiety scale. Drafted to spec; native-speaker edit pending.
+id: rotating-R4-B
+version: 1
+kind: rotating
+title:
+  en: "Writing — form B"
+  ko: "쓰기 — B형"
+tasks:
+  - id: R4-email
+    type: typed_response
+    title: { en: "Email to the pharmacy", ko: "약국에 보내는 이메일" }
+    instructions:
+      en: "Write an email to your pharmacy. You have eight minutes. Cover every point in the task; the email is scored on the points covered, accuracy and clarity, not on length."
+      ko: "약국에 이메일을 쓰세요. 8분입니다. 과제의 모든 요점을 다루세요. 길이가 아니라 다룬 요점, 정확성, 명료성으로 평가합니다."
+    timing: { prep_s: 15, respond_s: 480 }
+    target:
+      goals:
+        - "Identifies themselves (name, date of birth or phone) and the medication in question."
+        - "Explains that the wrong quantity (or wrong strength) was dispensed last time."
+        - "Asks for the prescription to be corrected and refilled."
+        - "Asks whether they will be charged again or whether the first charge will be refunded."
+        - "Says when they can pick it up, or asks for delivery."
+        - "Closes politely with a request for confirmation."
+    items:
+      - id: R4-email-1
+        prompt:
+          en: "Last week the pharmacy gave you a 30-day supply of your medication instead of the 90-day supply the doctor prescribed. Write to the pharmacy: say who you are and which medication, explain the mistake, ask for it to be corrected, ask about the charge, say when you can pick it up (or ask for delivery), and ask them to confirm."
+          ko: "지난주에 약국이 의사가 처방한 90일분 대신 30일분만 주었습니다. 약국에 이메일을 쓰세요: 누구이고 어떤 약인지 말하고, 실수를 설명하고, 바로잡아 달라고 하고, 요금에 대해 묻고, 언제 찾으러 갈 수 있는지 말하거나 배송을 요청하고, 확인을 요청하세요."
+        target: { language: en, genre: email }
+
+  - id: R4-typing
+    type: copy_typing
+    title: { en: "Typing check", ko: "타이핑 점검" }
+    instructions: { en: "Copy the text as fast as you comfortably can. Thirty seconds.", ko: "편안한 한도에서 최대한 빠르게 글을 따라 입력하세요. 30초입니다." }
+    timing: { prep_s: 0, respond_s: 30 }
+    items:
+      - id: R4-typing-1
+        text: "Thank you for sending the results so quickly. I have one question about the second page, and I would be grateful if someone could call me back this week."
+        target: { language: en }
+
+  - id: R4-anxiety
+    type: rating
+    title: { en: "Speaking anxiety", ko: "말하기 불안" }
+    instructions: { en: "Rate each statement from 0 (not at all true) to 10 (completely true).", ko: "각 문장을 0(전혀 아니다)에서 10(완전히 그렇다)까지 평가하세요." }
+    timing: { prep_s: 0, respond_s: 60 }
+    items:
+      - { id: S-anx-1, prompt: { en: "I feel nervous when I have to speak English without preparing.", ko: "준비 없이 영어로 말해야 할 때 긴장된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-2, prompt: { en: "I worry about making mistakes when I speak English.", ko: "영어로 말할 때 실수할까 봐 걱정된다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-3, prompt: { en: "My mind goes blank when someone asks me something in English.", ko: "누가 영어로 무언가를 물으면 머리가 하얘진다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-4, prompt: { en: "I avoid phone calls in English when I can.", ko: "가능하면 영어 전화 통화를 피한다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety } }
+      - { id: S-anx-5, prompt: { en: "I feel relaxed speaking English in casual conversation.", ko: "가벼운 대화에서는 영어로 말하는 것이 편안하다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }
+      - { id: S-anx-6, prompt: { en: "I feel confident speaking English with people I don't know.", ko: "모르는 사람과 영어로 말하는 것이 자신 있다." }, scale: { min: 0, max: 10 }, target: { scale_name: anxiety, reverse: true } }
