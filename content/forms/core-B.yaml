@@ -34,6 +34,7 @@ tasks:
     allow_rerecord: true
     items:
       - id: C1-para
+        timing: { prep_s: 5, respond_s: 60, max_s: 75 }
         text: >-
           Hello, this is the pharmacy on Franklin Street with a message about your refill. The
           doctor approved a different brand because the first one was out of stock, so the label
@@ -45,6 +46,7 @@ tasks:
           words: 84
           contrasts: ["r/l", "f/p", "v/b", "z/dʒ", "θ/s", "i/ɪ", "final consonants", "clusters"]
       - id: C1-words
+        timing: { prep_s: 3, respond_s: 25, max_s: 30 }
         text: "prescription, flu, vitamin, breathing, allergy, physician, swelling, lab, fifteen, receipt"
         target:
           words: 10

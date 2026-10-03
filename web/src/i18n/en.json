@@ -90,7 +90,8 @@
     "fill_blanks": "Type the missing letters",
     "axb_question": "Was X the same as A or B?",
     "a": "A",
-    "b": "B"
+    "b": "B",
+    "done_speaking": "I'm done"
   },
   "quality": {
     "clipping": "Clipping: the signal is too loud at peaks. Lower the microphone gain.",

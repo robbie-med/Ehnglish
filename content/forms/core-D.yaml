@@ -33,6 +33,7 @@ tasks:
     allow_rerecord: true
     items:
       - id: C1-para
+        timing: { prep_s: 5, respond_s: 60, max_s: 75 }
         text: >-
           Good afternoon, this is the dental office on River Road confirming your cleaning on Friday
           at three. Please eat something light beforehand, because the fluoride treatment means no food
@@ -44,6 +45,7 @@ tasks:
           words: 93
           contrasts: ["r/l", "f/p", "v/b", "z/dʒ", "θ/s", "i/ɪ", "final consonants", "clusters"]
       - id: C1-words
+        timing: { prep_s: 3, respond_s: 25, max_s: 30 }
         text: "fluoride, river, surgery, hygienist, thirty, billed, reschedule, cavity, filling, breathe"
         target:
           words: 10

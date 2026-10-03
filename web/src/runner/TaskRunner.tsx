@@ -34,6 +34,8 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
   const keysRef = useRef(new KeystrokeLogger());
   const textRef = useRef<HTMLTextAreaElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stopEarlyRef = useRef<(() => void) | null>(null);
+  const [canStop, setCanStop] = useState(false);
   const setup = useMemo(() => loadSetup(), []);
 
   const task = form.tasks[state.taskIdx];
@@ -127,10 +129,19 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
       if (!item?.audio) mark('prompt_end'); // no audio prompt: the response window opens now
       mark('record_start');
       await rec.start();
-      await new Promise((r) => setTimeout(r, timing.respond_s * 1000));
+      const t0 = performance.now();
+      let stoppedEarly = false;
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, timing.respond_s * 1000);
+        // "Done" is offered after 2 s on the longer windows; a tap ends the take early.
+        const allow = setTimeout(() => setCanStop(timing.respond_s >= 15), 2000);
+        stopEarlyRef.current = () => { clearTimeout(timer); clearTimeout(allow); stoppedEarly = true; resolve(); };
+      });
+      stopEarlyRef.current = null;
+      setCanStop(false);
       if (cancelled) return;
       const pcm = await rec.stop();
-      mark('record_stop');
+      mark('record_stop', { early: stoppedEarly, recorded_ms: Math.round(performance.now() - t0) });
       const quality = analyzeTake(pcm, rec.info.sampleRate, setup.noise_floor?.rms_dbfs ?? null);
       const takeId = await waitForTakeId();
       const takeRec = { takeId, pcm, quality };
@@ -142,7 +153,7 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
         dispatch({ type: 'RESPONSE_DONE' });
       }
     })().catch(fail);
-    return () => { cancelled = true; };
+    return () => { cancelled = true; stopEarlyRef.current = null; setCanStop(false); };
   }, [state.phase, state.attempt, state.itemIdx, state.taskIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function accept() {
@@ -337,6 +348,11 @@ export default function TaskRunner({ form, session, onFinished }: Props) {
             <>
               <div className="countdown status-bad" data-testid="recording"><span className="rec-dot" />{task.type === 'silence' ? t('runner.recording') : task.type === 'phone_call' ? t('runner.your_turn') : t('runner.speak_now')} · {respondLeft}</div>
               <div className="meter"><div style={{ width: `${recProgress.pct}%`, transition: 'width 100ms linear' }} /></div>
+              {canStop && (
+                <div className="row" style={{ justifyContent: 'center' }}>
+                  <button className="primary" onClick={() => stopEarlyRef.current?.()} data-testid="stop-early">{t('runner.done_speaking')}</button>
+                </div>
+              )}
             </>
           )}
         </div>

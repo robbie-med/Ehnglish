@@ -33,6 +33,7 @@ tasks:
     allow_rerecord: true
     items:
       - id: C1-para
+        timing: { prep_s: 5, respond_s: 60, max_s: 75 }
         text: >-
           Thank you for calling the urgent care center. We are open from eight in the morning until
           nine at night, seven days a week, and no appointment is needed. If you are having chest pain,
@@ -44,6 +45,7 @@ tasks:
           words: 88
           contrasts: ["r/l", "f/p", "v/b", "z/dʒ", "θ/s", "i/ɪ", "final consonants", "clusters"]
       - id: C1-words
+        timing: { prep_s: 3, respond_s: 25, max_s: 30 }
         text: "bleeding, wrist, vaccine, follow-up, throat, pharmacist, visit, refill, thirteen, zip code"
         target:
           words: 10

@@ -90,7 +90,8 @@
     "fill_blanks": "빠진 글자를 입력하세요",
     "axb_question": "X는 A와 같았나요, B와 같았나요?",
     "a": "A",
-    "b": "B"
+    "b": "B",
+    "done_speaking": "다 말했어요"
   },
   "quality": {
     "clipping": "클리핑: 최고점에서 소리가 너무 큽니다. 마이크 게인을 낮추세요.",
